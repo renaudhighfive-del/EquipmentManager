@@ -1,0 +1,145 @@
+<script setup>
+import { computed } from 'vue';
+import { 
+  LayoutDashboard, 
+  Users, 
+  Package, 
+  ArrowLeftRight, 
+  Activity, 
+  AlertTriangle, 
+  Wrench, 
+  AlertOctagon, 
+  BarChart3, 
+  Settings,
+  Sparkles,
+  Smartphone
+} from 'lucide-vue-next';
+import { useRoute } from 'vue-router';
+import { useAuthStore } from '../../stores/auth';
+
+const route = useRoute();
+const authStore = useAuthStore();
+
+defineProps({
+  isCollapsed: Boolean
+});
+
+// Menus par rôle
+const menusByRole = {
+  admin: [
+    { label: 'Tableau de bord', icon: LayoutDashboard, path: '/admin/dashboard' },
+    { label: 'Agents',          icon: Users,           path: '/admin/agents' },
+    { label: 'Équipements',     icon: Package,         path: '/admin/equipements' },
+    { label: 'Affectations',    icon: ArrowLeftRight,  path: '/admin/affectations' },
+    { label: 'Mouvements',      icon: Activity,        path: '/admin/mouvements' },
+    { label: 'Pannes',          icon: AlertTriangle,   path: '/admin/pannes' },
+    { label: 'Maintenances',    icon: Wrench,          path: '/admin/maintenances' },
+    { label: 'Pertes & Casses', icon: AlertOctagon,    path: '/admin/sinistres' },
+    { label: 'Rapports',        icon: BarChart3,       path: '/admin/rapports' },
+    { label: 'Administration',  icon: Settings,        path: '/admin/administration' },
+  ],
+  gestionnaire: [
+    { label: 'Tableau de bord', icon: LayoutDashboard, path: '/gestionnaire/dashboard' },
+    { label: 'Agents',          icon: Users,           path: '/gestionnaire/agents' },
+    { label: 'Équipements',     icon: Package,         path: '/gestionnaire/equipements' },
+    { label: 'Affectations',    icon: ArrowLeftRight,  path: '/gestionnaire/affectations' },
+    { label: 'Pannes',          icon: AlertTriangle,   path: '/gestionnaire/pannes' },
+    { label: 'Maintenances',    icon: Wrench,          path: '/gestionnaire/maintenances' },
+    { label: 'Pertes & Casses', icon: AlertOctagon,    path: '/gestionnaire/sinistres' },
+    { label: 'Rapports',        icon: BarChart3,       path: '/gestionnaire/rapports' },
+  ],
+  agent: [
+    { label: 'Mon espace',       icon: LayoutDashboard, path: '/agent/dashboard' },
+    { label: 'Mes équipements',  icon: Smartphone,      path: '/agent/equipements' },
+    { label: 'Déclarer une panne', icon: AlertTriangle, path: '/agent/pannes' },
+  ],
+};
+
+const menuItems = computed(() => {
+  const role = authStore.user?.role;
+  return menusByRole[role] ?? [];
+});
+</script>
+
+<template>
+  <aside 
+    class="bg-white border-r border-slate-200 flex flex-col h-screen sticky top-0 transition-all duration-300 z-40"
+    :class="[isCollapsed ? 'w-20' : 'w-64']"
+  >
+    <!-- Logo -->
+    <div class="p-4 mb-2 flex items-center justify-between overflow-hidden whitespace-nowrap">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-primary-600 flex items-center justify-center shadow-lg shadow-primary-200 flex-shrink-0">
+          <Package class="w-6 h-6 text-white" />
+        </div>
+        <div v-if="!isCollapsed" class="animate-in fade-in slide-in-from-left-2 duration-300">
+          <h1 class="text-xl font-bold text-slate-900 leading-tight">AssetFlow</h1>
+          <p class="text-xs text-slate-500 font-medium">Enterprise ERP</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 px-3 py-2 space-y-1 overflow-y-auto custom-scrollbar overflow-x-hidden">
+      <router-link 
+        v-for="item in menuItems" 
+        :key="item.path"
+        :to="item.path"
+        class="flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group relative whitespace-nowrap"
+        :class="[
+          route.path === item.path 
+            ? 'bg-primary-50 text-primary-600 font-semibold' 
+            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+        ]"
+      >
+        <component 
+          :is="item.icon" 
+          class="w-6 h-6 transition-colors flex-shrink-0"
+          :class="route.path === item.path ? 'text-primary-600' : 'text-slate-400 group-hover:text-slate-600'"
+        />
+        <span 
+          v-if="!isCollapsed" 
+          class="animate-in fade-in slide-in-from-left-2 duration-300"
+        >
+          {{ item.label }}
+        </span>
+
+        <!-- Tooltip mode réduit -->
+        <div 
+          v-if="isCollapsed"
+          class="absolute left-full ml-4 px-3 py-2 bg-slate-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap"
+        >
+          {{ item.label }}
+        </div>
+      </router-link>
+    </nav>
+
+    <!-- Bottom card -->
+    <div class="p-3 mt-auto">
+      <div 
+        v-if="!isCollapsed"
+        class="bg-primary-600 rounded-2xl p-5 text-white relative overflow-hidden cursor-pointer shadow-xl shadow-primary-200 animate-in fade-in zoom-in duration-300"
+      >
+        <div class="relative z-10">
+          <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center mb-3">
+            <Sparkles class="w-4 h-4 text-white" />
+          </div>
+          <h4 class="font-bold mb-1">Passez à Pro</h4>
+          <p class="text-xs text-primary-100 mb-4 leading-relaxed">Analytics & IA</p>
+          <button class="w-full py-2 bg-white text-primary-600 text-xs font-bold rounded-xl hover:bg-primary-50 transition-colors">
+            Découvrir
+          </button>
+        </div>
+      </div>
+      <div v-else class="flex justify-center py-4">
+        <div class="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center text-primary-600 cursor-pointer hover:bg-primary-200 transition-colors">
+          <Sparkles class="w-5 h-5" />
+        </div>
+      </div>
+    </div>
+  </aside>
+</template>
+
+<style scoped>
+.custom-scrollbar::-webkit-scrollbar { width: 0px; }
+</style>
