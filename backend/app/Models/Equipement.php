@@ -67,6 +67,11 @@ class Equipement extends Model
         return $this->hasMany(Mouvement::class);
     }
 
+    public function images()
+    {
+        return $this->hasMany(EquipementImage::class);
+    }
+
     /**
      * Accessor for is_nouveau
      */
