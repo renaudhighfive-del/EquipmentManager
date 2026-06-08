@@ -1,7 +1,8 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import PageHeader from '../../components/layout/PageHeader.vue';
 import SideModal from '../../components/layout/SideModal.vue';
+import { useAgentStore } from '../../stores/agent';
 import { 
   Search, 
   Filter, 
@@ -14,59 +15,27 @@ import {
   Calendar,
   Smartphone,
   ChevronRight,
-  History
+  History,
+  Loader2
 } from 'lucide-vue-next';
 
+const agentStore = useAgentStore();
 const showFiche = ref(false);
 const selectedAgent = ref(null);
+const searchQuery = ref('');
 
-const agents = [
-  { 
-    id: 1, 
-    name: 'Amélie Dubois', 
-    email: 'user0@entreprise.fr', 
-    matricule: 'MAT-2024000', 
-    direction: 'Logistique', 
-    service: 'Entrepôt A', 
-    statut: 'Inactif', 
-    avatar: null,
-    telephone: '+33 6 30 81 61 35',
-    poste: 'Agent terrain',
-    materiels: 0,
-    pertes: 0,
-    isNew: false
-  },
-  { 
-    id: 2, 
-    name: 'Karim Benali', 
-    email: 'user1@entreprise.fr', 
-    matricule: 'MAT-2024001', 
-    direction: 'IT', 
-    service: 'Helpdesk', 
-    statut: 'Actif', 
-    avatar: null,
-    telephone: '+33 6 12 34 56 78',
-    poste: 'Technicien Support',
-    materiels: 2,
-    pertes: 0,
-    isNew: false
-  },
-  { 
-    id: 3, 
-    name: 'Youssef El Amrani', 
-    email: 'user3@entreprise.fr', 
-    matricule: 'MAT-2024003', 
-    direction: 'Support', 
-    service: 'Admin', 
-    statut: 'Actif', 
-    avatar: null,
-    telephone: '+33 6 98 76 54 32',
-    poste: 'Administrateur',
-    materiels: 0,
-    pertes: 0,
-    isNew: true
-  },
-];
+onMounted(() => {
+  agentStore.fetchAgents();
+});
+
+const filteredAgents = computed(() => {
+  return agentStore.agents.filter(agent => {
+    const search = searchQuery.value.toLowerCase();
+    return agent.name?.toLowerCase().includes(search) ||
+           agent.email?.toLowerCase().includes(search) ||
+           agent.matricule?.toLowerCase().includes(search);
+  });
+});
 
 const openFiche = (agent) => {
   selectedAgent.value = agent;
@@ -79,13 +48,14 @@ const openFiche = (agent) => {
     <!-- Page Header -->
     <PageHeader 
       title="Agents" 
-      :subtitle="`${agents.length} agents au total`"
+      :subtitle="`${filteredAgents.length} agents affichés`"
     >
       <template #actions>
         <div class="flex items-center gap-3">
           <div class="relative">
             <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input 
+              v-model="searchQuery"
               type="text" 
               placeholder="Rechercher un agent..."
               class="h-10 pl-10 pr-4 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500/20 outline-none transition-all w-64"
@@ -105,7 +75,16 @@ const openFiche = (agent) => {
 
     <!-- Agents Table Card -->
     <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-      <table class="w-full text-left border-collapse">
+      <div v-if="agentStore.loading" class="p-12 flex justify-center">
+        <Loader2 class="w-8 h-8 animate-spin text-primary-600" />
+      </div>
+
+      <div v-else-if="filteredAgents.length === 0" class="p-12 text-center">
+        <User class="w-12 h-12 text-slate-200 mx-auto mb-4" />
+        <p class="text-slate-500 font-medium">Aucun agent trouvé</p>
+      </div>
+
+      <table v-else class="w-full text-left border-collapse">
         <thead>
           <tr class="bg-slate-50/50 text-[11px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-100">
             <th class="px-8 py-5">Agent</th>
@@ -118,17 +97,17 @@ const openFiche = (agent) => {
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-50">
-          <tr v-for="agent in agents" :key="agent.id" class="group hover:bg-slate-50/50 transition-colors">
+          <tr v-for="agent in filteredAgents" :key="agent.id" class="group hover:bg-slate-50/50 transition-colors">
             <td class="px-8 py-5">
               <div class="flex items-center gap-4">
                 <div class="w-11 h-11 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 font-bold overflow-hidden">
-                  <span v-if="!agent.avatar">{{ agent.name.charAt(0) }}</span>
+                  <span v-if="!agent.avatar">{{ agent.name?.charAt(0) }}</span>
                   <img v-else :src="agent.avatar" class="w-full h-full object-cover">
                 </div>
                 <div>
                   <div class="flex items-center gap-2">
                     <span class="text-sm font-bold text-slate-900">{{ agent.name }}</span>
-                    <span v-if="agent.isNew" class="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-md">Nouveau</span>
+                    <span v-if="agent.is_nouveau" class="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-md">Nouveau</span>
                   </div>
                   <p class="text-xs text-slate-500 font-medium">{{ agent.email }}</p>
                 </div>
@@ -146,25 +125,25 @@ const openFiche = (agent) => {
             <td class="px-6 py-5 text-center">
               <span 
                 class="inline-flex px-3 py-1 rounded-full text-[11px] font-bold tracking-tight"
-                :class="agent.statut === 'Actif' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'"
+                :class="agent.statut === 'actif' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'"
               >
-                {{ agent.statut }}
+                {{ agent.statut === 'actif' ? 'Actif' : 'Inactif' }}
               </span>
             </td>
             <td class="px-6 py-5 text-center">
               <span 
                 class="text-xs font-bold"
-                :class="agent.materiels > 0 ? 'text-primary-600' : 'text-slate-400'"
+                :class="agent.nb_affectes > 0 ? 'text-primary-600' : 'text-slate-400'"
               >
-                {{ agent.materiels }} affecté(s)
+                {{ agent.nb_affectes || 0 }} affecté(s)
               </span>
             </td>
             <td class="px-6 py-5 text-center">
               <span 
-                v-if="agent.pertes > 0"
+                v-if="agent.nb_perdus > 0"
                 class="px-2 py-1 bg-rose-50 text-rose-600 text-[10px] font-bold rounded-lg border border-rose-100"
               >
-                {{ agent.pertes }} perdu(s)
+                {{ agent.nb_perdus }} perdu(s)
               </span>
               <span v-else class="text-slate-300">—</span>
             </td>
@@ -195,9 +174,9 @@ const openFiche = (agent) => {
           </div>
           <div>
             <h3 class="text-2xl font-bold text-slate-900">{{ selectedAgent.name }}</h3>
-            <p class="text-slate-500 font-medium">{{ selectedAgent.poste }} • {{ selectedAgent.service }}</p>
+            <p class="text-slate-500 font-medium">{{ selectedAgent.poste || 'Agent' }} • {{ selectedAgent.service }}</p>
             <div class="mt-2 inline-flex px-3 py-1 bg-primary-100 text-primary-700 text-[10px] font-bold rounded-lg uppercase tracking-wider">
-              {{ selectedAgent.materiels }} équipements
+              {{ selectedAgent.nb_affectes || 0 }} équipements
             </div>
           </div>
         </div>
@@ -214,7 +193,7 @@ const openFiche = (agent) => {
           </div>
           <div class="p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Téléphone</p>
-            <p class="text-sm font-bold text-slate-900">{{ selectedAgent.telephone }}</p>
+            <p class="text-sm font-bold text-slate-900">{{ selectedAgent.telephone || 'Non renseigné' }}</p>
           </div>
           <div class="p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Email</p>
@@ -228,9 +207,9 @@ const openFiche = (agent) => {
             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Statut</p>
             <span 
               class="text-xs font-bold"
-              :class="selectedAgent.statut === 'Actif' ? 'text-emerald-600' : 'text-slate-400'"
+              :class="selectedAgent.statut === 'actif' ? 'text-emerald-600' : 'text-slate-400'"
             >
-              {{ selectedAgent.statut }}
+              {{ selectedAgent.statut === 'actif' ? 'Actif' : 'Inactif' }}
             </span>
           </div>
         </div>
@@ -242,20 +221,20 @@ const openFiche = (agent) => {
             Équipements affectés
           </h4>
           
-          <div v-if="selectedAgent.materiels === 0" class="p-8 text-center bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
+          <div v-if="!selectedAgent.affectations || selectedAgent.affectations.length === 0" class="p-8 text-center bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
             <p class="text-sm font-medium text-slate-400 italic">Aucun équipement affecté pour le moment</p>
           </div>
           
           <div v-else class="space-y-3">
-            <div v-for="i in selectedAgent.materiels" :key="i" class="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 hover:border-primary-200 transition-colors cursor-pointer group">
+            <div v-for="affectation in selectedAgent.affectations" :key="affectation.id" class="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 hover:border-primary-200 transition-colors cursor-pointer group">
               <div class="w-14 h-14 rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden grayscale group-hover:grayscale-0 transition-all">
-                <img src="https://images.unsplash.com/photo-1556656793-062ff9878258?w=200&h=200&fit=crop" class="w-full h-full object-cover">
+                <img :src="affectation.equipement?.images?.[0]?.path ? `http://localhost:8000/storage/${affectation.equipement.images[0].path}` : 'https://images.unsplash.com/photo-1556656793-062ff9878258?w=200&h=200&fit=crop'" class="w-full h-full object-cover">
               </div>
               <div class="flex-1">
-                <p class="text-sm font-bold text-slate-900">Zebra Zebra Pro 0{{ i }}</p>
-                <p class="text-[10px] font-mono font-medium text-slate-400 uppercase">REF-8000{{ i }}</p>
+                <p class="text-sm font-bold text-slate-900">{{ affectation.equipement?.marque }} {{ affectation.equipement?.modele }}</p>
+                <p class="text-[10px] font-mono font-medium text-slate-400 uppercase">{{ affectation.equipement?.reference }}</p>
               </div>
-              <span class="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded-md">Neuf</span>
+              <span class="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded-md capitalize">{{ affectation.equipement?.etat }}</span>
               <ChevronRight class="w-4 h-4 text-slate-300 group-hover:text-primary-400 transition-colors" />
             </div>
           </div>
