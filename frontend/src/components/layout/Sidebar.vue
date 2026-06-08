@@ -121,14 +121,7 @@ const menuItems = computed(() => {
         class="bg-primary-600 rounded-2xl p-5 text-white relative overflow-hidden cursor-pointer shadow-xl shadow-primary-200 animate-in fade-in zoom-in duration-300"
       >
         <div class="relative z-10">
-          <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center mb-3">
-            <Sparkles class="w-4 h-4 text-white" />
-          </div>
-          <h4 class="font-bold mb-1">Passez à Pro</h4>
-          <p class="text-xs text-primary-100 mb-4 leading-relaxed">Analytics & IA</p>
-          <button class="w-full py-2 bg-white text-primary-600 text-xs font-bold rounded-xl hover:bg-primary-50 transition-colors">
-            Découvrir
-          </button>
+          
         </div>
       </div>
       <div v-else class="flex justify-center py-4">

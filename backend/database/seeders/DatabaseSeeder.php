@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Models\Categorie;
+use App\Models\Equipement;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -38,9 +40,21 @@ class DatabaseSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        // Appel des autres seeders
-        $this->call([
-            CategorieSeeder::class,
-        ]);
+        // Création de 5 catégories avec exactement 5 équipements chacune
+        Categorie::factory()
+            ->count(5)
+            ->create()
+            ->each(function ($categorie) {
+                Equipement::factory()
+                    ->count(5) // Exactement 5 équipements par catégorie
+                    ->create([
+                        'categorie_id' => $categorie->id
+                    ]);
+            });
+
+        // On n'appelle plus CategorieSeeder car on utilise les factories pour plus de flexibilité
+        // $this->call([
+        //     CategorieSeeder::class,
+        // ]);
     }
 }
