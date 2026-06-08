@@ -92,13 +92,39 @@ class EquipementController extends Controller
     {
         $validated = $request->validate([
             'categorie_id' => 'sometimes|exists:categories,id',
+            'reference' => 'sometimes|string|unique:equipements,reference,' . $equipement->id,
+            'numero_serie' => 'sometimes|string|unique:equipements,numero_serie,' . $equipement->id,
+            'code_inventaire' => 'sometimes|string|unique:equipements,code_inventaire,' . $equipement->id,
+            'marque' => 'sometimes|string',
+            'modele' => 'sometimes|string',
+            'fournisseur' => 'nullable|string',
+            'date_acquisition' => 'nullable|date',
+            'prix_achat' => 'nullable|numeric',
+            'garantie_fin' => 'nullable|date',
             'etat' => 'sometimes|in:neuf,en_service,en_panne,en_maintenance,en_attente_sinistre,reforme,perdu',
-            
+            'localisation' => 'nullable|string',
+            'notes' => 'nullable|string',
+            'is_archived' => 'sometimes|boolean',
+            'images' => 'nullable|array',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:5120',
         ]);
 
         $equipement->update($validated);
 
-        return response()->json($equipement);
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                $path = $image->store('equipements', 'public');
+                $equipement->images()->create(['path' => $path]);
+            }
+        }
+
+        return response()->json($equipement->load(['images', 'categorie']));
+    }
+
+    public function archive(Equipement $equipement)
+    {
+        $equipement->update(['is_archived' => true]);
+        return response()->json(['message' => 'Équipement archivé avec succès']);
     }
 
     /**

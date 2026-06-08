@@ -30,6 +30,7 @@ Route::middleware(['auth:sanctum', 'check.active'])->group(function () {
     Route::apiResource('categories', \App\Http\Controllers\CategorieController::class);
     
     // Equipments
+    Route::patch('equipements/{equipement}/archive', [\App\Http\Controllers\EquipementController::class, 'archive']);
     Route::apiResource('equipements', \App\Http\Controllers\EquipementController::class);
 });
 
