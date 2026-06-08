@@ -71,17 +71,17 @@ const getEtatLabel = (etat) => {
       </template>
     </PageHeader>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
       <StatCard v-for="stat in stats" :key="stat.label" v-bind="stat" />
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
       <!-- Équipements -->
       <div class="lg:col-span-2 space-y-6">
-        <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
-          <div class="flex items-center justify-between mb-8">
-            <h3 class="text-xl font-black text-slate-900">Mes équipements actuels</h3>
-            <span class="px-3 py-1 bg-primary-50 text-primary-600 text-[10px] font-black uppercase rounded-lg">
+        <div class="bg-white p-5 sm:p-8 rounded-3xl border border-slate-200 shadow-sm">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+            <h3 class="text-lg sm:text-xl font-black text-slate-900">Mes équipements actuels</h3>
+            <span class="inline-flex w-fit px-3 py-1 bg-primary-50 text-primary-600 text-[10px] font-black uppercase rounded-lg">
               {{ equipementStore.equipements.length }} Appareils
             </span>
           </div>
@@ -90,34 +90,34 @@ const getEtatLabel = (etat) => {
             <div v-for="i in 2" :key="i" class="h-24 bg-slate-50 animate-pulse rounded-3xl"></div>
           </div>
 
-          <div v-else-if="equipementStore.equipements.length === 0" class="text-center py-12 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
-            <Smartphone class="w-12 h-12 text-slate-300 mx-auto mb-4" />
-            <p class="text-slate-500 font-medium">Aucun équipement affecté pour le moment.</p>
+          <div v-else-if="equipementStore.equipements.length === 0" class="text-center py-10 sm:py-12 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+            <Smartphone class="w-10 h-10 sm:w-12 h-12 text-slate-300 mx-auto mb-4" />
+            <p class="text-slate-500 text-sm font-medium">Aucun équipement affecté pour le moment.</p>
           </div>
 
           <div v-else class="space-y-4">
             <div 
               v-for="equip in recentEquipments" :key="equip.id"
               @click="router.push('/agent/equipements')"
-              class="p-5 bg-white border border-slate-100 rounded-3xl flex items-center justify-between group hover:border-primary-200 hover:shadow-lg hover:shadow-primary-50 transition-all duration-300 cursor-pointer"
+              class="p-4 sm:p-5 bg-white border border-slate-100 rounded-3xl flex items-center justify-between group hover:border-primary-200 hover:shadow-lg hover:shadow-primary-50 transition-all duration-300 cursor-pointer"
             >
-              <div class="flex items-center gap-5">
-                <div class="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-primary-50 group-hover:text-primary-600 transition-colors">
-                  <Smartphone class="w-7 h-7" />
+              <div class="flex items-center gap-3 sm:gap-5">
+                <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-primary-50 group-hover:text-primary-600 transition-colors">
+                  <Smartphone class="w-6 h-6 sm:w-7 sm:h-7" />
                 </div>
                 <div>
-                  <p class="font-black text-slate-900">{{ equip.marque }} {{ equip.modele }}</p>
-                  <div class="flex items-center gap-2 mt-1">
-                    <span class="text-xs text-slate-500 font-medium">{{ equip.reference }}</span>
+                  <p class="text-sm sm:text-base font-black text-slate-900">{{ equip.marque }} {{ equip.modele }}</p>
+                  <div class="flex items-center gap-2 mt-0.5 sm:mt-1">
+                    <span class="text-[10px] sm:text-xs text-slate-500 font-medium">{{ equip.reference }}</span>
                     <span class="w-1 h-1 bg-slate-300 rounded-full"></span>
-                    <span :class="['text-[10px] font-black uppercase', equip.etat === 'en_service' ? 'text-emerald-600' : 'text-amber-600']">
+                    <span :class="['text-[9px] sm:text-[10px] font-black uppercase', equip.etat === 'en_service' ? 'text-emerald-600' : 'text-amber-600']">
                       {{ getEtatLabel(equip.etat) }}
                     </span>
                   </div>
                 </div>
               </div>
-              <button class="p-3 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-2xl transition-all">
-                <RotateCcw class="w-5 h-5" />
+              <button class="p-2 sm:p-3 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-2xl transition-all">
+                <RotateCcw class="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             </div>
           </div>

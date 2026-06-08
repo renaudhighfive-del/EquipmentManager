@@ -134,18 +134,18 @@ const formatDate = (dateString) => {
     </div>
 
     <div v-else class="grid grid-cols-1 gap-4">
-      <div v-for="panne in panneStore.pannes" :key="panne.id" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between hover:shadow-md transition-all">
-        <div class="flex items-center gap-5">
-          <div :class="['w-14 h-14 rounded-2xl flex items-center justify-center', getGraviteClass(panne.gravite)]">
-            <AlertTriangle class="w-7 h-7" />
+      <div v-for="panne in panneStore.pannes" :key="panne.id" class="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:shadow-md transition-all">
+        <div class="flex items-center gap-4 sm:gap-5">
+          <div :class="['w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center flex-shrink-0', getGraviteClass(panne.gravite)]">
+            <AlertTriangle class="w-6 h-6 sm:w-7 sm:h-7" />
           </div>
-          <div>
-            <p class="font-bold text-slate-900">{{ panne.equipement?.marque }} {{ panne.equipement?.modele }}</p>
+          <div class="min-w-0">
+            <p class="font-bold text-slate-900 truncate">{{ panne.equipement?.marque }} {{ panne.equipement?.modele }}</p>
             <p class="text-xs text-slate-500 font-medium mt-0.5 line-clamp-1">{{ panne.description }}</p>
             <p class="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-wider">{{ formatDate(panne.created_at) }}</p>
           </div>
         </div>
-        <div class="flex items-center gap-4">
+        <div class="flex items-center justify-between sm:justify-end gap-3 border-t sm:border-t-0 pt-3 sm:pt-0">
           <span :class="['px-3 py-1 rounded-lg text-[10px] font-black uppercase', getGraviteClass(panne.gravite)]">
             {{ panne.gravite }}
           </span>
@@ -162,7 +162,7 @@ const formatDate = (dateString) => {
         <!-- Photo Upload Section -->
         <div class="space-y-4">
           <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Photos du problème (facultatif)</label>
-          <div class="grid grid-cols-3 gap-3">
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div v-for="(preview, index) in photoPreviews" :key="index" class="relative aspect-square rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 group">
               <img :src="preview" class="w-full h-full object-cover">
               <button type="button" @click="removePhoto(index)" class="absolute top-1 right-1 p-1 bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity">

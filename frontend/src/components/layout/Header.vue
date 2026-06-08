@@ -31,53 +31,53 @@ defineEmits(['toggleSidebar']);
 </script>
 
 <template>
-  <header class="h-20 bg-white border-b border-slate-200 px-8 flex items-center justify-between sticky top-0 z-30">
+  <header class="h-20 bg-white border-b border-slate-200 px-4 sm:px-8 flex items-center justify-between sticky top-0 z-30">
     <!-- Left: Hamburger & Search -->
-    <div class="flex items-center gap-6 flex-1 max-w-2xl">
+    <div class="flex items-center gap-2 sm:gap-6 flex-1 max-w-2xl">
       <button 
         @click="$emit('toggleSidebar')"
-        class="p-2.5 rounded-xl hover:bg-slate-100 text-slate-500 transition-all active:scale-95"
+        class="p-2 sm:p-2.5 rounded-xl hover:bg-slate-100 text-slate-500 transition-all active:scale-95"
       >
         <Menu class="w-6 h-6" />
       </button>
 
-      <div class="relative flex-1">
+      <div class="relative flex-1 hidden sm:block">
         <Search class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
         <input 
           type="text" 
-          placeholder="Recherche globale équipements, agents, pannes..."
+          placeholder="Recherche globale..."
           class="w-full h-12 bg-slate-100 border-none rounded-2xl pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary-500/20 transition-all placeholder:text-slate-500"
         >
       </div>
     </div>
 
     <!-- Right: Actions & Profile -->
-    <div class="flex items-center gap-4">
+    <div class="flex items-center gap-2 sm:gap-4">
       <!-- Bell -->
-      <button class="relative p-3 rounded-xl hover:bg-slate-100 text-slate-500 transition-colors">
-        <Bell class="w-6 h-6" />
-        <span class="absolute top-3 right-3 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
+      <button class="relative p-2 sm:p-3 rounded-xl hover:bg-slate-100 text-slate-500 transition-colors">
+        <Bell class="w-5 h-5 sm:w-6 h-6" />
+        <span class="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
       </button>
 
-      <div class="h-10 w-[1px] bg-slate-200 mx-1"></div>
+      <div class="h-8 sm:h-10 w-[1px] bg-slate-200 mx-1"></div>
 
       <!-- Profile Dropdown -->
       <div class="relative" v-click-outside="closeDropdown">
         <button
           @click="toggleDropdown"
-          class="flex items-center gap-3 pl-1 pr-2 py-1.5 rounded-2xl hover:bg-slate-50 transition-all"
+          class="flex items-center gap-2 sm:gap-3 pl-1 pr-1 sm:pr-2 py-1.5 rounded-2xl hover:bg-slate-50 transition-all"
         >
           <!-- Avatar rond -->
-          <div class="w-11 h-11 rounded-full bg-primary-100 border-2 border-primary-200 flex items-center justify-center text-primary-700 font-bold shadow-sm overflow-hidden flex-shrink-0">
+          <div class="w-9 h-9 sm:w-11 h-11 rounded-full bg-primary-100 border-2 border-primary-200 flex items-center justify-center text-primary-700 font-bold shadow-sm overflow-hidden flex-shrink-0">
             <img 
               v-if="authStore.user?.avatar" 
               :src="authStore.user.avatar" 
               class="w-full h-full object-cover"
             >
-            <span v-else class="text-sm">{{ authStore.user?.name?.charAt(0) || 'A' }}</span>
+            <span v-else class="text-xs sm:text-sm">{{ authStore.user?.name?.charAt(0) || 'A' }}</span>
           </div>
           <!-- Nom & Rôle -->
-          <div class="text-left hidden sm:block">
+          <div class="text-left hidden md:block">
             <p class="text-sm font-bold text-slate-900 leading-tight">{{ authStore.user?.name || 'Utilisateur' }}</p>
             <p class="text-[11px] font-medium text-slate-500 capitalize">{{ authStore.user?.role || 'Rôle' }}</p>
           </div>
