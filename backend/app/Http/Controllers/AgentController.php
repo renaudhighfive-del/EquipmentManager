@@ -10,16 +10,6 @@ class AgentController extends Controller
 {
     public function index(Request $request)
     {
-        // Test simple response first
-        return response()->json([
-            'agents' => [
-                ['id' => 1, 'matricule' => 'MAT-001', 'nom' => 'Dupont', 'prenom' => 'Jean', 'statut' => 'actif'],
-                ['id' => 2, 'matricule' => 'MAT-002', 'nom' => 'Martin', 'prenom' => 'Sophie', 'statut' => 'actif']
-            ],
-            'total' => 2
-        ]);
-        
-        /*
         $query = Agent::query();
 
         if ($request->has('search')) {
@@ -33,7 +23,6 @@ class AgentController extends Controller
             'agents' => $query->with(['user', 'affectations'])->get(),
             'total' => $query->count()
         ]);
-        */
     }
 
     public function store(Request $request)

@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\AgentController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CategorieController;
 use App\Http\Controllers\EquipementController;
@@ -39,8 +38,8 @@ Route::middleware(['auth:sanctum', 'check.active'])->group(function () {
     });
     
     // User Management (Admin only)
-    Route::apiResource('users', \App\Http\Controllers\UserController::class);
-    Route::patch('users/{user}/toggle-status', [\App\Http\Controllers\UserController::class, 'toggleStatus']);
+    Route::apiResource('users', UserController::class);
+    Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus']);
     
     // Agent Management
     Route::apiResource('agents', \App\Http\Controllers\AgentController::class);
