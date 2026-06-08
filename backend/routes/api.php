@@ -34,6 +34,18 @@ Route::middleware(['auth:sanctum', 'check.active'])->group(function () {
 
     // Équipements
     Route::apiResource('equipements', EquipementController::class);
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
+    
+    // User Management (Admin only)
+    Route::apiResource('users', \App\Http\Controllers\UserController::class);
+    Route::patch('users/{user}/toggle-status', [\App\Http\Controllers\UserController::class, 'toggleStatus']);
+    
+    // Agent Management
+    Route::apiResource('agents', \App\Http\Controllers\AgentController::class);
+    Route::patch('agents/{agent}/desactiver', [\App\Http\Controllers\AgentController::class, 'desactiver']);
+    Route::patch('agents/{agent}/reactiver', [\App\Http\Controllers\AgentController::class, 'reactiver']);
 });
 
 // ── Route de test ─────────────────────────────────────────────────────────────
