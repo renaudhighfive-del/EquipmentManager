@@ -3,10 +3,10 @@ import { ref, onMounted } from 'vue';
 import PageHeader from '../../components/layout/PageHeader.vue';
 import SideModal from '../../components/layout/SideModal.vue';
 import { useAgentsStore } from '../../stores/agents';
-import { 
-  Search, 
-  Filter, 
-  Plus, 
+import {
+  Search,
+  Filter,
+  Plus,
   Smartphone,
   Edit,
   UserX,
@@ -18,15 +18,15 @@ import {
   User,
   ChevronRight
 } from 'lucide-vue-next';
-
+ 
 const agentsStore = useAgentsStore();
-
+ 
 const showFiche = ref(false);
 const showForm = ref(false);
 const editingAgent = ref(null);
 const searchQuery = ref('');
 const formLoading = ref(false);
-
+ 
 const formData = ref({
   matricule: '',
   nom: '',
@@ -37,12 +37,12 @@ const formData = ref({
   service: '',
   poste: '',
 });
-
+ 
 const openFiche = async (agent) => {
   await agentsStore.fetchAgent(agent.id);
   showFiche.value = true;
 };
-
+ 
 const openCreateForm = () => {
   editingAgent.value = null;
   formData.value = {
@@ -57,7 +57,7 @@ const openCreateForm = () => {
   };
   showForm.value = true;
 };
-
+ 
 const openEditForm = (agent) => {
   editingAgent.value = agent;
   formData.value = {
@@ -72,7 +72,7 @@ const openEditForm = (agent) => {
   };
   showForm.value = true;
 };
-
+ 
 const saveAgent = async () => {
   formLoading.value = true;
   try {
@@ -88,7 +88,7 @@ const saveAgent = async () => {
     formLoading.value = false;
   }
 };
-
+ 
 const handleDesactiverAgent = async (agent) => {
   try {
     await agentsStore.desactiverAgent(agent.id);
@@ -96,7 +96,7 @@ const handleDesactiverAgent = async (agent) => {
     console.error('Erreur lors de la désactivation:', error);
   }
 };
-
+ 
 const handleReactiverAgent = async (agent) => {
   try {
     await agentsStore.reactiverAgent(agent.id);
@@ -104,34 +104,34 @@ const handleReactiverAgent = async (agent) => {
     console.error('Erreur lors de la réactivation:', error);
   }
 };
-
+ 
 const formatAgentName = (agent) => {
   return `${agent.prenom} ${agent.nom}`;
 };
-
+ 
 const getAgentInitials = (agent) => {
   return `${agent.prenom.charAt(0)}${agent.nom.charAt(0)}`;
 };
-
+ 
 onMounted(() => {
   agentsStore.fetchAgents();
 });
 </script>
-
+ 
 <template>
   <div class="space-y-6 animate-in fade-in duration-500">
     <!-- Page Header -->
-    <PageHeader 
-      title="Agents" 
+    <PageHeader
+      title="Agents"
       :subtitle="`${agentsStore.total} agents au total`"
     >
       <template #actions>
         <div class="flex items-center gap-3">
           <div class="relative">
             <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input 
+            <input
               v-model="searchQuery"
-              type="text" 
+              type="text"
               placeholder="Rechercher un agent..."
               @input="() => agentsStore.fetchAgents(searchQuery)"
               class="h-10 pl-10 pr-4 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500/20 outline-none transition-all w-64"
@@ -148,7 +148,7 @@ onMounted(() => {
         </div>
       </template>
     </PageHeader>
-
+ 
     <!-- Agents Table Card -->
     <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
       <table class="w-full text-left border-collapse">
@@ -191,7 +191,7 @@ onMounted(() => {
               </div>
             </td>
             <td class="px-6 py-5 text-center">
-              <span 
+              <span
                 class="inline-flex px-3 py-1 rounded-full text-[11px] font-bold tracking-tight"
                 :class="agent.statut === 'actif' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-slate-100 text-slate-400 border border-slate-200'"
               >
@@ -199,7 +199,7 @@ onMounted(() => {
               </span>
             </td>
             <td class="px-6 py-5 text-center">
-              <span 
+              <span
                 class="text-xs font-bold"
                 :class="agent.nb_affectes > 0 ? 'text-primary-600 bg-primary-50 px-2 py-1 rounded-lg border border-primary-200' : 'text-slate-400'"
               >
@@ -208,20 +208,20 @@ onMounted(() => {
             </td>
             <td class="px-8 py-5 text-right">
               <div class="flex items-center justify-end gap-2">
-                <button 
+                <button
                   @click="openFiche(agent)"
                   class="text-xs font-bold text-slate-600 hover:text-primary-600 transition-colors py-2 px-3 rounded-lg hover:bg-primary-50"
                 >
                   Voir fiche
                 </button>
-                <button 
+                <button
                   @click="openEditForm(agent)"
                   class="text-xs font-bold text-slate-600 hover:text-primary-600 transition-colors py-2 px-2 rounded-lg hover:bg-primary-50"
                   title="Modifier"
                 >
                   <Edit class="w-4 h-4" />
                 </button>
-                <button 
+                <button
                   v-if="agent.statut === 'actif'"
                   @click="handleDesactiverAgent(agent)"
                   class="text-xs font-bold text-rose-600 hover:text-rose-700 transition-colors py-2 px-2 rounded-lg hover:bg-rose-50"
@@ -229,7 +229,7 @@ onMounted(() => {
                 >
                   <UserX class="w-4 h-4" />
                 </button>
-                <button 
+                <button
                   v-else
                   @click="handleReactiverAgent(agent)"
                   class="text-xs font-bold text-emerald-600 hover:text-emerald-700 transition-colors py-2 px-2 rounded-lg hover:bg-emerald-50"
@@ -260,11 +260,11 @@ onMounted(() => {
         </tbody>
       </table>
     </div>
-
+ 
     <!-- Agent Detail Modal -->
-    <SideModal 
-      :show="showFiche" 
-      title="Fiche Agent" 
+    <SideModal
+      :show="showFiche"
+      title="Fiche Agent"
       @close="showFiche = false"
     >
       <div v-if="agentsStore.selectedAgent" class="space-y-8">
@@ -282,7 +282,7 @@ onMounted(() => {
             </div>
           </div>
         </div>
-
+ 
         <!-- Grid Info -->
         <div class="grid grid-cols-2 gap-4">
           <div class="p-5 bg-slate-50/50 rounded-2xl border border-slate-100">
@@ -319,7 +319,7 @@ onMounted(() => {
           </div>
           <div class="p-5 bg-slate-50/50 rounded-2xl border border-slate-100">
             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Statut</p>
-            <span 
+            <span
               class="text-sm font-bold"
               :class="agentsStore.selectedAgent.statut === 'actif' ? 'text-emerald-600' : 'text-slate-400'"
             >
@@ -327,19 +327,19 @@ onMounted(() => {
             </span>
           </div>
         </div>
-
+ 
         <!-- Affectations -->
         <div class="space-y-4 pt-4 border-t border-slate-100">
           <h4 class="text-sm font-bold text-slate-900 flex items-center gap-2">
             <Smartphone class="w-4 h-4 text-primary-500" />
             Équipements affectés
           </h4>
-          
+         
           <div v-if="agentsStore.selectedAgent.nb_affectes === 0" class="p-8 text-center bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
             <Smartphone class="w-10 h-10 text-slate-300 mx-auto mb-2" />
             <p class="text-sm font-medium text-slate-400 italic">Aucun équipement affecté pour le moment</p>
           </div>
-          
+         
           <div v-else class="space-y-3">
             <div v-for="(equipement, index) in (agentsStore.selectedAgent.affectations || [])" :key="index" class="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 hover:border-primary-200 transition-colors cursor-pointer group">
               <div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden">
@@ -353,17 +353,17 @@ onMounted(() => {
             </div>
           </div>
         </div>
-
+ 
         <!-- Actions -->
         <div class="flex gap-3 pt-4 border-t border-slate-100">
-          <button 
+          <button
             @click="openEditForm(agentsStore.selectedAgent)"
             class="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-primary-600 rounded-xl text-sm font-bold text-white hover:bg-primary-700 transition-all shadow-lg shadow-primary-200"
           >
             <Edit class="w-4 h-4" />
             Modifier
           </button>
-          <button 
+          <button
             v-if="agentsStore.selectedAgent.statut === 'actif'"
             @click="handleDesactiverAgent(agentsStore.selectedAgent)"
             class="flex items-center justify-center gap-2 px-4 py-3 bg-rose-50 border border-rose-200 rounded-xl text-sm font-bold text-rose-600 hover:bg-rose-100 transition-all"
@@ -371,7 +371,7 @@ onMounted(() => {
             <UserX class="w-4 h-4" />
             Désactiver
           </button>
-          <button 
+          <button
             v-else
             @click="handleReactiverAgent(agentsStore.selectedAgent)"
             class="flex items-center justify-center gap-2 px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-xl text-sm font-bold text-emerald-600 hover:bg-emerald-100 transition-all"
@@ -382,11 +382,11 @@ onMounted(() => {
         </div>
       </div>
     </SideModal>
-
+ 
     <!-- Agent Form Modal - CENTER MODE -->
-    <SideModal 
-      :show="showForm" 
-      :title="editingAgent ? 'Modifier l\'agent' : 'Nouvel agent'" 
+    <SideModal
+      :show="showForm"
+      :title="editingAgent ? 'Modifier l\'agent' : 'Nouvel agent'"
       mode="center"
       @close="showForm = false"
     >
@@ -394,7 +394,7 @@ onMounted(() => {
         <div class="grid grid-cols-2 gap-6">
           <div class="space-y-2">
             <label class="text-sm font-semibold text-slate-600 uppercase tracking-wide">Matricule</label>
-            <input 
+            <input
               v-model="formData.matricule"
               type="text"
               class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 outline-none transition-all"
@@ -403,7 +403,7 @@ onMounted(() => {
           </div>
           <div class="space-y-2">
             <label class="text-sm font-semibold text-slate-600 uppercase tracking-wide">Prénom</label>
-            <input 
+            <input
               v-model="formData.prenom"
               type="text"
               class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 outline-none transition-all"
@@ -412,7 +412,7 @@ onMounted(() => {
           </div>
           <div class="space-y-2">
             <label class="text-sm font-semibold text-slate-600 uppercase tracking-wide">Nom</label>
-            <input 
+            <input
               v-model="formData.nom"
               type="text"
               class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 outline-none transition-all"
@@ -421,7 +421,7 @@ onMounted(() => {
           </div>
           <div class="space-y-2">
             <label class="text-sm font-semibold text-slate-600 uppercase tracking-wide">Email</label>
-            <input 
+            <input
               v-model="formData.email"
               type="email"
               class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 outline-none transition-all"
@@ -430,7 +430,7 @@ onMounted(() => {
           </div>
           <div class="space-y-2">
             <label class="text-sm font-semibold text-slate-600 uppercase tracking-wide">Téléphone</label>
-            <input 
+            <input
               v-model="formData.telephone"
               type="text"
               class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 outline-none transition-all"
@@ -439,7 +439,7 @@ onMounted(() => {
           </div>
           <div class="space-y-2">
             <label class="text-sm font-semibold text-slate-600 uppercase tracking-wide">Poste</label>
-            <input 
+            <input
               v-model="formData.poste"
               type="text"
               class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 outline-none transition-all"
@@ -448,7 +448,7 @@ onMounted(() => {
           </div>
           <div class="space-y-2">
             <label class="text-sm font-semibold text-slate-600 uppercase tracking-wide">Direction</label>
-            <input 
+            <input
               v-model="formData.direction"
               type="text"
               class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 outline-none transition-all"
@@ -457,7 +457,7 @@ onMounted(() => {
           </div>
           <div class="space-y-2">
             <label class="text-sm font-semibold text-slate-600 uppercase tracking-wide">Service</label>
-            <input 
+            <input
               v-model="formData.service"
               type="text"
               class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 outline-none transition-all"
@@ -465,9 +465,9 @@ onMounted(() => {
             >
           </div>
         </div>
-        
+       
         <div class="pt-2">
-          <button 
+          <button
             @click="saveAgent"
             :disabled="formLoading"
             class="w-full px-8 py-4 bg-primary-600 rounded-2xl text-base font-bold text-white hover:bg-primary-700 transition-all disabled:opacity-60 shadow-xl shadow-primary-200"
@@ -479,3 +479,5 @@ onMounted(() => {
     </SideModal>
   </div>
 </template>
+ 
+ 

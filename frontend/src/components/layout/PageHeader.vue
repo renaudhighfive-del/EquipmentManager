@@ -35,10 +35,10 @@ defineProps({
     <!-- Title Area -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
-        <h1 class="text-3xl font-bold text-slate-900 tracking-tight">{{ title }}</h1>
-        <p v-if="subtitle" class="text-slate-500 font-medium mt-1">{{ subtitle }}</p>
+        <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">{{ title }}</h1>
+        <p v-if="subtitle" class="text-sm sm:text-base text-slate-500 font-medium mt-1">{{ subtitle }}</p>
       </div>
-      <div class="flex items-center gap-3">
+      <div class="flex flex-wrap items-center gap-2 sm:gap-3">
         <slot name="actions"></slot>
       </div>
     </div>

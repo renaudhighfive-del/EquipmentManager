@@ -23,7 +23,10 @@ Route::prefix('auth')->group(function () {
 // ── Routes protégées ──────────────────────────────────────────────────────────
 Route::middleware(['auth:sanctum', 'check.active'])->group(function () {
 
-    Route::get('/user', fn (Request $request) => $request->user());
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
+
 
     // Gestion utilisateurs (Admin)
     Route::apiResource('users', UserController::class);
@@ -31,25 +34,14 @@ Route::middleware(['auth:sanctum', 'check.active'])->group(function () {
 
     // Catégories
     Route::apiResource('categories', CategorieController::class);
-
-    // Équipements
-    Route::apiResource('equipements', EquipementController::class);
-    Route::get('/user', function (Request $request) {
-        return $request->user();
-    });
-    
-    // User Management (Admin only)
-    Route::apiResource('users', UserController::class);
-    Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus']);
     
     // Affectations
     Route::apiResource('affectations', AffectationController::class);
-    
-    // // Équipements & Agents (Basic routes for selection)
-    // Route::get('/equipements', [\App\Http\Controllers\EquipementController::class, 'index']);
-    // Route::get('/agents', [\App\Http\Controllers\AgentController::class, 'index']);
-    
-    // Add other protected routes here as we develop them
+
+    // Equipments
+    Route::patch('equipements/{equipement}/archive', [EquipementController::class, 'archive']);
+    Route::apiResource('equipements', EquipementController::class);
+
     // Agent Management
     Route::apiResource('agents', \App\Http\Controllers\AgentController::class);
     Route::patch('agents/{agent}/desactiver', [\App\Http\Controllers\AgentController::class, 'desactiver']);

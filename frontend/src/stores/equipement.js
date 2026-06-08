@@ -49,6 +49,39 @@ export const useEquipementStore = defineStore('equipement', {
       } finally {
         this.loading = false
       }
+    },
+
+    async updateEquipement(id, formData) {
+      this.loading = true
+      try {
+        // Laravel workaround for multipart/form-data with PUT/PATCH
+        formData.append('_method', 'PUT')
+        const response = await api.post(`/equipements/${id}`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        })
+        const index = this.equipements.findIndex(e => e.id === id)
+        if (index !== -1) {
+          this.equipements[index] = response.data
+        }
+        return response.data
+      } catch (error) {
+        console.error(error)
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async archiveEquipement(id) {
+      try {
+        await api.patch(`/equipements/${id}/archive`)
+        this.equipements = this.equipements.filter(e => e.id !== id)
+      } catch (error) {
+        console.error(error)
+        throw error
+      }
     }
   }
 })

@@ -12,7 +12,8 @@ import {
   BarChart3, 
   Settings,
   Sparkles,
-  Smartphone
+  Smartphone,
+  X
 } from 'lucide-vue-next';
 import { useRoute } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
@@ -21,8 +22,11 @@ const route = useRoute();
 const authStore = useAuthStore();
 
 defineProps({
-  isCollapsed: Boolean
+  isCollapsed: Boolean,
+  isOpenMobile: Boolean
 });
+
+defineEmits(['closeMobile']);
 
 // Menus par rôle
 const menusByRole = {
@@ -62,9 +66,19 @@ const menuItems = computed(() => {
 </script>
 
 <template>
+  <!-- Overlay mobile -->
+  <div 
+    v-if="isOpenMobile" 
+    class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 lg:hidden transition-opacity"
+    @click="$emit('closeMobile')"
+  ></div>
+
   <aside 
-    class="bg-white border-r border-slate-200 flex flex-col h-screen sticky top-0 transition-all duration-300 z-40"
-    :class="[isCollapsed ? 'w-20' : 'w-64']"
+    class="bg-white border-r border-slate-200 flex flex-col h-screen fixed inset-y-0 left-0 lg:sticky lg:top-0 transition-all duration-300 z-[60]"
+    :class="[
+      isCollapsed ? 'lg:w-20' : 'lg:w-64',
+      isOpenMobile ? 'translate-x-0 w-64' : '-translate-x-full lg:translate-x-0'
+    ]"
   >
     <!-- Logo -->
     <div class="p-4 mb-2 flex items-center justify-between overflow-hidden whitespace-nowrap">
@@ -72,11 +86,17 @@ const menuItems = computed(() => {
         <div class="w-10 h-10 rounded-xl bg-primary-600 flex items-center justify-center shadow-lg shadow-primary-200 flex-shrink-0">
           <Package class="w-6 h-6 text-white" />
         </div>
-        <div v-if="!isCollapsed" class="animate-in fade-in slide-in-from-left-2 duration-300">
+        <div v-if="!isCollapsed || isOpenMobile" class="animate-in fade-in slide-in-from-left-2 duration-300">
           <h1 class="text-xl font-bold text-slate-900 leading-tight">AssetFlow</h1>
           <p class="text-xs text-slate-500 font-medium">Enterprise ERP</p>
         </div>
       </div>
+      <button 
+        @click="$emit('closeMobile')"
+        class="lg:hidden p-2 text-slate-400 hover:text-slate-600 transition-colors"
+      >
+        <X class="w-5 h-5" />
+      </button>
     </div>
 
     <!-- Navigation -->
@@ -98,7 +118,7 @@ const menuItems = computed(() => {
           :class="route.path === item.path ? 'text-primary-600' : 'text-slate-400 group-hover:text-slate-600'"
         />
         <span 
-          v-if="!isCollapsed" 
+          v-if="!isCollapsed || isOpenMobile" 
           class="animate-in fade-in slide-in-from-left-2 duration-300"
         >
           {{ item.label }}
@@ -106,7 +126,7 @@ const menuItems = computed(() => {
 
         <!-- Tooltip mode réduit -->
         <div 
-          v-if="isCollapsed"
+          v-if="isCollapsed && !isOpenMobile"
           class="absolute left-full ml-4 px-3 py-2 bg-slate-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap"
         >
           {{ item.label }}
@@ -117,7 +137,7 @@ const menuItems = computed(() => {
     <!-- Bottom card -->
     <div class="p-3 mt-auto">
       <div 
-        v-if="!isCollapsed"
+        v-if="!isCollapsed || isOpenMobile"
         class="bg-primary-600 rounded-2xl p-5 text-white relative overflow-hidden cursor-pointer shadow-xl shadow-primary-200 animate-in fade-in zoom-in duration-300"
       >
         <div class="relative z-10">

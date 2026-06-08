@@ -38,7 +38,7 @@ defineEmits(['close']);
           </button>
         </div>
         <!-- Content -->
-        <div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+        <div class="flex-1 overflow-y-auto p-5 sm:p-8 custom-scrollbar">
           <slot></slot>
         </div>
       </div>
@@ -49,17 +49,17 @@ defineEmits(['close']);
         class="absolute right-0 top-0 h-full w-full max-w-lg bg-white border-l border-slate-200 shadow-2xl flex flex-col animate-in slide-in-from-right duration-500"
       >
         <!-- Header -->
-        <div class="p-6 border-b border-slate-200 flex items-center justify-between bg-white">
-          <h2 class="text-xl font-bold text-slate-900">{{ title }}</h2>
+        <div class="p-5 sm:p-6 border-b border-slate-200 flex items-center justify-between bg-white">
+          <h2 class="text-lg sm:text-xl font-bold text-slate-900">{{ title }}</h2>
           <button 
             @click="$emit('close')"
             class="p-2 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
           >
-            <X class="w-6 h-6" />
+            <X class="w-5 h-5 sm:w-6 h-6" />
           </button>
         </div>
         <!-- Content -->
-        <div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+        <div class="flex-1 overflow-y-auto p-5 sm:p-8 custom-scrollbar">
           <slot></slot>
         </div>
       </div>
