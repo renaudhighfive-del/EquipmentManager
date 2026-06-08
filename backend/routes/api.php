@@ -26,7 +26,10 @@ Route::middleware(['auth:sanctum', 'check.active'])->group(function () {
     Route::apiResource('users', \App\Http\Controllers\UserController::class);
     Route::patch('users/{user}/toggle-status', [\App\Http\Controllers\UserController::class, 'toggleStatus']);
     
-    // Add other protected routes here as we develop them
+    // Agent Management
+    Route::apiResource('agents', \App\Http\Controllers\AgentController::class);
+    Route::patch('agents/{agent}/desactiver', [\App\Http\Controllers\AgentController::class, 'desactiver']);
+    Route::patch('agents/{agent}/reactiver', [\App\Http\Controllers\AgentController::class, 'reactiver']);
 });
 
 // Public Test Route

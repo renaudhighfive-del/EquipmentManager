@@ -25,7 +25,7 @@ defineEmits(['close']);
       <!-- Center Modal -->
       <div 
         v-if="mode === 'center'"
-        class="relative w-full max-w-2xl bg-white border border-slate-200 shadow-2xl rounded-[2rem] flex flex-col animate-in zoom-in-95 fade-in duration-300 overflow-hidden"
+        class="relative w-full max-w-3xl bg-white border border-slate-200 shadow-2xl rounded-[2rem] flex flex-col animate-in zoom-in-95 fade-in duration-300 overflow-hidden"
       >
         <!-- Header -->
         <div class="p-6 border-b border-slate-200 flex items-center justify-between bg-white">
