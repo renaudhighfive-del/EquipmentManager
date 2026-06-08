@@ -27,6 +27,18 @@ class Affectation extends Model
         'date_retour' => 'date',
     ];
 
+    protected $appends = ['photo_remise_url', 'photo_retour_url'];
+
+    public function getPhotoRemiseUrlAttribute()
+    {
+        return $this->photo_remise ? asset('storage/' . $this->photo_remise) : null;
+    }
+
+    public function getPhotoRetourUrlAttribute()
+    {
+        return $this->photo_retour ? asset('storage/' . $this->photo_retour) : null;
+    }
+
     public function equipement()
     {
         return $this->belongsTo(Equipement::class);
@@ -40,5 +52,10 @@ class Affectation extends Model
     public function affectePar()
     {
         return $this->belongsTo(User::class, 'affecte_par');
+    }
+
+    public function mouvements()
+    {
+        return $this->morphMany(Mouvement::class, 'reference');
     }
 }

@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AffectationController;
 
 // Auth Routes
 Route::prefix('auth')->group(function () {
@@ -25,6 +26,13 @@ Route::middleware(['auth:sanctum', 'check.active'])->group(function () {
     // User Management (Admin only)
     Route::apiResource('users', \App\Http\Controllers\UserController::class);
     Route::patch('users/{user}/toggle-status', [\App\Http\Controllers\UserController::class, 'toggleStatus']);
+    
+    // Affectations
+    Route::apiResource('affectations', AffectationController::class);
+    
+    // Équipements & Agents (Basic routes for selection)
+    Route::get('/equipements', [\App\Http\Controllers\EquipementController::class, 'index']);
+    Route::get('/agents', [\App\Http\Controllers\AgentController::class, 'index']);
     
     // Add other protected routes here as we develop them
 });

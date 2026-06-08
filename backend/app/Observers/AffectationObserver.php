@@ -33,6 +33,7 @@ class AffectationObserver
     public function updated(Affectation $affectation): void
     {
         if ($affectation->isDirty('statut') && $affectation->statut === 'retourne') {
+            // Créer le mouvement de retour
             Mouvement::create([
                 'equipement_id' => $affectation->equipement_id,
                 'user_id' => Auth::id() ?? 1,
@@ -46,6 +47,9 @@ class AffectationObserver
                 'reference_id' => $affectation->id,
                 'reference_type' => Affectation::class,
             ]);
+
+            // Remettre l'équipement en état 'neuf' (ou disponible) pour qu'il puisse être réaffecté
+            $affectation->equipement->update(['etat' => 'neuf']);
         }
     }
 }
