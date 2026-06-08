@@ -30,9 +30,17 @@ const showReturnModal = ref(false);
 const showCreateModal = ref(false);
 const selectedAffectation = ref(null);
 const submitting = ref(false);
+
+// Refs pour la photo de remise (création)
 const photoInput = ref(null);
 const photoPreview = ref(null);
 const photoFile = ref(null);
+
+// Refs pour la photo de retour
+const returnPhotoInput = ref(null);
+const returnPhotoPreview = ref(null);
+const returnPhotoFile = ref(null);
+
 const localError = ref(null);
 
 //Pour le voir detail
@@ -48,8 +56,18 @@ const newAffectation = ref({
   observations: ''
 });
 
+const returnForm = ref({
+  date_retour: new Date().toISOString().split('T')[0],
+  etat_retour: 'Bon état',
+  observations: ''
+});
+
 const triggerFileInput = () => {
   photoInput.value.click();
+};
+
+const triggerReturnFileInput = () => {
+  returnPhotoInput.value.click();
 };
 
 const onFileChange = (e) => {
@@ -59,6 +77,18 @@ const onFileChange = (e) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       photoPreview.value = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+const onReturnFileChange = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    returnPhotoFile.value = file;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      returnPhotoPreview.value = e.target.result;
     };
     reader.readAsDataURL(file);
   }
@@ -89,7 +119,46 @@ onMounted(() => {
 
 const openReturnModal = (aff) => {
   selectedAffectation.value = aff;
+  returnForm.value = {
+    date_retour: new Date().toISOString().split('T')[0],
+    etat_retour: 'Bon état',
+    observations: ''
+  };
+  returnPhotoFile.value = null;
+  returnPhotoPreview.value = null;
+  localError.value = null;
   showReturnModal.value = true;
+};
+
+const submitReturn = async () => {
+  localError.value = null;
+  if (!returnPhotoFile.value) {
+    localError.value = 'La photo de retour est obligatoire.';
+    return;
+  }
+
+  try {
+    submitting.value = true;
+    
+    const formData = new FormData();
+    formData.append('_method', 'PATCH'); // Pour simuler PATCH via POST
+    formData.append('date_retour', returnForm.value.date_retour);
+    formData.append('etat_retour', returnForm.value.etat_retour);
+    formData.append('observations', returnForm.value.observations || '');
+    formData.append('photo_retour', returnPhotoFile.value);
+
+    const success = await affectationStore.returnAffectation(selectedAffectation.value.id, formData);
+    if (success) {
+      showReturnModal.value = false;
+    } else {
+      localError.value = storeError.value;
+    }
+  } catch (error) {
+    localError.value = "Une erreur est survenue lors du retour.";
+    console.error(error);
+  } finally {
+    submitting.value = false;
+  }
 };
 
 const openFiche = async (id) => {
@@ -359,7 +428,14 @@ const submitAffectation = async () => {
       mode="center"
       @close="showReturnModal = false"
     >
-      <div v-if="selectedAffectation" class="space-y-6">
+      <form @submit.prevent="submitReturn" v-if="selectedAffectation" class="space-y-6">
+        <div v-if="localError" class="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-start gap-3">
+          <div class="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <X class="w-3 h-3 text-red-600" />
+          </div>
+          <p class="text-sm font-medium text-red-600">{{ localError }}</p>
+        </div>
+
         <div class="p-5 bg-primary-500 rounded-2xl border border-primary-400 mb-6 text-white shadow-lg shadow-primary-200">
           <p class="text-[10px] font-bold text-primary-100 uppercase tracking-widest mb-1">Équipement à retourner</p>
           <p class="text-base font-bold">{{ selectedAffectation.equipement?.modele }} ({{ selectedAffectation.equipement?.reference }})</p>
@@ -368,11 +444,20 @@ const submitAffectation = async () => {
         <div class="grid grid-cols-2 gap-4">
           <div class="space-y-2">
             <label class="text-xs font-bold text-slate-500 uppercase">Date de retour</label>
-            <input type="date" class="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500/20">
+            <input 
+              type="date" 
+              v-model="returnForm.date_retour"
+              required
+              class="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500/20"
+            >
           </div>
           <div class="space-y-2">
             <label class="text-xs font-bold text-slate-500 uppercase">État constaté</label>
-            <select class="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500/20">
+            <select 
+              v-model="returnForm.etat_retour"
+              required
+              class="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500/20"
+            >
               <option>Bon état</option>
               <option>Abîmé</option>
               <option>En panne</option>
@@ -383,6 +468,7 @@ const submitAffectation = async () => {
         <div class="space-y-2">
           <label class="text-xs font-bold text-slate-500 uppercase">Observations</label>
           <textarea 
+            v-model="returnForm.observations"
             rows="4" 
             placeholder="Détails..."
             class="w-full p-4 bg-white border border-slate-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-primary-500/20 resize-none"
@@ -391,19 +477,50 @@ const submitAffectation = async () => {
 
         <div class="space-y-2">
           <label class="text-xs font-bold text-slate-500 uppercase">Photo retour (obligatoire)</label>
-          <div class="border-2 border-dashed border-slate-200 rounded-2xl p-8 flex flex-col items-center justify-center gap-3 hover:bg-slate-50 transition-colors cursor-pointer group">
-            <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Camera class="w-6 h-6 text-slate-400" />
-            </div>
-            <p class="text-xs font-bold text-slate-500">Ajouter une photo</p>
+          <input 
+            type="file" 
+            ref="returnPhotoInput" 
+            class="hidden" 
+            accept="image/*" 
+            @change="onReturnFileChange"
+          >
+          <div 
+            @click="triggerReturnFileInput"
+            class="border-2 border-dashed border-slate-200 rounded-2xl p-8 flex flex-col items-center justify-center gap-3 hover:bg-slate-50 transition-colors cursor-pointer group relative overflow-hidden"
+          >
+            <template v-if="returnPhotoPreview">
+              <img :src="returnPhotoPreview" class="absolute inset-0 w-full h-full object-cover" />
+              <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <Camera class="w-8 h-8 text-white" />
+              </div>
+            </template>
+            <template v-else>
+              <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Camera class="w-6 h-6 text-slate-400" />
+              </div>
+              <p class="text-xs font-bold text-slate-500">Ajouter une photo</p>
+            </template>
           </div>
         </div>
 
         <div class="pt-6 flex gap-3">
-          <button @click="showReturnModal = false" class="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors">Annuler</button>
-          <button class="flex-1 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-200">Confirmer retour</button>
+          <button 
+            type="button"
+            @click="showReturnModal = false" 
+            class="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+          >
+            Annuler
+          </button>
+          <button 
+            type="submit"
+            :disabled="submitting"
+            class="flex-1 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-200 flex items-center justify-center gap-2"
+          >
+            <Loader2 v-if="submitting" class="w-4 h-4 animate-spin" />
+            {{ submitting ? 'Traitement...' : 'Confirmer retour' }}
+          </button>
         </div>
-      </div>
+      </form>
     </SideModal>
 
     <SideModal 
@@ -503,6 +620,25 @@ const submitAffectation = async () => {
             <img 
               :src="currentAffectation.photo_remise_url" 
               alt="Photo de remise" 
+              class="w-full h-52 object-cover"
+            />
+          </div>
+        </div>
+
+        <div v-if="currentAffectation.statut === 'retourne'" class="space-y-4">
+          <h4 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <Camera class="w-4 h-4 text-emerald-500" />
+            Photo justificative de retour
+          </h4>
+          
+          <div v-if="!currentAffectation.photo_retour" class="p-8 text-center bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
+            <p class="text-sm font-medium text-slate-400 italic">Aucune photo enregistrée</p>
+          </div>
+          
+          <div v-else class="w-full rounded-2xl border border-slate-200 overflow-hidden shadow-sm bg-slate-50 group relative">
+            <img 
+              :src="currentAffectation.photo_retour_url" 
+              alt="Photo de retour" 
               class="w-full h-52 object-cover"
             />
           </div>

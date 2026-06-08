@@ -41,6 +41,29 @@ export const useAffectationStore = defineStore('affectation', () => {
     }
   }
 
+  // Pour le retour
+  const returnAffectation = async (id, returnData) => {
+    loading.value = true
+    error.value = null
+    try {
+      // Pour les uploads de fichiers en Laravel avec PATCH, on utilise souvent POST avec _method
+      const response = await api.post(`/affectations/${id}`, returnData)
+      
+      // Mettre à jour l'affectation dans la liste locale
+      const index = affectations.value.findIndex(a => a.id === id)
+      if (index !== -1) {
+        affectations.value[index] = response.data.data
+      }
+      
+      return true
+    } catch (err) {
+      error.value = err.response?.data?.message || 'Erreur lors du retour de l\'équipement'
+      return false
+    } finally {
+      loading.value = false
+    }
+  }
+
 
   //Detail d'une affectation 
   const fetchAffectationById = async (id)=> {
