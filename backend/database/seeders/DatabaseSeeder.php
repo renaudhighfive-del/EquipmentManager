@@ -8,39 +8,30 @@ use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // Création des utilisateurs par défaut
+        // ── Comptes système (admin & gestionnaire) ────────────────
         User::create([
-            'name' => 'Admin User',
-            'email' => 'admin@equip.com',
-            'password' => Hash::make('password'),
-            'role' => 'admin',
+            'name'      => 'Alexandre Martin',
+            'email'     => 'admin@equip.com',
+            'password'  => Hash::make('password'),
+            'role'      => 'admin',
             'is_active' => true,
         ]);
 
         User::create([
-            'name' => 'Gestionnaire Parc',
-            'email' => 'gestion@equip.com',
-            'password' => Hash::make('password'),
-            'role' => 'gestionnaire',
+            'name'      => 'Gestionnaire Parc',
+            'email'     => 'gestion@equip.com',
+            'password'  => Hash::make('password'),
+            'role'      => 'gestionnaire',
             'is_active' => true,
         ]);
 
-        User::create([
-            'name' => 'Agent Test',
-            'email' => 'agent@equip.com',
-            'password' => Hash::make('password'),
-            'role' => 'agent',
-            'is_active' => true,
-        ]);
-
-        // Appel des autres seeders
+        // ── Seeders dans l'ordre des dépendances ──────────────────
         $this->call([
-            CategorieSeeder::class,
+            CategorieSeeder::class,   // 1. Catégories
+            AgentSeeder::class,       // 2. Agents + leurs comptes users (rôle agent)
+            EquipementSeeder::class,  // 3. Équipements (dépend des catégories)
         ]);
     }
 }

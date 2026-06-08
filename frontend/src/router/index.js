@@ -31,7 +31,7 @@ const router = createRouter({
         { path: 'mouvements',     name: 'admin-mouvements',     component: () => import('../views/admin/MouvementsView.vue') },
         { path: 'pannes',         name: 'admin-pannes',         component: () => import('../views/admin/PannesView.vue') },
         { path: 'maintenances',   name: 'admin-maintenances',   component: () => import('../views/admin/MaintenancesView.vue') },
-        { path: 'sinistres',      name: 'admin-sinistres',      component: () => import('../views/admin/RapportsView.vue') }, // placeholder
+        { path: 'sinistres',      name: 'admin-sinistres',      component: () => import('../views/admin/SinistresView.vue') },
         { path: 'rapports',       name: 'admin-rapports',       component: () => import('../views/admin/RapportsView.vue') },
         { path: 'administration', name: 'admin-administration', component: () => import('../views/admin/AdministrationView.vue') },
       ]
@@ -50,7 +50,7 @@ const router = createRouter({
         { path: 'affectations', name: 'gestionnaire-affectations', component: () => import('../views/admin/AffectationsView.vue') },
         { path: 'pannes',       name: 'gestionnaire-pannes',       component: () => import('../views/admin/PannesView.vue') },
         { path: 'maintenances', name: 'gestionnaire-maintenances', component: () => import('../views/admin/MaintenancesView.vue') },
-        { path: 'sinistres',    name: 'gestionnaire-sinistres',    component: () => import('../views/admin/RapportsView.vue') }, // placeholder
+        { path: 'sinistres',    name: 'gestionnaire-sinistres',    component: () => import('../views/admin/SinistresView.vue') },
         { path: 'rapports',     name: 'gestionnaire-rapports',     component: () => import('../views/admin/RapportsView.vue') },
       ]
     },

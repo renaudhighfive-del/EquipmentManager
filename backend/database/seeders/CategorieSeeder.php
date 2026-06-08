@@ -7,22 +7,19 @@ use Illuminate\Database\Seeder;
 
 class CategorieSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $categories = [
-            ['nom' => 'PDA', 'description' => 'Assistant numérique personnel pour scan et inventaire'],
-            ['nom' => 'Smartphone', 'description' => 'Téléphones mobiles professionnels'],
-            ['nom' => 'Tablette', 'description' => 'Tablettes tactiles'],
-            ['nom' => 'Scanner', 'description' => 'Lecteurs de codes-barres autonomes'],
-            ['nom' => 'Ordinateur portable', 'description' => 'Laptops et stations de travail mobiles'],
-            ['nom' => 'Accessoire', 'description' => 'Chargeurs, batteries, housses, etc.'],
+            ['nom' => 'Équipement sportif',                      'description' => 'Montres, capteurs, trackers et équipements connectés pour le sport'],
+            ['nom' => 'Équipement informatique',                 'description' => 'Ordinateurs portables, tablettes, périphériques et accessoires IT'],
+            ['nom' => 'Équipement médical',                      'description' => 'Moniteurs, appareils de mesure et dispositifs médicaux'],
+            ['nom' => 'Équipement militaire',                    'description' => 'Terminaux durcis, radios et équipements de terrain'],
+            ['nom' => 'Équipement de bureau',                    'description' => 'Imprimantes, téléphones IP, systèmes de visioconférence'],
+            ['nom' => 'Équipements commerciaux / administratifs','description' => 'Terminaux de paiement, PDA commerciaux et outils terrain'],
         ];
 
-        foreach ($categories as $categorie) {
-            Categorie::create($categorie);
+        foreach ($categories as $data) {
+            Categorie::firstOrCreate(['nom' => $data['nom']], $data);
         }
     }
 }
