@@ -16,7 +16,7 @@ class DatabaseSeeder extends Seeder
         // Création des utilisateurs par défaut
         User::create([
             'name' => 'Admin User',
-            'email' => 'admin@admin.com',
+            'email' => 'admin@equip.com',
             'password' => Hash::make('password'),
             'role' => 'admin',
             'is_active' => true,
@@ -24,7 +24,7 @@ class DatabaseSeeder extends Seeder
 
         User::create([
             'name' => 'Gestionnaire Parc',
-            'email' => 'gestion@admin.com',
+            'email' => 'gestion@equip.com',
             'password' => Hash::make('password'),
             'role' => 'gestionnaire',
             'is_active' => true,
@@ -32,7 +32,7 @@ class DatabaseSeeder extends Seeder
 
         User::create([
             'name' => 'Agent Test',
-            'email' => 'agent@admin.com',
+            'email' => 'agent@equip.com',
             'password' => Hash::make('password'),
             'role' => 'agent',
             'is_active' => true,
