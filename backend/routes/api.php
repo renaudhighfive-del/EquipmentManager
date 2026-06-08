@@ -32,6 +32,10 @@ Route::middleware(['auth:sanctum', 'check.active'])->group(function () {
     // Equipments
     Route::patch('equipements/{equipement}/archive', [\App\Http\Controllers\EquipementController::class, 'archive']);
     Route::apiResource('equipements', \App\Http\Controllers\EquipementController::class);
+    // Agent Management
+    Route::apiResource('agents', \App\Http\Controllers\AgentController::class);
+    Route::patch('agents/{agent}/desactiver', [\App\Http\Controllers\AgentController::class, 'desactiver']);
+    Route::patch('agents/{agent}/reactiver', [\App\Http\Controllers\AgentController::class, 'reactiver']);
 });
 
 // Public Test Route
