@@ -28,80 +28,80 @@ const form = ref({
   password: ''
 });
 
-const fetchUsers = async () => {
-  loading.value = true;
-  try {
-    const response = await api.get('/users');
-    users.value = response.data;
-  } catch (error) {
-    console.error('Erreur lors de la récupération des utilisateurs:', error);
-  } finally {
-    loading.value = false;
-  }
-};
+// const fetchUsers = async () => {
+//   loading.value = true;
+//   try {
+//     const response = await api.get('/users');
+//     users.value = response.data;
+//   } catch (error) {
+//     console.error('Erreur lors de la récupération des utilisateurs:', error);
+//   } finally {
+//     loading.value = false;
+//   }
+// };
 
-const filteredUsers = computed(() => {
-  if (!searchQuery.value) return users.value;
-  const query = searchQuery.value.toLowerCase();
-  return users.value.filter(user => 
-    user.name.toLowerCase().includes(query) || 
-    user.email.toLowerCase().includes(query)
-  );
-});
+// const filteredUsers = computed(() => {
+//   if (!searchQuery.value) return users.value;
+//   const query = searchQuery.value.toLowerCase();
+//   return users.value.filter(user => 
+//     user.name.toLowerCase().includes(query) || 
+//     user.email.toLowerCase().includes(query)
+//   );
+// });
 
-const toggleUserStatus = async (user) => {
-  try {
-    const response = await api.patch(`/users/${user.id}/toggle-status`);
-    user.is_active = !user.is_active;
-    // Notification de succès si nécessaire
-  } catch (error) {
-    console.error('Erreur lors du changement de statut:', error);
-  }
-};
+// const toggleUserStatus = async (user) => {
+//   try {
+//     const response = await api.patch(`/users/${user.id}/toggle-status`);
+//     user.is_active = !user.is_active;
+//     // Notification de succès si nécessaire
+//   } catch (error) {
+//     console.error('Erreur lors du changement de statut:', error);
+//   }
+// };
 
-const openAddUser = () => {
-  selectedUser.value = null;
-  form.value = {
-    name: '',
-    email: '',
-    role: 'agent',
-    password: ''
-  };
-  showUserModal.value = true;
-};
+// const openAddUser = () => {
+//   selectedUser.value = null;
+//   form.value = {
+//     name: '',
+//     email: '',
+//     role: 'agent',
+//     password: ''
+//   };
+//   showUserModal.value = true;
+// };
 
-const openEditUser = (user) => {
-  selectedUser.value = user;
-  form.value = {
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    password: '' // On ne récupère pas le mot de passe
-  };
-  showUserModal.value = true;
-};
+// const openEditUser = (user) => {
+//   selectedUser.value = user;
+//   form.value = {
+//     name: user.name,
+//     email: user.email,
+//     role: user.role,
+//     password: '' // On ne récupère pas le mot de passe
+//   };
+//   showUserModal.value = true;
+// };
 
-const submitForm = async () => {
-  try {
-    if (selectedUser.value) {
-      await api.put(`/users/${selectedUser.value.id}`, form.value);
-    } else {
-      await api.post('/users', form.value);
-    }
-    showUserModal.value = false;
-    fetchUsers();
-  } catch (error) {
-    console.error('Erreur lors de l\'enregistrement:', error);
-  }
-};
+// const submitForm = async () => {
+//   try {
+//     if (selectedUser.value) {
+//       await api.put(`/users/${selectedUser.value.id}`, form.value);
+//     } else {
+//       await api.post('/users', form.value);
+//     }
+//     showUserModal.value = false;
+//     fetchUsers();
+//   } catch (error) {
+//     console.error('Erreur lors de l\'enregistrement:', error);
+//   }
+// };
 
-const getRoleBadge = (role) => {
-  switch (role) {
-    case 'admin': return 'bg-rose-50 text-rose-600 border-rose-100';
-    case 'gestionnaire': return 'bg-amber-50 text-amber-600 border-amber-100';
-    default: return 'bg-blue-50 text-blue-600 border-blue-100';
-  }
-};
+// const getRoleBadge = (role) => {
+//   switch (role) {
+//     case 'admin': return 'bg-rose-50 text-rose-600 border-rose-100';
+//     case 'gestionnaire': return 'bg-amber-50 text-amber-600 border-amber-100';
+//     default: return 'bg-blue-50 text-blue-600 border-blue-100';
+//   }
+// };
 
 onMounted(fetchUsers);
 </script>
