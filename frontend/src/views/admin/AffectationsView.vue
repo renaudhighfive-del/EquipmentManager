@@ -101,12 +101,12 @@ const fetchInitialData = async () => {
       api.get('/agents')
     ]);
     // On accepte uniquement 'neuf' comme état disponible pour une nouvelle affectation
-    availableEquipements.value = equipRes.data.data.filter(e => e.etat === 'neuf');
-    agents.value = agentRes.data.data;
+    availableEquipements.value = equipRes.data.filter(e => e.etat === 'neuf');
+    agents.value = agentRes.data.agents;
     
     console.log('Données initiales chargées :', {
       equipements: availableEquipements.value.length,
-      agents: agents.value.length
+      agentsTotal: agents.value.length,
     });
   } catch (error) {
     console.error('Erreur lors du chargement des données initiales', error);
@@ -115,6 +115,7 @@ const fetchInitialData = async () => {
 
 onMounted(() => {
   affectationStore.fetchAffectations();
+  fetchInitialData();
 });
 
 const openReturnModal = (aff) => {

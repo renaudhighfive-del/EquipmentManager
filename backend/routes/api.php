@@ -1,46 +1,63 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\CategorieController;
+use App\Http\Controllers\EquipementController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AffectationController;
 
-// Auth Routes
+// ── Auth ──────────────────────────────────────────────────────────────────────
 Route::prefix('auth')->group(function () {
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/login',      [AuthController::class, 'login']);
     Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
     Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
-    
+
     Route::middleware('auth:sanctum')->group(function () {
-        Route::get('/me', [AuthController::class, 'me']);
+        Route::get('/me',      [AuthController::class, 'me']);
         Route::post('/logout', [AuthController::class, 'logout']);
     });
 });
 
-// Protected Routes
+// ── Routes protégées ──────────────────────────────────────────────────────────
 Route::middleware(['auth:sanctum', 'check.active'])->group(function () {
+
+    Route::get('/user', fn (Request $request) => $request->user());
+
+    // Gestion utilisateurs (Admin)
+    Route::apiResource('users', UserController::class);
+    Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus']);
+
+    // Catégories
+    Route::apiResource('categories', CategorieController::class);
+
+    // Équipements
+    Route::apiResource('equipements', EquipementController::class);
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
     
     // User Management (Admin only)
-    Route::apiResource('users', \App\Http\Controllers\UserController::class);
-    Route::patch('users/{user}/toggle-status', [\App\Http\Controllers\UserController::class, 'toggleStatus']);
+    Route::apiResource('users', UserController::class);
+    Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus']);
     
     // Affectations
     Route::apiResource('affectations', AffectationController::class);
     
-    // Équipements & Agents (Basic routes for selection)
-    Route::get('/equipements', [\App\Http\Controllers\EquipementController::class, 'index']);
-    Route::get('/agents', [\App\Http\Controllers\AgentController::class, 'index']);
+    // // Équipements & Agents (Basic routes for selection)
+    // Route::get('/equipements', [\App\Http\Controllers\EquipementController::class, 'index']);
+    // Route::get('/agents', [\App\Http\Controllers\AgentController::class, 'index']);
     
     // Add other protected routes here as we develop them
+    // Agent Management
+    Route::apiResource('agents', \App\Http\Controllers\AgentController::class);
+    Route::patch('agents/{agent}/desactiver', [\App\Http\Controllers\AgentController::class, 'desactiver']);
+    Route::patch('agents/{agent}/reactiver', [\App\Http\Controllers\AgentController::class, 'reactiver']);
 });
 
-// Public Test Route
-Route::get('/test', function () {
-    return response()->json([
-        'status' => true,
-        'message' => 'API is working correctly 🚀'
-    ]);
-});
+// ── Route de test ─────────────────────────────────────────────────────────────
+Route::get('/test', fn () => response()->json([
+    'status'  => true,
+    'message' => 'API is working correctly 🚀',
+]));
