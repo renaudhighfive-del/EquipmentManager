@@ -12,20 +12,15 @@ class CategorieFactory extends Factory
 {
     protected $model = Categorie::class;
 
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         return [
             'nom' => $this->faker->unique()->randomElement([
-                'Équipement sportif', 
-                'Équipement informatique', 
-                'Équipement médical', 
-                'Équipement militaire', 
-                'Équipement de bureau', 
+                'Équipement sportif',
+                'Équipement informatique',
+                'Équipement médical',
+                'Équipement militaire',
+                'Équipement de bureau',
                 'Équipements commerciaux / administratifs',
             ]),
             'description' => $this->faker->sentence(),
