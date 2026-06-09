@@ -10,16 +10,11 @@ import {
   Plus, 
   ArrowLeftRight, 
   History,
- 
   Camera,
   Search,
   Filter,
   Loader2,
   X,
-  User,
-  Briefcase,
-  Smartphone,
-  ChevronRight,
   Pencil
 } from 'lucide-vue-next';
 
