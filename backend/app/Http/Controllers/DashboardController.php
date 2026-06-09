@@ -163,15 +163,10 @@ class DashboardController extends Controller
     {
         $agent = $user->agent;
         
-        if (!$agent) {
-            return response()->json([
-                'mes_equipements' => 0,
-                'mes_pannes' => 0
-            ]);
-        }
-
-        $mesEquipements = Equipement::whereHas('affectations', function($q) use ($agent) {
-            $q->where('agent_id', $agent->id)->where('statut', 'en_cours');
+        $mesEquipements = Equipement::whereHas('affectations', function($q) use ($user) {
+            $q->where('agent_id', function($sq) use ($user) {
+                $sq->select('id')->from('agents')->where('user_id', $user->id);
+            })->where('statut', 'en_cours');
         })->count();
 
         $mesPannes = Panne::where('declare_par', $user->id)
