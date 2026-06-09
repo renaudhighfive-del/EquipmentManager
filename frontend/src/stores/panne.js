@@ -49,22 +49,18 @@ export const usePanneStore = defineStore('panne', {
       }
     },
 
-    async updatePanneStatus(id, statut) {
+    async validerPanne(id) {
       this.loading = true
-      this.error = null
-      this.successMessage = null
       try {
-        const response = await api.patch(`/pannes/${id}`, { statut })
+        const response = await api.patch(`/pannes/${id}/valider`)
         const index = this.pannes.findIndex(p => p.id === id)
         if (index !== -1) {
-          this.pannes[index] = response.data.data
+          this.pannes[index] = response.data
         }
-        this.successMessage = response.data.message
-        return true
+        return response.data
       } catch (error) {
-        this.error = error.response?.data?.message || "Erreur lors de la mise à jour"
         console.error(error)
-        return false
+        throw error
       } finally {
         this.loading = false
       }
@@ -80,6 +76,23 @@ export const usePanneStore = defineStore('panne', {
       } catch (error) {
         console.error(error)
         return false
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async rejeterPanne(id, motif) {
+      this.loading = true
+      try {
+        const response = await api.patch(`/pannes/${id}/rejeter`, { motif })
+        const index = this.pannes.findIndex(p => p.id === id)
+        if (index !== -1) {
+          this.pannes[index] = response.data
+        }
+        return response.data
+      } catch (error) {
+        console.error(error)
+        throw error
       } finally {
         this.loading = false
       }

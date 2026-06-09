@@ -1,13 +1,16 @@
 <script setup>
-import { onMounted, computed } from 'vue'
+import { onMounted, computed, ref, reactive } from 'vue'
 import { useAuthStore } from '../../stores/auth'
 import { useEquipementStore } from '../../stores/equipement'
 import { usePanneStore } from '../../stores/panne'
 import { useDashboardStore } from '../../stores/dashboard'
 import { storeToRefs } from 'pinia'
+import { useSinistreStore } from "../../stores/sinistre";
 import PageHeader from '../../components/layout/PageHeader.vue'
 import StatCard from '../../components/dashboard/StatCard.vue'
+import SideModal from '../../components/layout/SideModal.vue'
 import { useRouter } from 'vue-router'
+import { useToast } from 'primevue/usetoast'
 import { 
   AlertTriangle, 
   RotateCcw,
@@ -20,13 +23,54 @@ const equipementStore = useEquipementStore()
 const panneStore = usePanneStore()
 const dashboardStore = useDashboardStore()
 const { stats: dashboardStats, loading: dashboardLoading } = storeToRefs(dashboardStore)
+const sinistreStore = useSinistreStore()
 const router = useRouter()
+const toast = useToast()
+
+const showSinistreModal = ref(false);
+const selectedEquipementId = ref('');
+const isSubmitting = ref(false);
+
+const sinistreForm = reactive({
+  type: 'perte',
+  description: ''
+});
 
 onMounted(() => {
   equipementStore.fetchEquipements()
   panneStore.fetchPannes()
   dashboardStore.fetchStats()
 })
+
+const openSinistreModal = (equip = null) => {
+  selectedEquipementId.value = equip ? equip.id : '';
+  sinistreForm.type = 'perte';
+  sinistreForm.description = '';
+  showSinistreModal.value = true;
+};
+
+const handleDeclareSinistre = async () => {
+  if (!selectedEquipementId.value || !sinistreForm.description) {
+    toast.add({ severity: 'warn', summary: 'Attention', detail: 'Veuillez remplir tous les champs', life: 3000 });
+    return;
+  }
+
+  isSubmitting.value = true;
+  try {
+    await sinistreStore.declareSinistre({
+      equipement_id: selectedEquipementId.value,
+      type: sinistreForm.type,
+      description: sinistreForm.description
+    });
+    toast.add({ severity: 'success', summary: 'Succès', detail: 'Déclaration envoyée avec succès', life: 3000 });
+    showSinistreModal.value = false;
+    equipementStore.fetchEquipements();
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Échec de l\'envoi', life: 3000 });
+  } finally {
+    isSubmitting.value = false;
+  }
+};
 
 const stats = computed(() => [
   { 
@@ -175,7 +219,76 @@ const getEtatLabel = (etat) => {
             Signaler un incident
           </button>
         </div>
+
+        <div class="bg-red-400 p-8 rounded-[2.5rem] border border-rose-100">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-12 h-12 bg-rose-500 rounded-2xl flex items-center justify-center shadow-lg shadow-rose-200">
+              <AlertTriangle class="w-6 h-6 text-white" />
+            </div>
+            <h4 class="font-black text-rose-900">Assistance</h4>
+          </div>
+          <p class="text-rose-700/70 text-sm font-medium mb-6">
+            Un problème grave avec le matériel ? Signalez en même temps
+          </p>
+          <button 
+            @click="openSinistreModal()"
+            class="w-full py-3 bg-white border border-rose-200 text-rose-600 font-black rounded-2xl hover:bg-rose-500 hover:text-white hover:border-rose-500 transition-all"
+          >
+            Signaler une perte
+          </button>
+        </div>
       </div>
     </div>
+
+    <!-- Modal Déclaration Sinistre -->
+    <SideModal :show="showSinistreModal" title="Déclarer un sinistre" @close="showSinistreModal = false">
+      <div class="space-y-6">
+        <div class="p-4 bg-orange-50 border border-orange-100 rounded-2xl">
+          <p class="text-sm text-orange-800 font-medium">
+            Sélectionnez l'équipement et décrivez l'incident (perte, casse ou vol).
+          </p>
+        </div>
+
+        <div class="space-y-4">
+          <div class="space-y-1.5">
+            <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Équipement concerné</label>
+            <select v-model="selectedEquipementId" class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary-500/10 outline-none">
+              <option value="">— Sélectionner un équipement —</option>
+              <option v-for="equip in equipementStore.equipements" :key="equip.id" :value="equip.id">
+                {{ equip.marque }} {{ equip.modele }} ({{ equip.reference }})
+              </option>
+            </select>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Type de sinistre</label>
+            <select v-model="sinistreForm.type" class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary-500/10 outline-none">
+              <option value="perte">Perte</option>
+              <option value="casse">Casse</option>
+              <option value="vol">Vol</option>
+            </select>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Description des faits</label>
+            <textarea 
+              v-model="sinistreForm.description"
+              rows="4" 
+              placeholder="Expliquez brièvement les circonstances..."
+              class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary-500/10 outline-none resize-none"
+            ></textarea>
+          </div>
+        </div>
+
+        <button 
+          @click="handleDeclareSinistre"
+          :disabled="isSubmitting"
+          class="w-full h-12 bg-primary-600 text-white rounded-xl text-sm font-black shadow-lg shadow-primary-200 hover:bg-primary-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          <Loader2 v-if="isSubmitting" class="w-4 h-4 animate-spin" />
+          {{ isSubmitting ? 'Envoi en cours...' : 'Envoyer la déclaration' }}
+        </button>
+      </div>
+    </SideModal>
   </div>
 </template>

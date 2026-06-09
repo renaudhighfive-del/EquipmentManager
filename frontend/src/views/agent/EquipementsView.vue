@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, reactive } from 'vue'
 import PageHeader from '../../components/layout/PageHeader.vue'
 import SideModal from '../../components/layout/SideModal.vue'
 import { Smartphone, RotateCcw, Calendar, Camera, Info } from 'lucide-vue-next'
@@ -8,16 +8,27 @@ import { useSinistreStore } from '../../stores/sinistre'
 import { useToast } from 'primevue/usetoast'
 
 const equipementStore = useEquipementStore();
-const selectedEquip = ref(null);
-const showDetailModal = ref(false);
+const sinistreStore = useSinistreStore();
+const toast = useToast();
+
+const showSinistreModal = ref(false);
+const selectedEquipement = ref(null);
+const isSubmitting = ref(false);
+
+const sinistreForm = reactive({
+  type: 'perte',
+  description: ''
+});
 
 onMounted(() => {
   equipementStore.fetchEquipements();
 });
 
-const openDetails = (equip) => {
-  selectedEquip.value = equip;
-  showDetailModal.value = true;
+const openSinistreModal = (equip) => {
+  selectedEquipement.value = equip;
+  sinistreForm.type = 'perte';
+  sinistreForm.description = '';
+  showSinistreModal.value = true;
 };
 
 const formatDate = (dateStr) => {
@@ -168,6 +179,27 @@ const getEtatLabel = (etat) => {
           <p class="text-sm text-slate-600 italic leading-relaxed">
             "{{ selectedEquip.current_affectation.observations }}"
           </p>
+        </div>
+
+        <div class="space-y-4">
+          <div class="space-y-1.5">
+            <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Type de sinistre</label>
+            <select v-model="sinistreForm.type" class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary-500/10 outline-none">
+              <option value="perte">Perte</option>
+              <option value="casse">Casse</option>
+              <option value="vol">Vol</option>
+            </select>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Description des faits</label>
+            <textarea 
+              v-model="sinistreForm.description"
+              rows="4" 
+              placeholder="Expliquez brièvement les circonstances..."
+              class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary-500/10 outline-none resize-none"
+            ></textarea>
+          </div>
         </div>
 
         <button 

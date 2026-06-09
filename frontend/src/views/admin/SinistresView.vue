@@ -91,6 +91,15 @@ const formatDate = (dateString) => {
     year: 'numeric'
   });
 };
+
+const getTypeLabel = (type) => {
+  const labels = {
+    perte: 'Perte',
+    casse: 'Casse',
+    vol: 'Vol'
+  };
+  return labels[type?.toLowerCase()] || type;
+};
 </script>
 
 <template>
@@ -121,7 +130,7 @@ const formatDate = (dateString) => {
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
             <span class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-orange-50 text-orange-600 border border-orange-100">
-              {{ item.type }}
+              {{ getTypeLabel(item.type) }}
             </span>
             <span class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider border" :class="getStatusStyle(item.status)">
               {{ getStatusLabel(item.status) }}

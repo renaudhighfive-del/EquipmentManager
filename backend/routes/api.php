@@ -11,6 +11,8 @@ use App\Http\Controllers\AffectationController;
 use App\Http\Controllers\MouvementController;
 use App\Http\Controllers\PanneController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PerteCasseController;
+use App\Http\Controllers\MaintenanceController;
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 Route::prefix('auth')->group(function () {
@@ -51,8 +53,24 @@ Route::middleware(['auth:sanctum', 'check.active'])->group(function () {
     Route::apiResource('pannes', PanneController::class);
 
     // Equipments
+    Route::get('equipements/archives', [EquipementController::class, 'fetchArchives']);
     Route::patch('equipements/{equipement}/archive', [EquipementController::class, 'archive']);
+    Route::patch('equipements/{equipement}/unarchive', [EquipementController::class, 'unarchive']);
     Route::apiResource('equipements', EquipementController::class);
+
+    // Pannes
+    Route::patch('pannes/{panne}/valider', [PanneController::class, 'valider']);
+    Route::patch('pannes/{panne}/rejeter', [PanneController::class, 'rejeter']);
+    Route::apiResource('pannes', PanneController::class);
+
+    // Maintenances
+    Route::apiResource('maintenances', MaintenanceController::class);
+
+    // Sinistres (Pertes & Casses)
+    Route::get('sinistres', [PerteCasseController::class, 'index']);
+    Route::post('sinistres', [PerteCasseController::class, 'store']);
+    Route::patch('sinistres/{sinistre}/valider', [PerteCasseController::class, 'valider']);
+    Route::patch('sinistres/{sinistre}/rejeter', [PerteCasseController::class, 'rejeter']);
 
     // Agent Management
     Route::apiResource('agents', AgentController::class);

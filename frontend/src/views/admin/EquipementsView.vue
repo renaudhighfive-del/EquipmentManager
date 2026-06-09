@@ -59,14 +59,6 @@ const selectedStatus = ref('');
 
 const filteredEquipements = computed(() => {
   return equipementStore.equipements.filter(equip => {
-    // Restriction pour le gestionnaire
-    if (authStore.user?.role === 'gestionnaire') {
-      const allowedCategoryIds = authStore.user.categories?.map(c => Number(c.id)) || [];
-      if (!allowedCategoryIds.includes(Number(equip.categorie_id))) {
-        return false;
-      }
-    }
-
     const matchesSearch = !searchQuery.value || 
       equip.reference?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       equip.numero_serie?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
@@ -150,15 +142,7 @@ const resetForm = () => {
 const fetchCategories = async () => {
   try {
     const response = await api.get('/categories');
-    let allCategories = response.data;
-    
-    // Si c'est un gestionnaire, on ne garde que ses catégories
-     if (authStore.user?.role === 'gestionnaire') {
-       const allowedIds = authStore.user.categories?.map(c => Number(c.id)) || [];
-       categories.value = allCategories.filter(cat => allowedIds.includes(Number(cat.id)));
-     } else {
-      categories.value = allCategories;
-    }
+    categories.value = response.data;
   } catch (error) {
     console.error('Error fetching categories:', error);
     toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les catégories', life: 3000 });
