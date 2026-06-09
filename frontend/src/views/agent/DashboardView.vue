@@ -3,43 +3,61 @@ import { onMounted, computed } from 'vue'
 import { useAuthStore } from '../../stores/auth'
 import { useEquipementStore } from '../../stores/equipement'
 import { usePanneStore } from '../../stores/panne'
+import { useDashboardStore } from '../../stores/dashboard'
+import { storeToRefs } from 'pinia'
 import PageHeader from '../../components/layout/PageHeader.vue'
 import StatCard from '../../components/dashboard/StatCard.vue'
 import { useRouter } from 'vue-router'
 import { 
   AlertTriangle, 
   RotateCcw,
-  Smartphone
+  Smartphone,
+  Loader2
 } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
 const equipementStore = useEquipementStore()
 const panneStore = usePanneStore()
+const dashboardStore = useDashboardStore()
+const { stats: dashboardStats, loading: dashboardLoading } = storeToRefs(dashboardStore)
 const router = useRouter()
 
 onMounted(() => {
   equipementStore.fetchEquipements()
   panneStore.fetchPannes()
+  dashboardStore.fetchStats()
 })
 
 const stats = computed(() => [
   { 
     label: 'Mes équipements', 
-    value: equipementStore.equipements.length, 
+    value: dashboardStats.value?.mes_equipements || 0, 
     icon: Smartphone,    
     colorClass: 'bg-blue-50 text-blue-600' 
   },
   { 
     label: 'Pannes signalées', 
-    value: panneStore.pannes.length, 
+    value: dashboardStats.value?.mes_pannes || 0, 
     icon: AlertTriangle, 
     colorClass: 'bg-red-50 text-red-600' 
   },
 ])
 
 const recentEquipments = computed(() => {
-  return equipementStore.equipements.slice(0, 3)
+  return [...equipementStore.equipements].sort((a, b) => {
+    const dateA = a.current_affectation?.date_affectation || 0;
+    const dateB = b.current_affectation?.date_affectation || 0;
+    return new Date(dateB) - new Date(dateA);
+  }).slice(0, 3)
 })
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return '—';
+  return new Date(dateStr).toLocaleDateString('fr-FR', { 
+    day: 'numeric', 
+    month: 'short'
+  });
+};
 
 const getEtatLabel = (etat) => {
   const labels = {
@@ -107,11 +125,14 @@ const getEtatLabel = (etat) => {
                 </div>
                 <div>
                   <p class="text-sm sm:text-base font-black text-slate-900">{{ equip.marque }} {{ equip.modele }}</p>
-                  <div class="flex items-center gap-2 mt-0.5 sm:mt-1">
+                  <div class="flex flex-wrap items-center gap-2 mt-0.5 sm:mt-1">
                     <span class="text-[10px] sm:text-xs text-slate-500 font-medium">{{ equip.reference }}</span>
                     <span class="w-1 h-1 bg-slate-300 rounded-full"></span>
                     <span :class="['text-[9px] sm:text-[10px] font-black uppercase', equip.etat === 'en_service' ? 'text-emerald-600' : 'text-amber-600']">
                       {{ getEtatLabel(equip.etat) }}
+                    </span>
+                    <span v-if="equip.current_affectation" class="text-[9px] text-primary-600 font-bold bg-primary-50 px-1.5 py-0.5 rounded">
+                      Reçu le {{ formatDate(equip.current_affectation.date_affectation) }}
                     </span>
                   </div>
                 </div>

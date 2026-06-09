@@ -70,14 +70,38 @@ const handleSubmit = async () => {
       formData.append('images[]', file)
     })
 
-    await panneStore.createPanne(formData)
-    toast.add({ severity: 'success', summary: 'Succès', detail: 'Panne déclarée avec succès', life: 3000 })
-    showModal.value = false
-    resetForm()
+    const success = await panneStore.createPanne(formData)
+    if (success) {
+      toast.add({ severity: 'success', summary: 'Succès', detail: panneStore.successMessage, life: 3000 })
+      showModal.value = false
+      resetForm()
+    }
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Échec de la déclaration', life: 3000 })
+    toast.add({ severity: 'error', summary: 'Erreur', detail: panneStore.error || 'Échec de la déclaration', life: 3000 })
   } finally {
     isSubmitting.value = false
+  }
+}
+
+const getStatutLabel = (statut) => {
+  const labels = {
+    'declaree': 'Déclarée',
+    'en_cours': 'En cours',
+    'en_maintenance': 'En maintenance',
+    'resolue': 'Résolue',
+    'irrecuperable': 'Irrécupérable'
+  }
+  return labels[statut] || statut
+}
+
+const getStatutClass = (statut) => {
+  switch (statut) {
+    case 'declaree': return 'bg-amber-50 text-amber-600'
+    case 'en_cours': return 'bg-blue-50 text-blue-600'
+    case 'en_maintenance': return 'bg-purple-50 text-purple-600'
+    case 'resolue': return 'bg-emerald-50 text-emerald-600'
+    case 'irrecuperable': return 'bg-rose-50 text-rose-600'
+    default: return 'bg-slate-50 text-slate-600'
   }
 }
 
@@ -149,8 +173,8 @@ const formatDate = (dateString) => {
           <span :class="['px-3 py-1 rounded-lg text-[10px] font-black uppercase', getGraviteClass(panne.gravite)]">
             {{ panne.gravite }}
           </span>
-          <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-black uppercase">
-            {{ panne.statut || 'En attente' }}
+          <span :class="['px-3 py-1 rounded-lg text-[10px] font-black uppercase', getStatutClass(panne.statut)]">
+            {{ getStatutLabel(panne.statut) }}
           </span>
         </div>
       </div>
