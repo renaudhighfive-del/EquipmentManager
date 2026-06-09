@@ -68,10 +68,10 @@ defineEmits(['toggleSidebar']);
           class="flex items-center gap-2 sm:gap-3 pl-1 pr-1 sm:pr-2 py-1.5 rounded-2xl hover:bg-slate-50 transition-all"
         >
           <!-- Avatar rond -->
-          <div class="w-9 h-9 sm:w-11 h-11 rounded-full bg-primary-100 border-2 border-primary-200 flex items-center justify-center text-primary-700 font-bold shadow-sm overflow-hidden flex-shrink-0">
+          <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-primary-100 border-2 border-primary-200 flex items-center justify-center text-primary-700 font-bold shadow-sm overflow-hidden flex-shrink-0">
             <img 
-              v-if="authStore.user?.avatar" 
-              :src="authStore.user.avatar" 
+              v-if="authStore.user?.avatar_url" 
+              :src="authStore.user.avatar_url" 
               class="w-full h-full object-cover"
             >
             <span v-else class="text-xs sm:text-sm">{{ authStore.user?.name?.charAt(0) || 'A' }}</span>

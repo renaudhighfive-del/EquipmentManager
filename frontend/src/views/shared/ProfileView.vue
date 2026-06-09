@@ -13,9 +13,8 @@ const userStore = useUserStore()
 
 // ── Avatar upload ────────────────────────────────────────────────────────
 const avatarFile    = ref(null)
-const avatarPreview = ref(
-  authStore.user?.avatar ? `/storage/${authStore.user.avatar}` : null
-)
+// Utiliser avatar_url (URL absolue retournée par l'API) au lieu de construire /storage/ manuellement
+const avatarPreview = ref(authStore.user?.avatar_url ?? null)
 
 const handleAvatarChange = (e) => {
   const file = e.target.files[0]
@@ -98,9 +97,9 @@ const submitProfile = async () => {
     localStorage.setItem('user', JSON.stringify(authStore.user))
     // Reset le fichier sélectionné après succès
     avatarFile.value = null
-    // Mettre à jour le preview avec l'URL serveur
-    if (updated.avatar) {
-      avatarPreview.value = `/storage/${updated.avatar}`
+    // Mettre à jour le preview avec l'URL absolue retournée par l'API
+    if (updated.avatar_url) {
+      avatarPreview.value = updated.avatar_url
     }
     profileSuccess.value = 'Informations mises à jour.'
   } catch (err) {

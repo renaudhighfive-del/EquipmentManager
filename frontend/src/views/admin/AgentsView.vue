@@ -86,7 +86,7 @@ const openEdit = (agent) => {
     service:   agent.service || '',
     poste:     agent.poste || '',
   }
-  photoPreview.value = agent.photo ? `/storage/${agent.photo}` : null
+  photoPreview.value = agent.photo_url ?? null
   photoFile.value    = null
   formError.value    = ''
   formSuccess.value  = ''
@@ -128,7 +128,7 @@ const openFiche = async (agent) => {
 const initiales = (a) => `${a.prenom?.charAt(0) ?? ''}${a.nom?.charAt(0) ?? ''}`
 const fullName  = (a) => `${a.prenom} ${a.nom}`
 const isAdmin   = computed(() => authStore.user?.role === 'admin')
-const avatarUrl = (agent) => agent.photo ? `/storage/${agent.photo}` : null
+const avatarUrl = (agent) => agent.photo_url ?? null
 
 onMounted(() => agentStore.fetchAgents())
 </script>
@@ -446,7 +446,7 @@ onMounted(() => agentStore.fetchAgents())
           </div>
           <div class="space-y-1.5">
             <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Téléphone</label>
-            <input v-model="formData.telephone" type="tel" placeholder="+33 6 12 34 56 78"
+            <input v-model="formData.telephone" type="number" placeholder="+33 6 12 34 56 78"
               class="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 transition-all">
           </div>
           <div class="space-y-1.5">

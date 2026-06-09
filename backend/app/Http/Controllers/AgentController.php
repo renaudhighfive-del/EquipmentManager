@@ -6,19 +6,30 @@ use App\Models\Agent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
 
 class AgentController extends Controller
 {
     /**
-     * Liste tous les agents — pas de filtre backend, le frontend filtre localement.
+     * Ajoute photo_url à un agent.
+     */
+    private function withPhotoUrl(Agent $agent): array
+    {
+        $arr = $agent->toArray();
+        $arr['photo_url'] = $agent->photo
+            ? Storage::url($agent->photo)
+            : null;
+        return $arr;
+    }
+
+    /**
+     * Liste tous les agents.
      */
     public function index()
     {
         $agents = Agent::with(['user', 'affectations.equipement'])->get();
 
         return response()->json([
-            'agents' => $agents,
+            'agents' => $agents->map(fn ($a) => $this->withPhotoUrl($a)),
             'total'  => $agents->count(),
         ]);
     }
@@ -74,17 +85,14 @@ class AgentController extends Controller
 
         return response()->json([
             'message' => 'Agent créé avec succès',
-            'agent'   => $agent->load(['user', 'affectations']),
+            'agent'   => $this->withPhotoUrl($agent->load(['user', 'affectations'])),
         ], 201);
     }
 
-    /**
-     * Détail d'un agent.
-     */
     public function show(Agent $agent)
     {
         return response()->json([
-            'agent' => $agent->load(['user', 'affectations.equipement']),
+            'agent' => $this->withPhotoUrl($agent->load(['user', 'affectations.equipement'])),
         ]);
     }
 
@@ -124,7 +132,7 @@ class AgentController extends Controller
 
         return response()->json([
             'message' => 'Agent mis à jour',
-            'agent'   => $agent->load(['user', 'affectations']),
+            'agent'   => $this->withPhotoUrl($agent->load(['user', 'affectations'])),
         ]);
     }
 
