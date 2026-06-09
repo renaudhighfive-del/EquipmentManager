@@ -25,7 +25,7 @@ const isSubmitting = ref(false);
 
 const form = reactive({
   panne_id: '',
-  type: 'curative',
+  type: 'corrective',
   technicien: '',
   date_debut: new Date().toISOString().substr(0, 10),
   cout: 0
@@ -38,13 +38,13 @@ onMounted(() => {
 
 // Récupérer uniquement les pannes validées (statut 'en_cours') qui ne sont pas déjà en maintenance
 const pannesValidées = computed(() => {
-  return panneStore.pannes.filter(p => p.statut === 'en_cours');
+  return panneStore.pannes.filter(p => p.statut === 'en_cours' || p.statut === 'declaree');
 });
 
 const resetForm = () => {
   Object.assign(form, {
     panne_id: '',
-    type: 'curative',
+    type: 'corrective',
     technicien: '',
     date_debut: new Date().toISOString().substr(0, 10),
     cout: 0
@@ -207,7 +207,7 @@ const getStatutClass = (statut) => {
             <div class="space-y-1.5">
               <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Type</label>
               <select v-model="form.type" class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary-500/10 outline-none">
-                <option value="curative">Curative</option>
+                <option value="corrective">Corrective</option>
                 <option value="preventive">Préventive</option>
               </select>
             </div>

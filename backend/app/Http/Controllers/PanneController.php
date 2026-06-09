@@ -58,13 +58,17 @@ class PanneController extends Controller
 
     public function valider(Panne $panne)
     {
+        // Une panne validée passe au statut 'en_cours' (prête pour maintenance)
         $panne->update([
             'statut' => 'en_cours',
             'valide_par' => Auth::id(),
             'date_validation' => now(),
         ]);
 
-        return response()->json($panne->load(['validePar']));
+        // On s'assure que l'équipement reste marqué 'en_panne' tant qu'il n'est pas en maintenance
+        $panne->equipement->update(['etat' => 'en_panne']);
+
+        return response()->json($panne->load(['validePar', 'equipement']));
     }
 
     public function rejeter(Request $request, Panne $panne)

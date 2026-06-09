@@ -23,7 +23,7 @@ class MaintenanceController extends Controller
     {
         $validated = $request->validate([
             'panne_id' => 'required|exists:pannes,id',
-            'type' => 'required|in:curative,preventive',
+            'type' => 'required|in:corrective,preventive',
             'technicien' => 'required|string|max:255',
             'date_debut' => 'required|date',
             'cout' => 'nullable|numeric|min:0',

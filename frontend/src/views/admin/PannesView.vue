@@ -38,21 +38,43 @@ const getStatutLabel = (statut) => {
     en_cours: 'En cours',
     en_maintenance: 'En maintenance',
     resolue: 'Résolue',
-    irrecuperable: 'Irrécupérable'
+    irrecuperable: 'Rejetée'
   }
   return labels[statut] || statut
 }
 
+const getStatutColorClass = (statut) => {
+  switch (statut) {
+    case 'declaree': return 'border-l-amber-400';
+    case 'en_cours':
+    case 'en_maintenance':
+    case 'resolue': return 'border-l-emerald-500';
+    case 'irrecuperable': return 'border-l-rose-500';
+    default: return 'border-l-slate-200';
+  }
+}
+
+const getStatutBadgeClass = (statut) => {
+  switch (statut) {
+    case 'declaree': return 'bg-amber-50 text-amber-600';
+    case 'en_cours':
+    case 'en_maintenance':
+    case 'resolue': return 'bg-emerald-50 text-emerald-600';
+    case 'irrecuperable': return 'bg-rose-50 text-rose-600';
+    default: return 'bg-slate-50 text-slate-600';
+  }
+}
+
 const handleValider = (id) => {
   confirm.require({
-    message: 'Voulez-vous valider cette panne et la passer en cours de traitement ?',
+    message: 'Voulez-vous valider cette panne ? Elle sera stockée et pourra être sélectionnée pour une maintenance.',
     header: 'Validation de panne',
     icon: 'pi pi-check-circle',
     acceptClass: 'p-button-success',
     accept: async () => {
       try {
         await panneStore.validerPanne(id)
-        toast.add({ severity: 'success', summary: 'Succès', detail: 'Panne validée', life: 3000 })
+        toast.add({ severity: 'success', summary: 'Succès', detail: 'Panne validée et prête pour maintenance', life: 3000 })
         showDetailModal.value = false
       } catch (error) {
         toast.add({ severity: 'error', summary: 'Erreur', detail: 'Échec de la validation', life: 3000 })
@@ -111,7 +133,7 @@ const formatDate = (dateString) => {
         :key="panne.id" 
         @click="openDetail(panne)"
         class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all border-l-4 cursor-pointer group" 
-        :class="panne.statut === 'declaree' ? 'border-l-amber-400' : 'border-l-emerald-500'"
+        :class="getStatutColorClass(panne.statut)"
       >
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div class="flex items-start gap-5">
@@ -212,7 +234,7 @@ const formatDate = (dateString) => {
           </div>
           <div class="p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
             <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Statut actuel</p>
-            <span :class="['text-xs font-bold', selectedPanne.statut === 'declaree' ? 'text-amber-600' : 'text-emerald-600']">
+            <span :class="['text-xs font-bold', getStatutBadgeClass(selectedPanne.statut)]">
               {{ getStatutLabel(selectedPanne.statut) }}
             </span>
           </div>
@@ -260,11 +282,16 @@ const formatDate = (dateString) => {
           </button>
         </div>
 
-        <!-- Traçabilité (si validé) -->
-        <div v-else-if="selectedPanne.valide_par" class="p-6 bg-emerald-50 rounded-3xl border border-emerald-100 flex flex-col items-center text-center gap-2">
-          <CheckCircle2 class="w-10 h-10 text-emerald-500" />
-          <p class="text-sm font-bold text-emerald-900">Ce signalement a été validé</p>
-          <p class="text-xs text-emerald-600 font-medium">Par {{ selectedPanne.valide_par?.name }} le {{ formatDate(selectedPanne.date_validation) }}</p>
+        <!-- Traçabilité (si validé ou rejeté) -->
+        <div v-else-if="selectedPanne.valide_par" class="p-6 rounded-3xl border flex flex-col items-center text-center gap-2" :class="selectedPanne.statut === 'irrecuperable' ? 'bg-rose-50 border-rose-100' : 'bg-emerald-50 border-emerald-100'">
+          <CheckCircle2 v-if="selectedPanne.statut !== 'irrecuperable'" class="w-10 h-10 text-emerald-500" />
+          <XCircle v-else class="w-10 h-10 text-rose-500" />
+          <p class="text-sm font-bold" :class="selectedPanne.statut === 'irrecuperable' ? 'text-rose-900' : 'text-emerald-900'">
+            {{ selectedPanne.statut === 'irrecuperable' ? 'Ce signalement a été rejeté' : 'Ce signalement a été validé' }}
+          </p>
+          <p class="text-xs font-medium" :class="selectedPanne.statut === 'irrecuperable' ? 'text-rose-600' : 'text-emerald-600'">
+            Par {{ selectedPanne.valide_par?.name }} le {{ formatDate(selectedPanne.date_validation) }}
+          </p>
         </div>
       </div>
     </SideModal>

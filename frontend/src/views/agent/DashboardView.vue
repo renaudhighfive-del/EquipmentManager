@@ -154,6 +154,24 @@ const getEtatLabel = (etat) => {
             Signaler un incident
           </button>
         </div>
+
+        <div class="bg-red-400 p-8 rounded-[2.5rem] border border-rose-100">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-12 h-12 bg-rose-500 rounded-2xl flex items-center justify-center shadow-lg shadow-rose-200">
+              <AlertTriangle class="w-6 h-6 text-white" />
+            </div>
+            <h4 class="font-black text-rose-900">Assistance</h4>
+          </div>
+          <p class="text-rose-700/70 text-sm font-medium mb-6">
+            Un problème avec votre matériel ? Nos techniciens sont là pour vous aider.
+          </p>
+          <button 
+            @click="router.push('/agent/pannes')"
+            class="w-full py-3 bg-white border border-rose-200 text-rose-600 font-black rounded-2xl hover:bg-rose-500 hover:text-white hover:border-rose-500 transition-all"
+          >
+            Signaler une perte
+          </button>
+        </div>
       </div>
     </div>
   </div>
