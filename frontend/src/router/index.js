@@ -34,6 +34,7 @@ const router = createRouter({
         { path: 'sinistres',      name: 'admin-sinistres',      component: () => import('../views/admin/SinistresView.vue') },
         { path: 'rapports',       name: 'admin-rapports',       component: () => import('../views/admin/RapportsView.vue') },
         { path: 'administration', name: 'admin-administration', component: () => import('../views/admin/AdministrationView.vue') },
+        { path: 'profile',       name: 'admin-profile',       component: () => import('../views/shared/ProfileView.vue') },
       ]
     },
 
@@ -52,6 +53,7 @@ const router = createRouter({
         { path: 'maintenances', name: 'gestionnaire-maintenances', component: () => import('../views/admin/MaintenancesView.vue') },
         { path: 'sinistres',    name: 'gestionnaire-sinistres',    component: () => import('../views/admin/SinistresView.vue') },
         { path: 'rapports',     name: 'gestionnaire-rapports',     component: () => import('../views/admin/RapportsView.vue') },
+        { path: 'profile',      name: 'gestionnaire-profile',      component: () => import('../views/shared/ProfileView.vue') },
       ]
     },
 
@@ -64,6 +66,7 @@ const router = createRouter({
         { path: 'dashboard',   name: 'agent-dashboard',   component: () => import('../views/agent/DashboardView.vue') },
         { path: 'equipements', name: 'agent-equipements', component: () => import('../views/agent/EquipementsView.vue') },
         { path: 'pannes',      name: 'agent-pannes',      component: () => import('../views/agent/PannesView.vue') },
+        { path: 'profile',     name: 'agent-profile',     component: () => import('../views/shared/ProfileView.vue') },
       ]
     },
 

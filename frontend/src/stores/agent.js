@@ -4,9 +4,17 @@ import api from '../services/axios'
 export const useAgentStore = defineStore('agent', {
   state: () => ({
     agents: [],
+    selectedAgent: null,
     loading: false,
     error: null,
   }),
+
+  getters: {
+    // Agents sans compte utilisateur — filtre local, pas de requête supplémentaire
+    agentsSansCompte: (state) => state.agents.filter(a => !a.user_id),
+    agentsActifs:     (state) => state.agents.filter(a => a.statut === 'actif'),
+    totalAgents:      (state) => state.agents.length,
+  },
 
   actions: {
     async fetchAgents() {
@@ -14,10 +22,11 @@ export const useAgentStore = defineStore('agent', {
       this.error = null
       try {
         const response = await api.get('/agents')
-        this.agents = response.data
-      } catch (error) {
-        this.error = "Erreur lors de la récupération des agents"
-        console.error(error)
+        // L'API retourne { agents: [...], total: n }
+        this.agents = response.data.agents
+      } catch (err) {
+        this.error = 'Erreur lors de la récupération des agents'
+        console.error(err)
       } finally {
         this.loading = false
       }
@@ -26,56 +35,52 @@ export const useAgentStore = defineStore('agent', {
     async fetchAgent(id) {
       try {
         const response = await api.get(`/agents/${id}`)
-        return response.data
-      } catch (error) {
-        console.error(error)
-        throw error
+        this.selectedAgent = response.data.agent
+        return this.selectedAgent
+      } catch (err) {
+        console.error(err)
+        throw err
       }
     },
 
-    async createAgent(agentData) {
-      this.loading = true
+    async createAgent(data) {
       try {
-        const response = await api.post('/agents', agentData)
-        this.agents.unshift(response.data)
-        return response.data
-      } catch (error) {
-        console.error(error)
-        throw error
-      } finally {
-        this.loading = false
+        const response = await api.post('/agents', data)
+        this.agents.unshift(response.data.agent)
+        return response.data.agent
+      } catch (err) {
+        console.error(err)
+        throw err
       }
     },
 
-    async updateAgent(id, agentData) {
-      this.loading = true
+    async updateAgent(id, data) {
       try {
-        const response = await api.put(`/agents/${id}`, agentData)
+        const response = await api.put(`/agents/${id}`, data)
+        const updated = response.data.agent
         const index = this.agents.findIndex(a => a.id === id)
-        if (index !== -1) {
-          this.agents[index] = response.data
-        }
-        return response.data
-      } catch (error) {
-        console.error(error)
-        throw error
-      } finally {
-        this.loading = false
+        if (index !== -1) this.agents[index] = updated
+        return updated
+      } catch (err) {
+        console.error(err)
+        throw err
       }
     },
 
-    async toggleAgentStatus(id) {
+    async toggleStatut(agent) {
+      const route = agent.statut === 'actif'
+        ? `/agents/${agent.id}/desactiver`
+        : `/agents/${agent.id}/reactiver`
       try {
-        const response = await api.patch(`/agents/${id}/toggle-status`)
-        const index = this.agents.findIndex(a => a.id === id)
-        if (index !== -1) {
-          this.agents[index] = response.data
-        }
-        return response.data
-      } catch (error) {
-        console.error(error)
-        throw error
+        const response = await api.patch(route)
+        const updated = response.data.agent
+        const index = this.agents.findIndex(a => a.id === agent.id)
+        if (index !== -1) this.agents[index] = updated
+        return updated
+      } catch (err) {
+        console.error(err)
+        throw err
       }
-    }
-  }
+    },
+  },
 })

@@ -13,6 +13,7 @@ import {
   Settings,
   Sparkles,
   Smartphone,
+  CircleUser,
   X
 } from 'lucide-vue-next';
 import { useRoute } from 'vue-router';
@@ -41,6 +42,7 @@ const menusByRole = {
     { label: 'Pertes & Casses', icon: AlertOctagon,    path: '/admin/sinistres' },
     { label: 'Rapports',        icon: BarChart3,       path: '/admin/rapports' },
     { label: 'Administration',  icon: Settings,        path: '/admin/administration' },
+    { label: 'Mon profil',      icon: CircleUser,      path: '/admin/profile' },
   ],
   gestionnaire: [
     { label: 'Tableau de bord', icon: LayoutDashboard, path: '/gestionnaire/dashboard' },
@@ -51,11 +53,13 @@ const menusByRole = {
     { label: 'Maintenances',    icon: Wrench,          path: '/gestionnaire/maintenances' },
     { label: 'Pertes & Casses', icon: AlertOctagon,    path: '/gestionnaire/sinistres' },
     { label: 'Rapports',        icon: BarChart3,       path: '/gestionnaire/rapports' },
+    { label: 'Mon profil',      icon: CircleUser,      path: '/gestionnaire/profile' },
   ],
   agent: [
-    { label: 'Mon espace',       icon: LayoutDashboard, path: '/agent/dashboard' },
-    { label: 'Mes équipements',  icon: Smartphone,      path: '/agent/equipements' },
-    { label: 'Déclarer une panne', icon: AlertTriangle, path: '/agent/pannes' },
+    { label: 'Mon espace',         icon: LayoutDashboard, path: '/agent/dashboard' },
+    { label: 'Mes équipements',    icon: Smartphone,      path: '/agent/equipements' },
+    { label: 'Déclarer une panne', icon: AlertTriangle,   path: '/agent/pannes' },
+    { label: 'Mon profil',         icon: CircleUser,      path: '/agent/profile' },
   ],
 };
 

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\AgentController;
 use App\Http\Controllers\CategorieController;
 use App\Http\Controllers\EquipementController;
 use Illuminate\Http\Request;
@@ -23,10 +24,11 @@ Route::prefix('auth')->group(function () {
 // ── Routes protégées ──────────────────────────────────────────────────────────
 Route::middleware(['auth:sanctum', 'check.active'])->group(function () {
 
-    Route::get('/user', function (Request $request) {
-        return $request->user();
-    });
+    Route::get('/user', fn (Request $request) => $request->user());
 
+    // Profil de l'utilisateur connecté (AVANT apiResource pour éviter les conflits)
+    Route::put('profile',          [UserController::class, 'updateProfile']);
+    Route::put('profile/password', [UserController::class, 'changePassword']);
 
     // Gestion utilisateurs (Admin)
     Route::apiResource('users', UserController::class);
@@ -43,9 +45,9 @@ Route::middleware(['auth:sanctum', 'check.active'])->group(function () {
     Route::apiResource('equipements', EquipementController::class);
 
     // Agent Management
-    Route::apiResource('agents', \App\Http\Controllers\AgentController::class);
-    Route::patch('agents/{agent}/desactiver', [\App\Http\Controllers\AgentController::class, 'desactiver']);
-    Route::patch('agents/{agent}/reactiver', [\App\Http\Controllers\AgentController::class, 'reactiver']);
+    Route::apiResource('agents', AgentController::class);
+    Route::patch('agents/{agent}/desactiver', [AgentController::class, 'desactiver']);
+    Route::patch('agents/{agent}/reactiver',  [AgentController::class, 'reactiver']);
 });
 
 // ── Route de test ─────────────────────────────────────────────────────────────

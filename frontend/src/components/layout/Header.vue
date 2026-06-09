@@ -109,6 +109,7 @@ defineEmits(['toggleSidebar']);
             <!-- Actions -->
             <div class="py-1.5">
               <button
+                @click="closeDropdown(); router.push(`/${authStore.user?.role}/profile`)"
                 class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
               >
                 <User class="w-4 h-4 text-slate-400" />

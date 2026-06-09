@@ -10,18 +10,22 @@ class AgentController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Agent::query();
+        $query = Agent::with(['user', 'affectations']);
 
         if ($request->has('search')) {
-            $search = $request->search;
-            $query->where('nom', 'like', "%{$search}%")
-                ->orWhere('prenom', 'like', "%{$search}%")
-                ->orWhere('matricule', 'like', "%{$search}%");
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('nom', 'like', "%{$search}%")
+                  ->orWhere('prenom', 'like', "%{$search}%")
+                  ->orWhere('matricule', 'like', "%{$search}%");
+            });
         }
 
+        $agents = $query->get();
+
         return response()->json([
-            'agents' => $query->with(['user', 'affectations'])->get(),
-            'total' => $query->count()
+            'agents' => $agents,
+            'total'  => $agents->count(),
         ]);
     }
 
