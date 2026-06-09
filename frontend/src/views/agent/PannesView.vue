@@ -90,6 +90,17 @@ const getGraviteClass = (gravite) => {
   }
 }
 
+const getStatutLabel = (statut) => {
+  const labels = {
+    declaree: 'Déclarée',
+    en_cours: 'En cours',
+    en_maintenance: 'En maintenance',
+    resolue: 'Résolue',
+    irrecuperable: 'Irrécupérable'
+  }
+  return labels[statut] || statut
+}
+
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A'
   return new Date(dateString).toLocaleDateString('fr-FR', {
@@ -102,7 +113,7 @@ const formatDate = (dateString) => {
 
 <template>
   <div class="space-y-6 animate-in fade-in duration-500">
-    <PageHeader title="Déclarer une panne" subtitle="Signalez un problème sur l'un de vos équipements">
+    <PageHeader title="Mes pannes" subtitle="Suivez l'état de vos signalements de panne">
       <template #actions>
         <button 
           @click="showModal = true"
@@ -134,7 +145,7 @@ const formatDate = (dateString) => {
     </div>
 
     <div v-else class="grid grid-cols-1 gap-4">
-      <div v-for="panne in panneStore.pannes" :key="panne.id" class="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:shadow-md transition-all">
+      <div v-for="panne in panneStore.pannes" :key="panne.id" class="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:shadow-md transition-all border-l-4" :class="panne.statut === 'declaree' ? 'border-l-amber-400' : 'border-l-emerald-500'">
         <div class="flex items-center gap-4 sm:gap-5">
           <div :class="['w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center flex-shrink-0', getGraviteClass(panne.gravite)]">
             <AlertTriangle class="w-6 h-6 sm:w-7 sm:h-7" />
@@ -142,15 +153,20 @@ const formatDate = (dateString) => {
           <div class="min-w-0">
             <p class="font-bold text-slate-900 truncate">{{ panne.equipement?.marque }} {{ panne.equipement?.modele }}</p>
             <p class="text-xs text-slate-500 font-medium mt-0.5 line-clamp-1">{{ panne.description }}</p>
-            <p class="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-wider">{{ formatDate(panne.created_at) }}</p>
+            <div class="flex items-center gap-3 mt-1">
+              <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">{{ formatDate(panne.date_declaration) }}</p>
+              <span v-if="panne.valide_par" class="text-[9px] font-black text-emerald-600 uppercase bg-emerald-50 px-1.5 py-0.5 rounded">
+                Validé par {{ panne.valide_par?.name || 'Admin' }}
+              </span>
+            </div>
           </div>
         </div>
         <div class="flex items-center justify-between sm:justify-end gap-3 border-t sm:border-t-0 pt-3 sm:pt-0">
           <span :class="['px-3 py-1 rounded-lg text-[10px] font-black uppercase', getGraviteClass(panne.gravite)]">
             {{ panne.gravite }}
           </span>
-          <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-black uppercase">
-            {{ panne.statut || 'En attente' }}
+          <span :class="['px-3 py-1 rounded-lg text-[10px] font-black uppercase', panne.statut === 'declaree' ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600']">
+            {{ getStatutLabel(panne.statut) }}
           </span>
         </div>
       </div>

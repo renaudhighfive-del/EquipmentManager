@@ -39,6 +39,40 @@ export const usePanneStore = defineStore('panne', {
       } finally {
         this.loading = false
       }
+    },
+
+    async validerPanne(id) {
+      this.loading = true
+      try {
+        const response = await api.patch(`/pannes/${id}/valider`)
+        const index = this.pannes.findIndex(p => p.id === id)
+        if (index !== -1) {
+          this.pannes[index] = response.data
+        }
+        return response.data
+      } catch (error) {
+        console.error(error)
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async rejeterPanne(id, motif) {
+      this.loading = true
+      try {
+        const response = await api.patch(`/pannes/${id}/rejeter`, { motif })
+        const index = this.pannes.findIndex(p => p.id === id)
+        if (index !== -1) {
+          this.pannes[index] = response.data
+        }
+        return response.data
+      } catch (error) {
+        console.error(error)
+        throw error
+      } finally {
+        this.loading = false
+      }
     }
   }
 })

@@ -30,18 +30,7 @@ const searchQuery = ref('');
 const formLoading = ref(false);
 
 const filteredAgents = computed(() => {
-  return agentsStore.agents.filter(agent => {
-    // Si c'est un gestionnaire, on filtre les agents qui ont du matériel dans ses catégories
-    if (authStore.user?.role === 'gestionnaire') {
-      const allowedCategoryIds = authStore.user.categories?.map(c => Number(c.id)) || [];
-      // On garde l'agent si au moins une de ses affectations correspond à une catégorie autorisée
-      const hasAllowedEquipment = agent.affectations?.some(aff => 
-        allowedCategoryIds.includes(Number(aff.equipement?.categorie_id))
-      );
-      if (!hasAllowedEquipment) return false;
-    }
-    return true;
-  });
+  return agentsStore.agents;
 });
  
 const formData = ref({

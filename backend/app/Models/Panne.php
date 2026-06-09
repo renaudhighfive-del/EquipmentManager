@@ -12,7 +12,9 @@ class Panne extends Model
     protected $fillable = [
         'equipement_id',
         'declare_par',
+        'valide_par',
         'date_declaration',
+        'date_validation',
         'description',
         'gravite',
         'statut',
@@ -21,6 +23,7 @@ class Panne extends Model
 
     protected $casts = [
         'date_declaration' => 'date',
+        'date_validation' => 'datetime',
         'photos' => 'json',
     ];
 
@@ -32,6 +35,11 @@ class Panne extends Model
     public function declarePar()
     {
         return $this->belongsTo(User::class, 'declare_par');
+    }
+
+    public function validePar()
+    {
+        return $this->belongsTo(User::class, 'valide_par');
     }
 
     public function maintenances()

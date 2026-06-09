@@ -16,7 +16,7 @@ const selectedEquipement = ref(null);
 const isSubmitting = ref(false);
 
 const sinistreForm = reactive({
-  type: 'Perte',
+  type: 'perte',
   description: ''
 });
 
@@ -26,7 +26,7 @@ onMounted(() => {
 
 const openSinistreModal = (equip) => {
   selectedEquipement.value = equip;
-  sinistreForm.type = 'Perte';
+  sinistreForm.type = 'perte';
   sinistreForm.description = '';
   showSinistreModal.value = true;
 };
@@ -139,9 +139,9 @@ const getEtatLabel = (etat) => {
           <div class="space-y-1.5">
             <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Type de sinistre</label>
             <select v-model="sinistreForm.type" class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary-500/10 outline-none">
-              <option value="Perte">Perte</option>
-              <option value="Casse">Casse</option>
-              <option value="Vol">Vol</option>
+              <option value="perte">Perte</option>
+              <option value="casse">Casse</option>
+              <option value="vol">Vol</option>
             </select>
           </div>
 

@@ -82,6 +82,32 @@ export const useEquipementStore = defineStore('equipement', {
         console.error(error)
         throw error
       }
+    },
+
+    async unarchiveEquipement(id) {
+      try {
+        const response = await api.patch(`/equipements/${id}/unarchive`)
+        this.equipements.push(response.data)
+        return response.data
+      } catch (error) {
+        console.error(error)
+        throw error
+      }
+    },
+
+    async fetchArchives() {
+      this.loading = true
+      this.error = null
+      try {
+        const response = await api.get('/equipements/archives')
+        return response.data
+      } catch (error) {
+        this.error = "Erreur lors de la récupération des archives"
+        console.error(error)
+        throw error
+      } finally {
+        this.loading = false
+      }
     }
   }
 })

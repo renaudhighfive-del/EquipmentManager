@@ -32,6 +32,7 @@ const router = createRouter({
         { path: 'pannes',         name: 'admin-pannes',         component: () => import('../views/admin/PannesView.vue') },
         { path: 'maintenances',   name: 'admin-maintenances',   component: () => import('../views/admin/MaintenancesView.vue') },
         { path: 'sinistres',      name: 'admin-sinistres',      component: () => import('../views/admin/SinistresView.vue') },
+        { path: 'archives',       name: 'admin-archives',       component: () => import('../views/admin/ArchivesView.vue') },
         { path: 'rapports',       name: 'admin-rapports',       component: () => import('../views/admin/RapportsView.vue') },
         { path: 'administration', name: 'admin-administration', component: () => import('../views/admin/AdministrationView.vue') },
         { path: 'profile',       name: 'admin-profile',       component: () => import('../views/shared/ProfileView.vue') },

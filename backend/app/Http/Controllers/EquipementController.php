@@ -9,50 +9,35 @@ use Illuminate\Support\Facades\Auth;
 class EquipementController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * list d'équipment
      */
-    public function index(Request $request)
+    public function index()
     {
         $user = Auth::user();
-        $query = Equipement::with(['categorie', 'currentAffectation.agent']);
+        $query = Equipement::with(['images', 'categorie', 'currentAffectation.agent'])
+            ->where('is_archived', false);
 
-        if ($user->role === 'admin') {
-            // Admin sees all
-        } elseif ($user->role === 'gestionnaire') {
-            // Gestionnaire sees only equipments in their category
-            if ($user->categorie_id) {
-                $query->where('categorie_id', $user->categorie_id);
-            } else {
-                // If no category assigned, maybe they see nothing or all? 
-                // Let's assume they see nothing if no category is assigned to them.
-                return response()->json([]);
-            }
-        } elseif ($user->role === 'agent') {
-            // Agent sees only equipments assigned to them
-            $query->whereHas('affectations', function ($q) use ($user) {
-                $q->whereHas('agent', function ($sq) use ($user) {
-                    $sq->where('user_id', $user->id);
-                })->where('statut', 'en_cours');
+        if ($user->role === 'agent') {
+            $query->whereHas('currentAffectation', function ($q) use ($user) {
+                $q->where('agent_id', $user->agent->id);
             });
         }
 
-        $equipements = $query->get();
-
-        return response()->json($equipements);
+        return response()->json($query->latest()->get());
     }
 
     /**
-     * Store a newly created resource in storage.
+     * create d'équipment
      */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'categorie_id' => 'required|exists:categories,id',
             'reference' => 'required|string|unique:equipements',
-            'numero_serie' => 'required|string|unique:equipements',
-            'code_inventaire' => 'required|string|unique:equipements',
             'marque' => 'required|string',
             'modele' => 'required|string',
+            'categorie_id' => 'required|exists:categories,id',
+            'numero_serie' => 'nullable|string',
+            'code_inventaire' => 'nullable|string',
             'fournisseur' => 'nullable|string',
             'date_acquisition' => 'nullable|date',
             'prix_achat' => 'nullable|numeric',
@@ -77,26 +62,25 @@ class EquipementController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * detail d'équipment
      */
     public function show(Equipement $equipement)
     {
-        $equipement->load(['categorie', 'affectations.agent', 'pannes', 'maintenances', 'mouvements']);
-        return response()->json($equipement);
+        return response()->json($equipement->load(['images', 'categorie', 'affectations.agent']));
     }
 
     /**
-     * Update
+     * update d'équipment
      */
     public function update(Request $request, Equipement $equipement)
     {
         $validated = $request->validate([
-            'categorie_id' => 'sometimes|exists:categories,id',
             'reference' => 'sometimes|string|unique:equipements,reference,' . $equipement->id,
-            'numero_serie' => 'sometimes|string|unique:equipements,numero_serie,' . $equipement->id,
-            'code_inventaire' => 'sometimes|string|unique:equipements,code_inventaire,' . $equipement->id,
             'marque' => 'sometimes|string',
             'modele' => 'sometimes|string',
+            'categorie_id' => 'sometimes|exists:categories,id',
+            'numero_serie' => 'nullable|string',
+            'code_inventaire' => 'nullable|string',
             'fournisseur' => 'nullable|string',
             'date_acquisition' => 'nullable|date',
             'prix_achat' => 'nullable|numeric',
@@ -124,7 +108,22 @@ class EquipementController extends Controller
     public function archive(Equipement $equipement)
     {
         $equipement->update(['is_archived' => true]);
-        return response()->json(['message' => 'Équipement archivé avec succès']);
+        return response()->json(['message' => 'Equipement archivé']);
+    }
+
+    public function unarchive(Equipement $equipement)
+    {
+        $equipement->update(['is_archived' => false]);
+        return response()->json($equipement->load('categorie'));
+    }
+
+    public function fetchArchives()
+    {
+        $archives = Equipement::with('categorie')
+            ->where('is_archived', true)
+            ->latest()
+            ->get();
+        return response()->json($archives);
     }
 
     /**
