@@ -27,9 +27,11 @@ class AffectationController extends Controller
             $validated = $request->validate([
                 'equipement_id' => 'required|exists:equipements,id',
                 'agent_id' => 'required|exists:agents,id',
-                'date_affectation' => 'required|date',
+                'date_affectation' => 'required|date|before_or_equal:today',
                 'photo_remise' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120',
                 'observations' => 'nullable|string',
+            ], [
+                'date_affectation.before_or_equal' => 'La date d\'affectation ne peut pas être une date future.',
             ]);
 
             // Vérifier si l'équipement est disponible
@@ -98,7 +100,7 @@ class AffectationController extends Controller
     {
         try {
             // Si c'est un retour d'équipement
-            if ($request->has('date_retour')) {
+            if ($request->has('date_retour') && $affectation->statut === 'en_cours') {
                 $validated = $request->validate([
                     'date_retour' => 'required|date',
                     'etat_retour' => 'required|string',
@@ -106,7 +108,6 @@ class AffectationController extends Controller
                     'observations' => 'nullable|string',
                 ]);
 
-                // Gestion de l'upload de la photo de retour
                 if ($request->hasFile('photo_retour')) {
                     $file = $request->file('photo_retour');
                     $filename = 'retour_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
@@ -115,7 +116,6 @@ class AffectationController extends Controller
                 }
 
                 $validated['statut'] = 'retourne';
-                
                 $affectation->update($validated);
 
                 return response()->json([
@@ -125,10 +125,30 @@ class AffectationController extends Controller
                 ], 200);
             }
 
+            // Sinon, c'est une modification générale
+            $validated = $request->validate([
+                'agent_id' => 'sometimes|required|exists:agents,id',
+                'date_affectation' => 'sometimes|required|date|before_or_equal:today',
+                'observations' => 'nullable|string',
+                'photo_remise' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+            ], [
+                'date_affectation.before_or_equal' => 'La date d\'affectation ne peut pas être une date future.',
+            ]);
+
+            if ($request->hasFile('photo_remise')) {
+                $file = $request->file('photo_remise');
+                $filename = 'remise_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs('affectations', $filename, 'public');
+                $validated['photo_remise'] = $path;
+            }
+
+            $affectation->update($validated);
+
             return response()->json([
-                'status' => 'error',
-                'message' => 'Action non reconnue'
-            ], 400);
+                'status' => 'success',
+                'message' => 'Affectation mise à jour avec succès',
+                'data' => $affectation->load(['equipement', 'agent'])
+            ], 200);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
@@ -139,7 +159,7 @@ class AffectationController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Une erreur est survenue lors du retour : ' . $e->getMessage()
+                'message' => 'Une erreur est survenue lors de la mise à jour : ' . $e->getMessage()
             ], 500);
         }
     }

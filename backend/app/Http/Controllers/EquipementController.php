@@ -19,13 +19,9 @@ class EquipementController extends Controller
         if ($user->role === 'admin') {
             // Admin sees all
         } elseif ($user->role === 'gestionnaire') {
-            // Gestionnaire sees only equipments in their category
+            // Gestionnaire sees only equipments in their category if assigned
             if ($user->categorie_id) {
                 $query->where('categorie_id', $user->categorie_id);
-            } else {
-                // If no category assigned, maybe they see nothing or all? 
-                // Let's assume they see nothing if no category is assigned to them.
-                return response()->json([]);
             }
         } elseif ($user->role === 'agent') {
             // Agent sees only equipments assigned to them
