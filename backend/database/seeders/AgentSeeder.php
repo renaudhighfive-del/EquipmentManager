@@ -20,7 +20,7 @@ class AgentSeeder extends Seeder
                 'email'      => 'a.dubois@entreprise.fr',
                 'direction'  => 'Logistique',
                 'service'    => 'Entrepôt A',
-                'poste'      => 'Agent terrain',
+                'poste'      => 'Agent',
                 'statut'     => 'actif',
             ],
             [
@@ -75,7 +75,7 @@ class AgentSeeder extends Seeder
                 'email'      => 'k.petit@entreprise.fr',
                 'direction'  => 'Logistique',
                 'service'    => 'Entrepôt A',
-                'poste'      => 'Agent terrain',
+                'poste'      => 'Agent',
                 'statut'     => 'inactif',
             ],
             [

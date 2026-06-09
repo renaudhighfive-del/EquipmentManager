@@ -4,11 +4,12 @@ import PageHeader from '../../components/layout/PageHeader.vue'
 import SideModal from '../../components/layout/SideModal.vue'
 import { useUserStore }  from '../../stores/user'
 import { useAgentStore } from '../../stores/agent'
+import api from '../../services/axios';
 import {
   UserPlus, Search, Power, PowerOff, Edit3, Loader2,
   ChevronDown, UserCheck, AlertCircle, CheckCircle2,
   Eye, Mail, Shield, Calendar, Smartphone, Package,
-  ArrowLeftRight, Clock, Hash
+  ArrowLeftRight, Clock, Hash, Tag, X
 } from 'lucide-vue-next'
 
 import { useAuthStore } from '../../stores/auth'
@@ -28,6 +29,14 @@ const filterRole   = ref('') // '' = tous
 const filterInactif = ref(false)
 const formError    = ref('')
 const formSuccess  = ref('')
+const categories   = ref([])
+const showCatDropdown = ref(false)
+
+const toggleCategory = (catId) => {
+  const idx = form.value.category_ids.indexOf(catId)
+  if (idx > -1) form.value.category_ids.splice(idx, 1)
+  else form.value.category_ids.push(catId)
+}
 
 // ── Formulaire ─────────────────────────────────────────────────────────────
 const emptyForm = () => ({
@@ -36,6 +45,7 @@ const emptyForm = () => ({
   name:     '',
   email:    '',
   password: '',
+  category_ids: [],
 })
 
 const form = ref(emptyForm())
@@ -108,19 +118,30 @@ const openCreate = async () => {
 }
 
 // ── Ouvrir modal édition ───────────────────────────────────────────────────
-const openEdit = (user) => {
+const openEdit = async (user) => {
   isEditMode.value  = true
   editUserId.value  = user.id
   formError.value   = ''
   formSuccess.value = ''
-  form.value = {
-    role:     user.role,
-    agent_id: null,
-    name:     user.name,
-    email:    user.email,
-    password: '',
+  
+  // On récupère le détail pour être sûr d'avoir les catégories
+  submitting.value = true
+  try {
+    const fullUser = await userStore.fetchUser(user.id)
+    form.value = {
+      role:     fullUser.role,
+      agent_id: null,
+      name:     fullUser.name,
+      email:    fullUser.email,
+      password: '',
+      category_ids: fullUser.categories?.map(c => Number(c.id)) || [],
+    }
+    showModal.value = true
+  } catch (err) {
+    console.error('Erreur chargement détail utilisateur:', err)
+  } finally {
+    submitting.value = false
   }
-  showModal.value = true
 }
 
 // ── Soumettre ──────────────────────────────────────────────────────────────
@@ -135,6 +156,7 @@ const submit = async () => {
       name:     form.value.name,
       email:    form.value.email,
       password: form.value.password || undefined,
+      category_ids: form.value.role === 'gestionnaire' ? form.value.category_ids : [],
     }
 
     if (form.value.role === 'agent' && form.value.agent_id && !isEditMode.value) {
@@ -186,7 +208,15 @@ const roleLabel = (role) => ({
 }[role] ?? role)
 
 // ── Init ───────────────────────────────────────────────────────────────────
-onMounted(() => userStore.fetchUsers())
+onMounted(async () => {
+  userStore.fetchUsers()
+  try {
+    const response = await api.get('/categories')
+    categories.value = response.data
+  } catch (err) {
+    console.error('Erreur chargement catégories:', err)
+  }
+})
 
 // ── Formatage ──────────────────────────────────────────────────────────────
 const formatDate = (dateStr) => {
@@ -434,8 +464,8 @@ const etatBadge = (etat) => ({
               class="w-full h-12 pl-4 pr-10 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 transition-all appearance-none disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <option value="admin">Administrateur</option>
-              <option value="gestionnaire">Gestionnaire de parc</option>
-              <option value="agent">Agent terrain</option>
+              <option value="gestionnaire">Gestionnaire</option>
+              <option value="agent">Agent</option>
             </select>
             <ChevronDown class="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
           </div>
@@ -494,6 +524,78 @@ const etatBadge = (etat) => ({
 
             <p class="text-[11px] text-blue-500/80 font-medium">
               Si vous sélectionnez un agent, son nom et email seront pré-remplis automatiquement.
+            </p>
+          </div>
+        </Transition>
+
+        <!-- 2bis. Sélection de catégories (uniquement rôle=gestionnaire) -->
+        <Transition
+          enter-active-class="transition-all duration-300 ease-out"
+          enter-from-class="opacity-0 -translate-y-2"
+          enter-to-class="opacity-100 translate-y-0"
+          leave-active-class="transition-all duration-200 ease-in"
+          leave-from-class="opacity-100 translate-y-0"
+          leave-to-class="opacity-0 -translate-y-2"
+        >
+          <div
+            v-if="form.role === 'gestionnaire'"
+            class="space-y-3 p-4 bg-amber-50/60 border border-amber-100 rounded-2xl"
+          >
+            <label class="text-xs font-bold text-amber-700 uppercase tracking-wider flex items-center gap-1.5">
+              <Tag class="w-3.5 h-3.5" />
+              Affecter des catégories à ce gestionnaire
+            </label>
+
+            <!-- Multi-select simulé pour "select" -->
+            <div class="relative">
+              <div 
+                class="min-h-[44px] p-2 bg-white border border-amber-200 rounded-xl flex flex-wrap gap-2 cursor-pointer hover:border-amber-400 transition-all"
+                @click="showCatDropdown = !showCatDropdown"
+              >
+                <div v-if="form.category_ids.length === 0" class="text-slate-400 text-sm py-1 px-2 italic">
+                  — Choisir une ou plusieurs catégories —
+                </div>
+                <div 
+                  v-for="catId in form.category_ids" 
+                  :key="catId"
+                  class="bg-amber-500 text-white px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 animate-in zoom-in duration-200"
+                >
+                  {{ categories.find(c => Number(c.id) === catId)?.nom }}
+                  <X @click.stop="toggleCategory(catId)" class="w-3 h-3 hover:text-amber-100" />
+                </div>
+                <ChevronDown class="ml-auto w-4 h-4 text-amber-400 self-center" :class="{ 'rotate-180': showCatDropdown }" />
+              </div>
+
+              <!-- Dropdown -->
+              <div 
+                v-if="showCatDropdown"
+                v-click-outside="() => showCatDropdown = false"
+                class="absolute z-50 w-full mt-2 bg-white border border-slate-200 rounded-2xl shadow-xl max-h-60 overflow-y-auto animate-in slide-in-from-top-2 duration-200"
+              >
+                <div 
+                  v-for="cat in categories" 
+                  :key="cat.id"
+                  @click="toggleCategory(Number(cat.id))"
+                  class="px-4 py-3 hover:bg-amber-50 cursor-pointer flex items-center justify-between group transition-colors"
+                >
+                  <span class="text-sm font-medium" :class="form.category_ids.includes(Number(cat.id)) ? 'text-amber-600 font-bold' : 'text-slate-700'">
+                    {{ cat.nom }}
+                  </span>
+                  <div 
+                    class="w-5 h-5 rounded-md border flex items-center justify-center transition-all"
+                    :class="form.category_ids.includes(Number(cat.id)) ? 'bg-amber-500 border-amber-500' : 'border-slate-300 group-hover:border-amber-400'"
+                  >
+                    <CheckCircle2 v-if="form.category_ids.includes(Number(cat.id))" class="w-3.5 h-3.5 text-white" />
+                  </div>
+                </div>
+                <div v-if="categories.length === 0" class="p-4 text-center text-slate-400 text-xs italic">
+                  Aucune catégorie disponible.
+                </div>
+              </div>
+            </div>
+
+            <p class="text-[11px] text-amber-600/80 font-medium">
+              Ce gestionnaire pourra uniquement voir et gérer les équipements des catégories sélectionnées.
             </p>
           </div>
         </Transition>
@@ -620,6 +722,24 @@ const etatBadge = (etat) => ({
               </div>
               <p class="text-sm font-bold text-slate-900">{{ formatDate(userStore.selectedUser.created_at) }}</p>
             </div>
+          </div>
+        </div>
+
+        <!-- ── Catégories gérées (uniquement gestionnaire) ────────────── -->
+        <div v-if="userStore.selectedUser.role === 'gestionnaire'" class="space-y-3">
+          <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Catégories gérées</p>
+          <div v-if="userStore.selectedUser.categories?.length" class="flex flex-wrap gap-2">
+            <div 
+              v-for="cat in userStore.selectedUser.categories" 
+              :key="cat.id"
+              class="px-3 py-1.5 bg-amber-50 border border-amber-100 rounded-xl flex items-center gap-2 shadow-sm"
+            >
+              <Tag class="w-3.5 h-3.5 text-amber-500" />
+              <span class="text-xs font-bold text-amber-700">{{ cat.nom }}</span>
+            </div>
+          </div>
+          <div v-else class="p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-center">
+            <p class="text-xs font-medium text-slate-400 italic">Aucune catégorie affectée</p>
           </div>
         </div>
 

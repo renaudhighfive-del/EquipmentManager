@@ -1,8 +1,9 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import PageHeader from '../../components/layout/PageHeader.vue';
 import SideModal from '../../components/layout/SideModal.vue';
 import { useAgentsStore } from '../../stores/agents';
+import { useAuthStore } from '../../stores/auth';
 import {
   Search,
   Filter,
@@ -20,12 +21,28 @@ import {
 } from 'lucide-vue-next';
  
 const agentsStore = useAgentsStore();
+const authStore = useAuthStore();
  
 const showFiche = ref(false);
 const showForm = ref(false);
 const editingAgent = ref(null);
 const searchQuery = ref('');
 const formLoading = ref(false);
+
+const filteredAgents = computed(() => {
+  return agentsStore.agents.filter(agent => {
+    // Si c'est un gestionnaire, on filtre les agents qui ont du matériel dans ses catégories
+    if (authStore.user?.role === 'gestionnaire') {
+      const allowedCategoryIds = authStore.user.categories?.map(c => Number(c.id)) || [];
+      // On garde l'agent si au moins une de ses affectations correspond à une catégorie autorisée
+      const hasAllowedEquipment = agent.affectations?.some(aff => 
+        allowedCategoryIds.includes(Number(aff.equipement?.categorie_id))
+      );
+      if (!hasAllowedEquipment) return false;
+    }
+    return true;
+  });
+});
  
 const formData = ref({
   matricule: '',
@@ -123,7 +140,7 @@ onMounted(() => {
     <!-- Page Header -->
     <PageHeader
       title="Agents"
-      :subtitle="`${agentsStore.total} agents au total`"
+      :subtitle="`${filteredAgents.length} agents affichés`"
     >
       <template #actions>
         <div class="flex items-center gap-3">
@@ -163,7 +180,7 @@ onMounted(() => {
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-50">
-          <tr v-for="agent in agentsStore.agents" :key="agent.id" class="group hover:bg-slate-50/50 transition-colors">
+          <tr v-for="agent in filteredAgents" :key="agent.id" class="group hover:bg-slate-50/50 transition-colors">
             <td class="px-8 py-5">
               <div class="flex items-center gap-4">
                 <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-primary-100 to-primary-200 border border-primary-300 flex items-center justify-center text-primary-700 font-bold text-lg overflow-hidden">
@@ -479,5 +496,3 @@ onMounted(() => {
     </SideModal>
   </div>
 </template>
- 
- 

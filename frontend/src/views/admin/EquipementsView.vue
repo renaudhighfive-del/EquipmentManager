@@ -3,6 +3,7 @@ import { ref, onMounted, computed, reactive, watch } from 'vue';
 import PageHeader from '../../components/layout/PageHeader.vue';
 import SideModal from '../../components/layout/SideModal.vue';
 import { useEquipementStore } from '../../stores/equipement';
+import { useAuthStore } from '../../stores/auth';
 import api from '../../services/axios';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
@@ -36,6 +37,7 @@ import {
 } from 'lucide-vue-next';
 
 const equipementStore = useEquipementStore();
+const authStore = useAuthStore();
 const toast = useToast();
 const confirm = useConfirm();
 
@@ -57,6 +59,14 @@ const selectedStatus = ref('');
 
 const filteredEquipements = computed(() => {
   return equipementStore.equipements.filter(equip => {
+    // Restriction pour le gestionnaire
+    if (authStore.user?.role === 'gestionnaire') {
+      const allowedCategoryIds = authStore.user.categories?.map(c => Number(c.id)) || [];
+      if (!allowedCategoryIds.includes(Number(equip.categorie_id))) {
+        return false;
+      }
+    }
+
     const matchesSearch = !searchQuery.value || 
       equip.reference?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       equip.numero_serie?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
@@ -140,7 +150,15 @@ const resetForm = () => {
 const fetchCategories = async () => {
   try {
     const response = await api.get('/categories');
-    categories.value = response.data;
+    let allCategories = response.data;
+    
+    // Si c'est un gestionnaire, on ne garde que ses catégories
+     if (authStore.user?.role === 'gestionnaire') {
+       const allowedIds = authStore.user.categories?.map(c => Number(c.id)) || [];
+       categories.value = allCategories.filter(cat => allowedIds.includes(Number(cat.id)));
+     } else {
+      categories.value = allCategories;
+    }
   } catch (error) {
     console.error('Error fetching categories:', error);
     toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les catégories', life: 3000 });
@@ -332,7 +350,7 @@ const openFiche = (equip) => {
     <PageHeader title="Équipements" subtitle="Catalogue complet du parc">
       <template #actions>
         <div class="flex items-center gap-3">
-          <button @click="showCategoriesModal = true" class="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm">
+          <button v-if="authStore.user?.role === 'admin'" @click="showCategoriesModal = true" class="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm">
             <Tags class="w-4 h-4" />
             Catégories
           </button>
@@ -447,9 +465,11 @@ const openFiche = (equip) => {
               <div class="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400">
                 <User class="w-3.5 h-3.5" />
               </div>
-              <div>
-                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Assigné</p>
-                <p class="text-xs font-bold text-slate-700">{{ equip.current_affectation ? 'Oui' : 'Non' }}</p>
+              <div class="min-w-0">
+                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Assigné à</p>
+                <p class="text-xs font-bold text-slate-700 truncate">
+                  {{ equip.current_affectation?.agent?.nom || equip.current_affectation?.agent?.name || 'Disponible' }}
+                </p>
               </div>
             </div>
           </div>
