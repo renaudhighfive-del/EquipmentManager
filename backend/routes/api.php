@@ -14,6 +14,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PerteCasseController;
 use App\Http\Controllers\MaintenanceController;
 
+use App\Http\Controllers\RapportController;
+
 // ── Auth ──────────────────────────────────────────────────────────────────────
 Route::prefix('auth')->group(function () {
     Route::post('/login',      [AuthController::class, 'login']);
@@ -81,6 +83,9 @@ Route::middleware(['auth:sanctum', 'check.active'])->group(function () {
 
     // Journal des mouvements
     Route::get('mouvements', [MouvementController::class, 'index']);
+
+    // Rapports & statistiques
+    Route::get('rapports/stats', [RapportController::class, 'stats']);
 });
 
 // ── Route de test ─────────────────────────────────────────────────────────────

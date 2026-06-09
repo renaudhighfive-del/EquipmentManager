@@ -12,7 +12,6 @@ import {
   Archive,
   BarChart3, 
   Settings,
-  Sparkles,
   Smartphone,
   CircleUser,
   X
@@ -144,15 +143,16 @@ const menuItems = computed(() => {
     <div class="p-3 mt-auto">
       <div 
         v-if="!isCollapsed || isOpenMobile"
-        class="bg-primary-600 rounded-2xl p-5 text-white relative overflow-hidden cursor-pointer shadow-xl shadow-primary-200 animate-in fade-in zoom-in duration-300"
+        class="bg-primary-600 rounded-2xl p-4 text-white cursor-pointer shadow-xl shadow-primary-200 hover:bg-primary-700 transition-colors animate-in fade-in zoom-in duration-300 flex items-center justify-center gap-2"
       >
-        <div class="relative z-10">
-          
+        <div class="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-[11px] font-black flex-shrink-0">
+          ?
         </div>
+        <span class="text-sm font-bold">Besoin d'aide ?</span>
       </div>
       <div v-else class="flex justify-center py-4">
-        <div class="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center text-primary-600 cursor-pointer hover:bg-primary-200 transition-colors">
-          <Sparkles class="w-5 h-5" />
+        <div class="w-10 h-10 rounded-xl bg-primary-600 flex items-center justify-center text-white cursor-pointer hover:bg-primary-700 transition-colors shadow-lg shadow-primary-200">
+          <span class="text-sm font-black">?</span>
         </div>
       </div>
     </div>
