@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useToast } from 'primevue/usetoast';
 import PageHeader from '../../components/layout/PageHeader.vue';
 import SideModal from '../../components/layout/SideModal.vue';
 import api from '../../services/axios';
@@ -9,9 +10,7 @@ import {
   Plus, 
   ArrowLeftRight, 
   History,
-  CheckCircle2,
-  Clock,
-  RotateCcw,
+ 
   Camera,
   Search,
   Filter,
@@ -20,14 +19,17 @@ import {
   User,
   Briefcase,
   Smartphone,
-  ChevronRight
+  ChevronRight,
+  Pencil
 } from 'lucide-vue-next';
 
 const affectationStore = useAffectationStore();
-const { affectations, loading, error: storeError ,currentAffectation } = storeToRefs(affectationStore);
+const { affectations, loading, error: storeError ,currentAffectation, successMessage } = storeToRefs(affectationStore);
+const toast = useToast();
 
 const showReturnModal = ref(false);
 const showCreateModal = ref(false);
+const showEditModal = ref(false);
 const selectedAffectation = ref(null);
 const submitting = ref(false);
 
@@ -41,6 +43,11 @@ const returnPhotoInput = ref(null);
 const returnPhotoPreview = ref(null);
 const returnPhotoFile = ref(null);
 
+// Refs pour la photo d'édition
+const editPhotoInput = ref(null);
+const editPhotoPreview = ref(null);
+const editPhotoFile = ref(null);
+
 const localError = ref(null);
 
 //Pour le voir detail
@@ -49,15 +56,23 @@ const showFiche=ref(false);
 const availableEquipements = ref([]);
 const agents = ref([]);
 
+const today = new Date().toISOString().split('T')[0];
+
 const newAffectation = ref({
   equipement_id: '',
   agent_id: '',
-  date_affectation: new Date().toISOString().split('T')[0],
+  date_affectation: today,
+  observations: ''
+});
+
+const editForm = ref({
+  agent_id: '',
+  date_affectation: '',
   observations: ''
 });
 
 const returnForm = ref({
-  date_retour: new Date().toISOString().split('T')[0],
+  date_retour: today,
   etat_retour: 'Bon état',
   observations: ''
 });
@@ -68,6 +83,10 @@ const triggerFileInput = () => {
 
 const triggerReturnFileInput = () => {
   returnPhotoInput.value.click();
+};
+
+const triggerEditFileInput = () => {
+  editPhotoInput.value.click();
 };
 
 const onFileChange = (e) => {
@@ -94,11 +113,27 @@ const onReturnFileChange = (e) => {
   }
 };
 
+const onEditFileChange = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    editPhotoFile.value = file;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      editPhotoPreview.value = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+const showToast = (severity, summary, detail) => {
+  toast.add({ severity, summary, detail, life: 3000 });
+};
+
 const fetchInitialData = async () => {
   try {
     const [equipRes, agentRes] = await Promise.all([
       api.get('/equipements'),
-      api.get('/agents')
+      api.get('/agents?statut=actif')
     ]);
     // On accepte uniquement 'neuf' comme état disponible pour une nouvelle affectation
     availableEquipements.value = equipRes.data.filter(e => e.etat === 'neuf');
@@ -109,12 +144,16 @@ const fetchInitialData = async () => {
       agentsTotal: agents.value.length,
     });
   } catch (error) {
+    showToast('error', 'Erreur', 'Impossible de charger les données initiales');
     console.error('Erreur lors du chargement des données initiales', error);
   }
 };
 
-onMounted(() => {
-  affectationStore.fetchAffectations();
+onMounted(async () => {
+  const success = await affectationStore.fetchAffectations();
+  if (!success) {
+    showToast('error', 'Erreur', storeError.value);
+  }
   fetchInitialData();
 });
 
@@ -129,6 +168,20 @@ const openReturnModal = (aff) => {
   returnPhotoPreview.value = null;
   localError.value = null;
   showReturnModal.value = true;
+};
+
+const openEditModal = async (aff) => {
+  await fetchInitialData(); // Charger les agents si pas déjà fait
+  selectedAffectation.value = aff;
+  editForm.value = {
+    agent_id: aff.agent_id,
+    date_affectation: aff.date_affectation.split('T')[0],
+    observations: aff.observations || ''
+  };
+  editPhotoFile.value = null;
+  editPhotoPreview.value = aff.photo_remise_url;
+  localError.value = null;
+  showEditModal.value = true;
 };
 
 const submitReturn = async () => {
@@ -150,12 +203,46 @@ const submitReturn = async () => {
 
     const success = await affectationStore.returnAffectation(selectedAffectation.value.id, formData);
     if (success) {
+      showToast('success', 'Succès', successMessage.value);
       showReturnModal.value = false;
     } else {
+      showToast('error', 'Erreur', storeError.value);
       localError.value = storeError.value;
     }
   } catch (error) {
+    showToast('error', 'Erreur', "Une erreur est survenue lors du retour.");
     localError.value = "Une erreur est survenue lors du retour.";
+    console.error(error);
+  } finally {
+    submitting.value = false;
+  }
+};
+
+const submitEdit = async () => {
+  localError.value = null;
+  try {
+    submitting.value = true;
+    
+    const formData = new FormData();
+    formData.append('_method', 'PATCH');
+    formData.append('agent_id', editForm.value.agent_id);
+    formData.append('date_affectation', editForm.value.date_affectation);
+    formData.append('observations', editForm.value.observations || '');
+    if (editPhotoFile.value) {
+      formData.append('photo_remise', editPhotoFile.value);
+    }
+
+    const success = await affectationStore.updateAffectation(selectedAffectation.value.id, formData);
+    if (success) {
+      showToast('success', 'Succès', successMessage.value);
+      showEditModal.value = false;
+    } else {
+      showToast('error', 'Erreur', storeError.value);
+      localError.value = storeError.value;
+    }
+  } catch (error) {
+    showToast('error', 'Erreur', "Une erreur est survenue lors de la modification.");
+    localError.value = "Une erreur est survenue lors de la modification.";
     console.error(error);
   } finally {
     submitting.value = false;
@@ -164,7 +251,10 @@ const submitReturn = async () => {
 
 const openFiche = async (id) => {
   showFiche.value = true;
-  await affectationStore.fetchAffectationById(id);
+  const success = await affectationStore.fetchAffectationById(id);
+  if (!success) {
+    showToast('error', 'Erreur', storeError.value);
+  }
 };
 
 const openCreateModal = () => {
@@ -192,6 +282,7 @@ const submitAffectation = async () => {
 
     const success = await affectationStore.createAffectation(formData);
     if (success) {
+      showToast('success', 'Succès', successMessage.value);
       showCreateModal.value = false;
       // Reset form
       newAffectation.value = {
@@ -203,9 +294,11 @@ const submitAffectation = async () => {
       photoFile.value = null;
       photoPreview.value = null;
     } else {
+      showToast('error', 'Erreur', storeError.value);
       localError.value = storeError.value;
     }
   } catch (error) {
+    showToast('error', 'Erreur', "Une erreur inattendue est survenue.");
     localError.value = "Une erreur inattendue est survenue.";
     console.error('Erreur lors de la création de l\'affectation', error);
   } finally {
@@ -291,8 +384,18 @@ const submitAffectation = async () => {
                 <button 
                   @click="openFiche(aff.id)"
                   class="text-xs font-bold text-slate-600 hover:text-primary-600 transition-colors py-2 px-3 rounded-lg hover:bg-primary-50"
+                  title="Voir détails"
                 >
                   Détails
+                </button>
+                
+                <button 
+                  v-if="aff.statut === 'en_cours'"
+                  @click="openEditModal(aff)"
+                  class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  title="Modifier l'affectation"
+                >
+                  <Pencil class="w-4 h-4" />
                 </button>
                 
                 <button 
@@ -361,6 +464,7 @@ const submitAffectation = async () => {
             type="date" 
             v-model="newAffectation.date_affectation"
             required
+            :max="today"
             class="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500/20"
           >
         </div>
@@ -424,6 +528,107 @@ const submitAffectation = async () => {
     </SideModal>
 
     <SideModal 
+      :show="showEditModal" 
+      title="Modifier l'affectation" 
+      mode="center"
+      @close="showEditModal = false"
+    >
+      <form @submit.prevent="submitEdit" v-if="selectedAffectation" class="space-y-6">
+        <div v-if="localError" class="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-start gap-3">
+          <div class="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <X class="w-3 h-3 text-red-600" />
+          </div>
+          <p class="text-sm font-medium text-red-600">{{ localError }}</p>
+        </div>
+
+        <div class="p-5 bg-blue-600 rounded-2xl border border-blue-500 mb-6 text-white shadow-lg shadow-blue-200">
+          <p class="text-[10px] font-bold text-blue-100 uppercase tracking-widest mb-1">Équipement</p>
+          <p class="text-base font-bold">{{ selectedAffectation.equipement?.modele }} ({{ selectedAffectation.equipement?.reference }})</p>
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Agent</label>
+          <select 
+            v-model="editForm.agent_id"
+            required
+            class="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500/20"
+          >
+            <option v-for="agent in agents" :key="agent.id" :value="agent.id">
+              {{ agent.nom }} {{ agent.prenom }}
+            </option>
+          </select>
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Date d'affectation</label>
+          <input 
+            type="date" 
+            v-model="editForm.date_affectation"
+            required
+            :max="today"
+            class="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500/20"
+          >
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Observations</label>
+          <textarea 
+            v-model="editForm.observations"
+            rows="3" 
+            placeholder="Notes éventuelles..."
+            class="w-full p-4 bg-white border border-slate-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-primary-500/20 resize-none"
+          ></textarea>
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Photo remise (laisser vide pour ne pas modifier)</label>
+          <input 
+            type="file" 
+            ref="editPhotoInput" 
+            class="hidden" 
+            accept="image/*" 
+            @change="onEditFileChange"
+          >
+          <div 
+            @click="triggerEditFileInput"
+            class="border-2 border-dashed border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center gap-2 hover:bg-slate-50 transition-colors cursor-pointer group overflow-hidden relative"
+          >
+            <template v-if="editPhotoPreview">
+              <img :src="editPhotoPreview" class="absolute inset-0 w-full h-full object-cover" />
+              <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <Camera class="w-8 h-8 text-white" />
+              </div>
+            </template>
+            <template v-else>
+              <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Camera class="w-5 h-5 text-slate-400" />
+              </div>
+              <p class="text-xs font-bold text-slate-500">Modifier la photo</p>
+            </template>
+          </div>
+        </div>
+
+        <div class="pt-4 flex gap-3">
+          <button 
+            type="button"
+            @click="showEditModal = false" 
+            class="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+          >
+            Annuler
+          </button>
+          <button 
+            type="submit"
+            :disabled="submitting"
+            class="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 flex items-center justify-center gap-2"
+          >
+            <Loader2 v-if="submitting" class="w-4 h-4 animate-spin" />
+            {{ submitting ? 'Modification...' : 'Enregistrer les modifications' }}
+          </button>
+        </div>
+      </form>
+    </SideModal>
+
+    <SideModal 
       :show="showReturnModal" 
       title="Retour d'équipement" 
       mode="center"
@@ -449,6 +654,7 @@ const submitAffectation = async () => {
               type="date" 
               v-model="returnForm.date_retour"
               required
+              :max="today"
               class="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500/20"
             >
           </div>
