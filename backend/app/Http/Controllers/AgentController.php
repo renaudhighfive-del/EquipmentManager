@@ -4,24 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Models\Agent;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class AgentController extends Controller
 {
-    public function index(Request $request)
+    /**
+     * Liste tous les agents — pas de filtre backend, le frontend filtre localement.
+     */
+    public function index()
     {
-        $query = Agent::with(['user', 'affectations']);
-
-        if ($request->has('search')) {
-            $search = $request->input('search');
-            $query->where(function ($q) use ($search) {
-                $q->where('nom', 'like', "%{$search}%")
-                  ->orWhere('prenom', 'like', "%{$search}%")
-                  ->orWhere('matricule', 'like', "%{$search}%");
-            });
-        }
-
-        $agents = $query->get();
+        $agents = Agent::with(['user', 'affectations.equipement'])->get();
 
         return response()->json([
             'agents' => $agents,
@@ -29,94 +23,131 @@ class AgentController extends Controller
         ]);
     }
 
+    /**
+     * Création d'un agent.
+     * Le matricule est généré automatiquement côté backend.
+     * L'image est uploadée si fournie.
+     */
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'matricule' => 'required|string|max:50|unique:agents',
-            'nom' => 'required|string|max:100',
-            'prenom' => 'required|string|max:100',
+            'nom'       => 'required|string|max:100',
+            'prenom'    => 'required|string|max:100',
             'telephone' => 'nullable|string|max:20',
-            'email' => 'nullable|string|email|max:255',
+            'email'     => 'nullable|string|email|max:255',
             'direction' => 'nullable|string|max:150',
-            'service' => 'nullable|string|max:150',
-            'poste' => 'nullable|string|max:150',
+            'service'   => 'nullable|string|max:150',
+            'poste'     => 'nullable|string|max:150',
+            'photo'     => 'nullable|image|mimes:jpeg,png,webp|max:2048',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
+        // Génération automatique du matricule : MAT-YYYY-XXXXX
+        $year      = now()->format('Y');
+        $lastAgent = Agent::whereYear('created_at', $year)->latest()->first();
+        $sequence  = $lastAgent
+            ? (int) substr($lastAgent->matricule, -5) + 1
+            : 1;
+        $matricule = 'MAT-' . $year . '-' . str_pad($sequence, 5, '0', STR_PAD_LEFT);
+
+        // Upload photo
+        $photoPath = null;
+        if ($request->hasFile('photo')) {
+            $photoPath = $request->file('photo')->store('agents/photos', 'public');
+        }
+
         $agent = Agent::create([
-            'matricule' => $request->matricule,
-            'nom' => $request->nom,
-            'prenom' => $request->prenom,
-            'telephone' => $request->telephone,
-            'email' => $request->email,
-            'direction' => $request->direction,
-            'service' => $request->service,
-            'poste' => $request->poste,
-            'statut' => 'actif',
+            'matricule'  => $matricule,
+            'nom'        => $request->input('nom'),
+            'prenom'     => $request->input('prenom'),
+            'telephone'  => $request->input('telephone'),
+            'email'      => $request->input('email'),
+            'direction'  => $request->input('direction'),
+            'service'    => $request->input('service'),
+            'poste'      => $request->input('poste'),
+            'statut'     => 'actif',
+            'photo'      => $photoPath,
         ]);
 
         return response()->json([
             'message' => 'Agent créé avec succès',
-            'agent' => $agent->load(['user', 'affectations'])
+            'agent'   => $agent->load(['user', 'affectations']),
         ], 201);
     }
 
+    /**
+     * Détail d'un agent.
+     */
     public function show(Agent $agent)
     {
         return response()->json([
-            'agent' => $agent->load(['user', 'affectations'])
+            'agent' => $agent->load(['user', 'affectations.equipement']),
         ]);
     }
 
+    /**
+     * Mise à jour d'un agent (admin uniquement).
+     * Supporte le remplacement de photo.
+     */
     public function update(Request $request, Agent $agent)
     {
         $validator = Validator::make($request->all(), [
-            'matricule' => 'sometimes|required|string|max:50|unique:agents,matricule,' . $agent->id,
-            'nom' => 'sometimes|required|string|max:100',
-            'prenom' => 'sometimes|required|string|max:100',
+            'nom'       => 'sometimes|required|string|max:100',
+            'prenom'    => 'sometimes|required|string|max:100',
             'telephone' => 'nullable|string|max:20',
-            'email' => 'nullable|string|email|max:255',
+            'email'     => 'nullable|string|email|max:255',
             'direction' => 'nullable|string|max:150',
-            'service' => 'nullable|string|max:150',
-            'poste' => 'nullable|string|max:150',
+            'service'   => 'nullable|string|max:150',
+            'poste'     => 'nullable|string|max:150',
+            'statut'    => 'in:actif,inactif',
+            'photo'     => 'nullable|image|mimes:jpeg,png,webp|max:2048',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $agent->update($request->only([
-            'matricule', 'nom', 'prenom', 'telephone', 'email', 'direction', 'service', 'poste'
-        ]));
+        $data = $request->only(['nom', 'prenom', 'telephone', 'email', 'direction', 'service', 'poste', 'statut']);
+
+        if ($request->hasFile('photo')) {
+            // Supprimer l'ancienne photo
+            if ($agent->photo) {
+                Storage::disk('public')->delete($agent->photo);
+            }
+            $data['photo'] = $request->file('photo')->store('agents/photos', 'public');
+        }
+
+        $agent->update($data);
 
         return response()->json([
             'message' => 'Agent mis à jour',
-            'agent' => $agent->load(['user', 'affectations'])
+            'agent'   => $agent->load(['user', 'affectations']),
         ]);
     }
 
     public function desactiver(Agent $agent)
     {
-        $agent->statut = 'inactif';
-        $agent->save();
+        $agent->update(['statut' => 'inactif']);
 
-        return response()->json([
-            'message' => 'Agent désactivé',
-            'agent' => $agent
-        ]);
+        // Désactiver le compte user lié si existant
+        if ($agent->user) {
+            $agent->user->update(['is_active' => false]);
+        }
+
+        return response()->json(['message' => 'Agent désactivé', 'agent' => $agent]);
     }
 
     public function reactiver(Agent $agent)
     {
-        $agent->statut = 'actif';
-        $agent->save();
+        $agent->update(['statut' => 'actif']);
 
-        return response()->json([
-            'message' => 'Agent réactivé',
-            'agent' => $agent
-        ]);
+        if ($agent->user) {
+            $agent->user->update(['is_active' => true]);
+        }
+
+        return response()->json(['message' => 'Agent réactivé', 'agent' => $agent]);
     }
 }

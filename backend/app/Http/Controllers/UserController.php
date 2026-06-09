@@ -152,22 +152,33 @@ class UserController extends Controller
     }
 
     /**
-     * Mise à jour du profil de l'utilisateur connecté (nom, email).
+     * Mise à jour du profil de l'utilisateur connecté (nom, email, avatar).
      */
     public function updateProfile(Request $request)
     {
         $user = $request->user();
 
         $validator = Validator::make($request->all(), [
-            'name'  => 'sometimes|required|string|max:255',
-            'email' => "sometimes|required|email|max:255|unique:users,email,{$user->id}",
+            'name'   => 'sometimes|required|string|max:255',
+            'email'  => "sometimes|required|email|max:255|unique:users,email,{$user->id}",
+            'avatar' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $user->update($request->only(['name', 'email']));
+        $data = $request->only(['name', 'email']);
+
+        if ($request->hasFile('avatar')) {
+            // Supprimer l'ancien avatar
+            if ($user->avatar) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar);
+            }
+            $data['avatar'] = $request->file('avatar')->store('users/avatars', 'public');
+        }
+
+        $user->update($data);
 
         return response()->json([
             'message' => 'Profil mis à jour avec succès',

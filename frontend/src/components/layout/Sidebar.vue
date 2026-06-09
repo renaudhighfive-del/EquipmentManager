@@ -109,21 +109,21 @@ const menuItems = computed(() => {
         v-for="item in menuItems" 
         :key="item.path"
         :to="item.path"
-        class="flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group relative whitespace-nowrap"
+        class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative whitespace-nowrap"
         :class="[
           route.path === item.path 
-            ? 'bg-primary-50 text-primary-600 font-semibold' 
-            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+            ? 'bg-primary-600 text-white font-semibold shadow-lg shadow-primary-200' 
+            : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
         ]"
       >
         <component 
           :is="item.icon" 
-          class="w-6 h-6 transition-colors flex-shrink-0"
-          :class="route.path === item.path ? 'text-primary-600' : 'text-slate-400 group-hover:text-slate-600'"
+          class="w-5 h-5 transition-colors flex-shrink-0"
+          :class="route.path === item.path ? 'text-white' : 'text-slate-400 group-hover:text-slate-700'"
         />
         <span 
           v-if="!isCollapsed || isOpenMobile" 
-          class="animate-in fade-in slide-in-from-left-2 duration-300"
+          class="text-sm animate-in fade-in slide-in-from-left-2 duration-300"
         >
           {{ item.label }}
         </span>
@@ -131,7 +131,7 @@ const menuItems = computed(() => {
         <!-- Tooltip mode réduit -->
         <div 
           v-if="isCollapsed && !isOpenMobile"
-          class="absolute left-full ml-4 px-3 py-2 bg-slate-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap"
+          class="absolute left-full ml-4 px-3 py-2 bg-slate-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap shadow-xl"
         >
           {{ item.label }}
         </div>

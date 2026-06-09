@@ -28,6 +28,7 @@ Route::middleware(['auth:sanctum', 'check.active'])->group(function () {
 
     // Profil de l'utilisateur connecté (AVANT apiResource pour éviter les conflits)
     Route::put('profile',          [UserController::class, 'updateProfile']);
+    Route::post('profile',         [UserController::class, 'updateProfile']); // FormData (_method=PUT)
     Route::put('profile/password', [UserController::class, 'changePassword']);
 
     // Gestion utilisateurs (Admin)

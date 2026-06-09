@@ -4,13 +4,25 @@ import { useAuthStore } from '../../stores/auth'
 import { useUserStore } from '../../stores/user'
 import PageHeader from '../../components/layout/PageHeader.vue'
 import {
-  User, Mail, Shield, Lock, Eye, EyeOff, Check, AlertCircle,
-  CheckCircle2, LogOut, Clock, Calendar, Smartphone, Package,
-  KeyRound, Pencil, X
+  User, Lock, Eye, EyeOff, Check, AlertCircle,
+  CheckCircle2, LogOut, Calendar, KeyRound, X, Camera
 } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
 const userStore = useUserStore()
+
+// ── Avatar upload ────────────────────────────────────────────────────────
+const avatarFile    = ref(null)
+const avatarPreview = ref(
+  authStore.user?.avatar ? `/storage/${authStore.user.avatar}` : null
+)
+
+const handleAvatarChange = (e) => {
+  const file = e.target.files[0]
+  if (!file) return
+  avatarFile.value    = file
+  avatarPreview.value = URL.createObjectURL(file)
+}
 
 // ── Infos profil ────────────────────────────────────────────────────────
 const profileForm = ref({
@@ -59,17 +71,37 @@ const formatDate = (d) => {
 
 // ── Soumettre profil ─────────────────────────────────────────────────────
 const submitProfile = async () => {
-  profileError.value   = ''
-  profileSuccess.value = ''
+  profileError.value      = ''
+  profileSuccess.value    = ''
   profileSubmitting.value = true
   try {
-    const updated = await userStore.updateProfile({
-      name:  profileForm.value.name,
-      email: profileForm.value.email,
-    })
+    let payload
+
+    if (avatarFile.value) {
+      // Utiliser FormData si un avatar est sélectionné
+      // Laravel ne supporte pas multipart sur PUT → POST + _method
+      payload = new FormData()
+      payload.append('_method', 'PUT')
+      payload.append('name',  profileForm.value.name)
+      payload.append('email', profileForm.value.email)
+      payload.append('avatar', avatarFile.value)
+    } else {
+      payload = {
+        name:  profileForm.value.name,
+        email: profileForm.value.email,
+      }
+    }
+
+    const updated = await userStore.updateProfile(payload)
     // Sync auth store
     authStore.user = { ...authStore.user, ...updated }
     localStorage.setItem('user', JSON.stringify(authStore.user))
+    // Reset le fichier sélectionné après succès
+    avatarFile.value = null
+    // Mettre à jour le preview avec l'URL serveur
+    if (updated.avatar) {
+      avatarPreview.value = `/storage/${updated.avatar}`
+    }
     profileSuccess.value = 'Informations mises à jour.'
   } catch (err) {
     const errors = err.response?.data?.errors
@@ -327,15 +359,43 @@ onMounted(() => {
 
         <!-- Carte identité -->
         <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-7 text-center">
-          <!-- Avatar -->
-          <div class="w-20 h-20 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white text-3xl font-bold shadow-xl shadow-primary-100 mx-auto mb-4">
-            {{ authStore.user?.name?.charAt(0)?.toUpperCase() }}
+          <!-- Avatar avec upload -->
+          <div class="relative inline-block mb-4 group">
+            <div class="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-xl mx-auto bg-gradient-to-br from-primary-500 to-primary-600">
+              <img
+                v-if="avatarPreview"
+                :src="avatarPreview"
+                class="w-full h-full object-cover"
+                :alt="authStore.user?.name"
+              >
+              <div v-else class="w-full h-full flex items-center justify-center text-white text-3xl font-bold">
+                {{ authStore.user?.name?.charAt(0)?.toUpperCase() }}
+              </div>
+            </div>
+            <!-- Bouton overlay -->
+            <label class="absolute -bottom-1 -right-1 w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:bg-primary-700 transition-colors">
+              <Camera class="w-4 h-4 text-white" />
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                class="hidden"
+                @change="handleAvatarChange"
+              >
+            </label>
           </div>
+
           <h3 class="text-xl font-bold text-slate-900">{{ authStore.user?.name }}</h3>
           <span :class="['inline-block mt-1.5 px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider', roleBadgeClass(authStore.user?.role)]">
             {{ roleLabel(authStore.user?.role) }}
           </span>
           <p class="text-sm text-slate-500 mt-3 font-medium">{{ authStore.user?.email }}</p>
+
+          <!-- Indication si photo sélectionnée non encore sauvegardée -->
+          <p v-if="avatarFile" class="text-[11px] text-amber-600 font-medium mt-3 flex items-center justify-center gap-1.5">
+            <span class="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
+            Photo non sauvegardée — cliquez sur "Enregistrer"
+          </p>
+          <p v-else class="text-[11px] text-slate-400 mt-2">Cliquez sur l'icône pour changer la photo</p>
         </div>
 
         <!-- Informations du compte -->

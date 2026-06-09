@@ -82,7 +82,12 @@ export const useUserStore = defineStore('user', {
 
     async updateProfile(data) {
       try {
-        const response = await api.put('/profile', data)
+        // Si FormData (upload avatar) → POST avec _method=PUT
+        // Si objet JSON simple → PUT direct
+        const isFormData = data instanceof FormData
+        const response = isFormData
+          ? await api.post('/profile', data, { headers: { 'Content-Type': 'multipart/form-data' } })
+          : await api.put('/profile', data)
         return response.data.data
       } catch (err) {
         console.error(err)

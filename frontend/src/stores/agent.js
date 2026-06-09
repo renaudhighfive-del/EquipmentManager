@@ -10,9 +10,9 @@ export const useAgentStore = defineStore('agent', {
   }),
 
   getters: {
-    // Agents sans compte utilisateur — filtre local, pas de requête supplémentaire
     agentsSansCompte: (state) => state.agents.filter(a => !a.user_id),
     agentsActifs:     (state) => state.agents.filter(a => a.statut === 'actif'),
+    agentsInactifs:   (state) => state.agents.filter(a => a.statut === 'inactif'),
     totalAgents:      (state) => state.agents.length,
   },
 
@@ -22,7 +22,6 @@ export const useAgentStore = defineStore('agent', {
       this.error = null
       try {
         const response = await api.get('/agents')
-        // L'API retourne { agents: [...], total: n }
         this.agents = response.data.agents
       } catch (err) {
         this.error = 'Erreur lors de la récupération des agents'
@@ -43,9 +42,12 @@ export const useAgentStore = defineStore('agent', {
       }
     },
 
-    async createAgent(data) {
+    // data doit être un FormData (pour supporter l'upload photo)
+    async createAgent(formData) {
       try {
-        const response = await api.post('/agents', data)
+        const response = await api.post('/agents', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        })
         this.agents.unshift(response.data.agent)
         return response.data.agent
       } catch (err) {
@@ -54,12 +56,17 @@ export const useAgentStore = defineStore('agent', {
       }
     },
 
-    async updateAgent(id, data) {
+    // Laravel ne supporte pas multipart sur PUT → POST + _method=PUT
+    async updateAgent(id, formData) {
       try {
-        const response = await api.put(`/agents/${id}`, data)
+        formData.append('_method', 'PUT')
+        const response = await api.post(`/agents/${id}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        })
         const updated = response.data.agent
         const index = this.agents.findIndex(a => a.id === id)
         if (index !== -1) this.agents[index] = updated
+        if (this.selectedAgent?.id === id) this.selectedAgent = updated
         return updated
       } catch (err) {
         console.error(err)
@@ -76,6 +83,7 @@ export const useAgentStore = defineStore('agent', {
         const updated = response.data.agent
         const index = this.agents.findIndex(a => a.id === agent.id)
         if (index !== -1) this.agents[index] = updated
+        if (this.selectedAgent?.id === agent.id) this.selectedAgent = updated
         return updated
       } catch (err) {
         console.error(err)

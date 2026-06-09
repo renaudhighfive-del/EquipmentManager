@@ -21,6 +21,7 @@ class Agent extends Model
         'service',
         'poste',
         'statut',
+        'photo',
     ];
 
     protected $appends = ['is_nouveau', 'nb_affectes', 'nb_perdus'];
