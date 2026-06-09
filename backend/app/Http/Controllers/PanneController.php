@@ -15,7 +15,12 @@ class PanneController extends Controller
         $query = Panne::with(['equipement', 'declarePar', 'validePar']);
 
         if ($user->role === 'agent') {
-            $query->where('declare_par', $user->id);
+            $query->where(function($q) use ($user) {
+                $q->where('declare_par', $user->id)
+                  ->orWhereHas('equipement.currentAffectation', function($sq) use ($user) {
+                      $sq->where('agent_id', $user->agent->id);
+                  });
+            });
         }
 
         return response()->json($query->latest()->get());

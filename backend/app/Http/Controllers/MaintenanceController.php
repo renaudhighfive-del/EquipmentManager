@@ -57,4 +57,91 @@ class MaintenanceController extends Controller
             return response()->json($maintenance->load(['equipement', 'panne', 'responsable']), 201);
         });
     }
+
+    public function cloturer(Request $request, Maintenance $maintenance)
+    {
+        $validated = $request->validate([
+            'date_fin' => 'required|date',
+            'actions_effectuees' => 'nullable|string',
+            'cout' => 'nullable|numeric|min:0',
+            'images' => 'nullable|array',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+        ]);
+
+        return DB::transaction(function () use ($validated, $maintenance, $request) {
+            $maintenance->update([
+                'date_fin' => $validated['date_fin'],
+                'actions_effectuees' => $validated['actions_effectuees'] ?? $maintenance->actions_effectuees,
+                'cout' => $validated['cout'] ?? $maintenance->cout,
+            ]);
+
+            if ($request->hasFile('images')) {
+                $photoPaths = [];
+                foreach ($request->file('images') as $image) {
+                    $path = $image->store('maintenances', 'public');
+                    $photoPaths[] = $path;
+                }
+                $maintenance->update(['photos_retour' => $photoPaths]);
+            }
+
+            // Mettre à jour le statut de la panne si elle existe
+            if ($maintenance->panne) {
+                $maintenance->panne->update(['statut' => 'resolue']);
+            }
+
+            // Mettre à jour l'état de l'équipement
+            $maintenance->equipement->update(['etat' => 'repare']);
+
+            return response()->json($maintenance->load(['equipement', 'panne', 'responsable']));
+        });
+    }
+
+    public function declarerPerte(Request $request, Maintenance $maintenance)
+    {
+        $validated = $request->validate([
+            'type' => 'required|in:perte,casse,vol',
+            'description' => 'required|string',
+            'images' => 'nullable|array',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+        ]);
+
+        return DB::transaction(function () use ($validated, $maintenance, $request) {
+            // Clôturer la maintenance
+            $maintenance->update([
+                'date_fin' => now(),
+                'actions_effectuees' => 'Irrécupérable : ' . $validated['description'],
+            ]);
+
+            if ($maintenance->panne) {
+                $maintenance->panne->update(['statut' => 'irrecuperable']);
+            }
+
+            // Créer le sinistre
+            $photoPaths = [];
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $image) {
+                    $path = $image->store('sinistres', 'public');
+                    $photoPaths[] = $path;
+                }
+            }
+
+            $sinistre = \App\Models\PerteCasse::create([
+                'equipement_id' => $maintenance->equipement_id,
+                'declare_par' => Auth::id(),
+                'type' => $validated['type'],
+                'date_declaration' => now(),
+                'description' => $validated['description'],
+                'statut' => 'en_attente_validation',
+                'photos' => $photoPaths,
+            ]);
+
+            // Mettre à jour l'état de l'équipement
+            $maintenance->equipement->update(['etat' => 'perdu']);
+
+            return response()->json([
+                'maintenance' => $maintenance->load(['equipement', 'panne']),
+                'sinistre' => $sinistre
+            ]);
+        });
+    }
 }

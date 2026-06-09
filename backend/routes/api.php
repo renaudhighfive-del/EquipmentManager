@@ -55,6 +55,8 @@ Route::middleware(['auth:sanctum', 'check.active'])->group(function () {
     Route::apiResource('pannes', PanneController::class);
 
     // Maintenances
+    Route::patch('maintenances/{maintenance}/cloturer', [MaintenanceController::class, 'cloturer']);
+    Route::patch('maintenances/{maintenance}/declarer-perte', [MaintenanceController::class, 'declarerPerte']);
     Route::apiResource('maintenances', MaintenanceController::class);
 
     // Sinistres (Pertes & Casses)

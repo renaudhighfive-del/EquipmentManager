@@ -20,12 +20,14 @@ class Maintenance extends Model
         'cout',
         'date_debut',
         'date_fin',
+        'photos_retour',
     ];
 
     protected $casts = [
         'date_debut' => 'date',
         'date_fin' => 'date',
         'cout' => 'decimal:2',
+        'photos_retour' => 'json',
     ];
 
     public function equipement()

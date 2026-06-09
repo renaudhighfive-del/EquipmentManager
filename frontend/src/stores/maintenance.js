@@ -35,6 +35,48 @@ export const useMaintenanceStore = defineStore('maintenance', {
       } finally {
         this.loading = false
       }
+    },
+
+    async cloturerMaintenance(id, formData) {
+      this.loading = true
+      try {
+        // Laravel workaround for multipart/form-data with PATCH
+        formData.append('_method', 'PATCH')
+        const response = await api.post(`/maintenances/${id}/cloturer`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
+        const index = this.maintenances.findIndex(m => m.id === id)
+        if (index !== -1) {
+          this.maintenances[index] = response.data
+        }
+        return response.data
+      } catch (error) {
+        console.error(error)
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async declarerPerteMaintenance(id, formData) {
+      this.loading = true
+      try {
+        // Laravel workaround for multipart/form-data with PATCH
+        formData.append('_method', 'PATCH')
+        const response = await api.post(`/maintenances/${id}/declarer-perte`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
+        const index = this.maintenances.findIndex(m => m.id === id)
+        if (index !== -1) {
+          this.maintenances[index] = response.data.maintenance
+        }
+        return response.data
+      } catch (error) {
+        console.error(error)
+        throw error
+      } finally {
+        this.loading = false
+      }
     }
   }
 })

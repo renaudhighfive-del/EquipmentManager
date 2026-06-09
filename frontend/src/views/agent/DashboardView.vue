@@ -75,8 +75,8 @@ const stats = computed(() => [
     colorClass: 'bg-blue-50 text-blue-600' 
   },
   { 
-    label: 'Pannes signalées', 
-    value: panneStore.pannes.length, 
+    label: 'Incidents signalés', 
+    value: panneStore.pannes.length + sinistreStore.sinistres.length, 
     icon: AlertTriangle, 
     colorClass: 'bg-red-50 text-red-600' 
   },
@@ -107,11 +107,11 @@ const getEtatLabel = (etat) => {
     >
       <template #actions>
         <button 
-          @click="router.push('/agent/pannes')"
+          @click="router.push('/agent/incidents')"
           class="flex items-center gap-2 px-5 py-2.5 bg-rose-600 rounded-xl text-sm font-bold text-white hover:bg-rose-700 transition-all shadow-lg shadow-rose-200"
         >
           <AlertTriangle class="w-4 h-4" />
-          Signaler une panne
+          Signaler un incident
         </button>
       </template>
     </PageHeader>
@@ -193,30 +193,13 @@ const getEtatLabel = (etat) => {
             Un problème avec votre matériel ? Nos techniciens sont là pour vous aider.
           </p>
           <button 
-            @click="router.push('/agent/pannes')"
+            @click="router.push('/agent/incidents')"
             class="w-full py-3 bg-white border border-rose-200 text-rose-600 font-black rounded-2xl hover:bg-rose-500 hover:text-white hover:border-rose-500 transition-all"
           >
             Signaler un incident
           </button>
         </div>
 
-        <div class="bg-red-400 p-8 rounded-[2.5rem] border border-rose-100">
-          <div class="flex items-center gap-4 mb-4">
-            <div class="w-12 h-12 bg-rose-500 rounded-2xl flex items-center justify-center shadow-lg shadow-rose-200">
-              <AlertTriangle class="w-6 h-6 text-white" />
-            </div>
-            <h4 class="font-black text-rose-900">Assistance</h4>
-          </div>
-          <p class="text-rose-700/70 text-sm font-medium mb-6">
-            Un problème grave avec le matériel ? Signalez en même temps
-          </p>
-          <button 
-            @click="openSinistreModal()"
-            class="w-full py-3 bg-white border border-rose-200 text-rose-600 font-black rounded-2xl hover:bg-rose-500 hover:text-white hover:border-rose-500 transition-all"
-          >
-            Signaler une perte
-          </button>
-        </div>
       </div>
     </div>
 

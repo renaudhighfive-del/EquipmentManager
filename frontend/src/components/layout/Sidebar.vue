@@ -58,10 +58,10 @@ const menusByRole = {
     { label: 'Mon profil',      icon: CircleUser,      path: '/gestionnaire/profile' },
   ],
   agent: [
-    { label: 'Mon espace',         icon: LayoutDashboard, path: '/agent/dashboard' },
-    { label: 'Mes équipements',    icon: Smartphone,      path: '/agent/equipements' },
-    { label: 'Déclarer une panne', icon: AlertTriangle,   path: '/agent/pannes' },
-    { label: 'Mon profil',         icon: CircleUser,      path: '/agent/profile' },
+    { label: 'Mon espace',       icon: LayoutDashboard, path: '/agent/dashboard' },
+    { label: 'Mes équipements',  icon: Smartphone,      path: '/agent/equipements' },
+    { label: 'Mes Incidents',    icon: AlertTriangle,   path: '/agent/incidents' },
+    { label: 'Mon profil',       icon: CircleUser,      path: '/agent/profile' },
   ],
 };
 

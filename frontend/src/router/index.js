@@ -66,7 +66,7 @@ const router = createRouter({
       children: [
         { path: 'dashboard',   name: 'agent-dashboard',   component: () => import('../views/agent/DashboardView.vue') },
         { path: 'equipements', name: 'agent-equipements', component: () => import('../views/agent/EquipementsView.vue') },
-        { path: 'pannes',      name: 'agent-pannes',      component: () => import('../views/agent/PannesView.vue') },
+        { path: 'incidents',   name: 'agent-incidents',   component: () => import('../views/agent/IncidentsView.vue') },
         { path: 'profile',     name: 'agent-profile',     component: () => import('../views/shared/ProfileView.vue') },
       ]
     },
