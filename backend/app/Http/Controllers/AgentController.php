@@ -20,7 +20,11 @@ class AgentController extends Controller
                   ->orWhere('matricule', 'like', "%{$search}%");
             });
         }
-
+        //christelle
+        if ($request->has('statut')) {
+            $query->where('statut', $request->input('statut'));
+        }
+        //fin
         $agents = $query->get();
 
         return response()->json([

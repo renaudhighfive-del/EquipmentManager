@@ -8,6 +8,9 @@ use App\Http\Controllers\EquipementController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AffectationController;
+use App\Http\Controllers\MouvementController;
+use App\Http\Controllers\PanneController;
+use App\Http\Controllers\DashboardController;
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 Route::prefix('auth')->group(function () {
@@ -37,8 +40,14 @@ Route::middleware(['auth:sanctum', 'check.active'])->group(function () {
     // Catégories
     Route::apiResource('categories', CategorieController::class);
     
+    // Dashboard
+    Route::get('dashboard', [DashboardController::class, 'index']);
+
     // Affectations
     Route::apiResource('affectations', AffectationController::class);
+
+    // Pannes
+    Route::apiResource('pannes', PanneController::class);
 
     // Equipments
     Route::patch('equipements/{equipement}/archive', [EquipementController::class, 'archive']);
@@ -48,6 +57,9 @@ Route::middleware(['auth:sanctum', 'check.active'])->group(function () {
     Route::apiResource('agents', AgentController::class);
     Route::patch('agents/{agent}/desactiver', [AgentController::class, 'desactiver']);
     Route::patch('agents/{agent}/reactiver',  [AgentController::class, 'reactiver']);
+
+    // Journal des mouvements
+    Route::get('mouvements', [MouvementController::class, 'index']);
 });
 
 // ── Route de test ─────────────────────────────────────────────────────────────
