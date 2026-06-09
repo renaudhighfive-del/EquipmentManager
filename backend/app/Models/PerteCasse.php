@@ -21,11 +21,13 @@ class PerteCasse extends Model
         'valide_par',
         'date_validation',
         'motif_rejet',
+        'photos',
     ];
 
     protected $casts = [
         'date_declaration' => 'date',
         'date_validation' => 'date',
+        'photos' => 'json',
     ];
 
     public function equipement()

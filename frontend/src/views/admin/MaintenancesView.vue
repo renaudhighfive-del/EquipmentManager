@@ -13,7 +13,12 @@ import {
   DollarSign, 
   Loader2,
   Smartphone,
-  FileText
+  FileText,
+  CheckCircle2,
+  AlertOctagon,
+  Upload,
+  X,
+  History
 } from 'lucide-vue-next';
 
 const maintenanceStore = useMaintenanceStore();
@@ -21,7 +26,10 @@ const panneStore = usePanneStore();
 const toast = useToast();
 
 const showModal = ref(false);
+const showClotureModal = ref(false);
 const isSubmitting = ref(false);
+const selectedMaintenance = ref(null);
+const clotureAction = ref('retour'); // 'retour' or 'perte'
 
 const form = reactive({
   panne_id: '',
@@ -30,6 +38,16 @@ const form = reactive({
   date_debut: new Date().toISOString().substr(0, 10),
   cout: 0
 });
+
+const clotureForm = reactive({
+  date_fin: new Date().toISOString().substr(0, 10),
+  actions_effectuees: '',
+  cout: 0,
+  type_sinistre: 'perte'
+});
+
+const photos = ref([])
+const photoPreviews = ref([])
 
 onMounted(() => {
   maintenanceStore.fetchMaintenances();
@@ -40,6 +58,35 @@ onMounted(() => {
 const pannesValidées = computed(() => {
   return panneStore.pannes.filter(p => p.statut === 'en_cours' || p.statut === 'declaree');
 });
+
+const openClotureModal = (maint) => {
+  selectedMaintenance.value = maint;
+  clotureAction.value = 'retour';
+  clotureForm.date_fin = new Date().toISOString().substr(0, 10);
+  clotureForm.actions_effectuees = '';
+  clotureForm.cout = maint.cout || 0;
+  clotureForm.type_sinistre = 'perte';
+  photos.value = [];
+  photoPreviews.value = [];
+  showClotureModal.value = true;
+};
+
+const onFileChange = (e) => {
+  const files = Array.from(e.target.files)
+  files.forEach(file => {
+    photos.value.push(file)
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      photoPreviews.value.push(e.target.result)
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
+const removePhoto = (index) => {
+  photos.value.splice(index, 1)
+  photoPreviews.value.splice(index, 1)
+}
 
 const resetForm = () => {
   Object.assign(form, {
@@ -65,8 +112,51 @@ const handleSubmit = async () => {
     resetForm();
     // Rafraîchir les pannes pour mettre à jour la liste des pannes validées dispo
     panneStore.fetchPannes();
+    maintenanceStore.fetchMaintenances();
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Erreur', detail: 'Échec de la création', life: 3000 });
+  } finally {
+    isSubmitting.value = false;
+  }
+};
+
+const handleClotureAction = async () => {
+  if (!clotureForm.actions_effectuees) {
+    toast.add({ severity: 'warn', summary: 'Attention', detail: 'Veuillez renseigner le rapport d\'intervention', life: 3000 });
+    return;
+  }
+
+  isSubmitting.value = true;
+  try {
+    const formData = new FormData();
+    // Toujours ajouter les photos s'il y en a
+    if (photos.value.length > 0) {
+      photos.value.forEach((file) => {
+        formData.append('images[]', file);
+      });
+    }
+
+    if (clotureAction.value === 'retour') {
+      formData.append('date_fin', clotureForm.date_fin);
+      formData.append('actions_effectuees', clotureForm.actions_effectuees);
+      formData.append('cout', clotureForm.cout || 0);
+      
+      console.log('Envoi clôture réparation...');
+      await maintenanceStore.cloturerMaintenance(selectedMaintenance.value.id, formData);
+      toast.add({ severity: 'success', summary: 'Succès', detail: 'Maintenance clôturée avec succès', life: 3000 });
+    } else {
+      formData.append('type', clotureForm.type_sinistre);
+      formData.append('description', clotureForm.actions_effectuees);
+      
+      console.log('Envoi clôture irrécupérable...');
+      await maintenanceStore.declarerPerteMaintenance(selectedMaintenance.value.id, formData);
+      toast.add({ severity: 'success', summary: 'Succès', detail: 'Équipement déclaré irrécupérable', life: 3000 });
+    }
+    showClotureModal.value = false;
+    await maintenanceStore.fetchMaintenances();
+  } catch (error) {
+    console.error('Erreur lors de la clôture:', error);
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Échec de l\'opération. Vérifiez la console.', life: 3000 });
   } finally {
     isSubmitting.value = false;
   }
@@ -162,6 +252,27 @@ const getStatutClass = (statut) => {
             </p>
             <p class="text-sm text-slate-600 font-medium line-clamp-2">{{ maint.panne.description }}</p>
           </div>
+
+          <!-- Actions -->
+          <div v-if="!maint.date_fin" class="pt-2">
+            <button 
+              @click="openClotureModal(maint)"
+              class="w-full py-3 bg-emerald-600 text-white text-xs font-black uppercase rounded-xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 flex items-center justify-center gap-2"
+            >
+              <CheckCircle2 class="w-4 h-4" />
+              Clôturer l'intervention
+            </button>
+          </div>
+
+          <div v-if="maint.date_fin" class="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 space-y-2">
+            <div class="flex items-center justify-between">
+              <p class="text-[10px] font-bold text-emerald-600 uppercase tracking-widest flex items-center gap-2">
+                <CheckCircle2 class="w-3 h-3" /> Clôturée le {{ formatDate(maint.date_fin) }}
+              </p>
+            </div>
+            <p class="text-xs text-emerald-700 font-medium">{{ maint.actions_effectuees }}</p>
+          </div>
+
           <div class="flex items-center justify-between pt-4 border-t border-slate-50">
             <div class="flex items-center gap-2">
               <div class="w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center text-[10px] font-bold text-primary-700">
@@ -241,6 +352,116 @@ const getStatutClass = (statut) => {
         >
           <Loader2 v-if="isSubmitting" class="w-4 h-4 animate-spin" />
           {{ isSubmitting ? 'Planification...' : 'Lancer la maintenance' }}
+        </button>
+      </div>
+    </SideModal>
+
+    <!-- Modal Clôture de Maintenance (Fusionné) -->
+    <SideModal :show="showClotureModal" title="Clôturer la maintenance" @close="showClotureModal = false">
+      <div v-if="selectedMaintenance" class="space-y-6">
+        <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+          <p class="text-sm text-slate-600 font-medium">
+            Équipement : 
+            <span class="font-black text-slate-900">{{ selectedMaintenance.equipement?.marque }} {{ selectedMaintenance.equipement?.modele }}</span>
+          </p>
+          <p class="text-xs text-slate-500 font-bold mt-1">Référence : {{ selectedMaintenance.equipement?.reference }}</p>
+        </div>
+
+        <!-- Action Choice -->
+        <div class="space-y-3">
+          <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Résultat de l'intervention</label>
+          <div class="grid grid-cols-2 gap-3">
+            <button 
+              type="button"
+              @click="clotureAction = 'retour'"
+              :class="['p-4 rounded-2xl border-2 transition-all text-left flex flex-col gap-2', clotureAction === 'retour' ? 'border-emerald-600 bg-emerald-50/50' : 'border-slate-100 hover:border-slate-200']"
+            >
+              <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                <CheckCircle2 class="w-6 h-6" />
+              </div>
+              <div>
+                <p class="text-sm font-black text-slate-900">Réparé</p>
+                <p class="text-[10px] text-slate-500 font-medium">Remise en service</p>
+              </div>
+            </button>
+            
+            <button 
+              type="button"
+              @click="clotureAction = 'perte'"
+              :class="['p-4 rounded-2xl border-2 transition-all text-left flex flex-col gap-2', clotureAction === 'perte' ? 'border-rose-600 bg-rose-50/50' : 'border-slate-100 hover:border-slate-200']"
+            >
+              <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center">
+                <AlertOctagon class="w-6 h-6" />
+              </div>
+              <div>
+                <p class="text-sm font-black text-slate-900">Irrécupérable</p>
+                <p class="text-[10px] text-slate-500 font-medium">Déclarer un sinistre</p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Photos -->
+        <div class="space-y-4">
+          <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Photos justificatives (appui au rapport)</label>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div v-for="(preview, index) in photoPreviews" :key="index" class="relative aspect-square rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 group">
+              <img :src="preview" class="w-full h-full object-cover">
+              <button type="button" @click="removePhoto(index)" class="absolute top-1 right-1 p-1 bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                <X class="w-3 h-3" />
+              </button>
+            </div>
+            <label class="relative aspect-square rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-primary-400 hover:bg-primary-50 transition-all text-slate-400 hover:text-primary-600">
+              <input type="file" multiple accept="image/*" class="hidden" @change="onFileChange">
+              <Upload class="w-6 h-6" />
+              <span class="text-[10px] font-bold">Ajouter</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Form fields -->
+        <div class="space-y-5">
+          <div v-if="clotureAction === 'retour'" class="grid grid-cols-2 gap-4 animate-in slide-in-from-top-2 duration-300">
+            <div class="space-y-1.5">
+              <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Date de fin</label>
+              <input v-model="clotureForm.date_fin" type="date" class="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-primary-500/20">
+            </div>
+            <div class="space-y-1.5">
+              <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Coût final (€)</label>
+              <input v-model="clotureForm.cout" type="number" step="0.01" class="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-primary-500/20">
+            </div>
+          </div>
+
+          <div v-else class="space-y-1.5 animate-in slide-in-from-top-2 duration-300">
+            <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Type de sinistre</label>
+            <select v-model="clotureForm.type_sinistre" class="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-rose-500/20">
+              <option value="perte">Perte</option>
+              <option value="casse">Casse</option>
+              <option value="vol">Vol</option>
+            </select>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">
+              {{ clotureAction === 'retour' ? 'Rapport d\'intervention' : 'Justification du sinistre' }}
+            </label>
+            <textarea 
+              v-model="clotureForm.actions_effectuees" 
+              required
+              rows="4" 
+              class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-primary-500/20 resize-none"
+              placeholder="Détaillez ici..."
+            ></textarea>
+          </div>
+        </div>
+
+        <button 
+          @click="handleClotureAction"
+          :disabled="isSubmitting"
+          class="w-full h-12 bg-primary-600 text-white rounded-xl text-sm font-black shadow-lg shadow-primary-200 hover:bg-primary-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          <Loader2 v-if="isSubmitting" class="w-4 h-4 animate-spin" />
+          {{ isSubmitting ? 'Envoi en cours...' : 'Confirmer la clôture' }}
         </button>
       </div>
     </SideModal>

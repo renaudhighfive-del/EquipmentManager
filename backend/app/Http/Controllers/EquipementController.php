@@ -18,9 +18,10 @@ class EquipementController extends Controller
             ->where('is_archived', false);
 
         if ($user->role === 'agent') {
-            $query->whereHas('currentAffectation', function ($q) use ($user) {
-                $q->where('agent_id', $user->agent->id);
-            });
+            $query->where('etat', '!=', 'perdu')
+                ->whereHas('currentAffectation', function ($q) use ($user) {
+                    $q->where('agent_id', $user->agent->id);
+                });
         }
 
         return response()->json($query->latest()->get());

@@ -58,10 +58,10 @@ const menusByRole = {
     { label: 'Mon profil',      icon: CircleUser,      path: '/gestionnaire/profile' },
   ],
   agent: [
-    { label: 'Mon espace',         icon: LayoutDashboard, path: '/agent/dashboard' },
-    { label: 'Mes équipements',    icon: Smartphone,      path: '/agent/equipements' },
-    { label: 'Déclarer une panne', icon: AlertTriangle,   path: '/agent/pannes' },
-    { label: 'Mon profil',         icon: CircleUser,      path: '/agent/profile' },
+    { label: 'Mon espace',       icon: LayoutDashboard, path: '/agent/dashboard' },
+    { label: 'Mes équipements',  icon: Smartphone,      path: '/agent/equipements' },
+    { label: 'Mes Incidents',    icon: AlertTriangle,   path: '/agent/incidents' },
+    { label: 'Mon profil',       icon: CircleUser,      path: '/agent/profile' },
   ],
 };
 
@@ -93,8 +93,8 @@ const menuItems = computed(() => {
           <Package class="w-6 h-6 text-white" />
         </div>
         <div v-if="!isCollapsed || isOpenMobile" class="animate-in fade-in slide-in-from-left-2 duration-300">
-          <h1 class="text-xl font-bold text-slate-900 leading-tight">AssetFlow</h1>
-          <p class="text-xs text-slate-500 font-medium">Enterprise ERP</p>
+          <h1 class="text-xl font-bold text-slate-900 leading-tight">EquipTrack</h1>
+          <p class="text-xs text-slate-500 font-medium">Une traçabilité impécable</p>
         </div>
       </div>
       <button 

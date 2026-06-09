@@ -41,14 +41,14 @@ defineEmits(['toggleSidebar']);
         <Menu class="w-6 h-6" />
       </button>
 
-      <div class="relative flex-1 hidden sm:block">
+      <!-- <div class="relative flex-1 hidden sm:block">
         <Search class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
         <input 
           type="text" 
           placeholder="Recherche globale..."
           class="w-full h-12 bg-slate-100 border-none rounded-2xl pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary-500/20 transition-all placeholder:text-slate-500"
         >
-      </div>
+      </div> -->
     </div>
 
     <!-- Right: Actions & Profile -->

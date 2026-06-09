@@ -2,47 +2,101 @@
 import { onMounted, ref, reactive } from 'vue'
 import PageHeader from '../../components/layout/PageHeader.vue'
 import SideModal from '../../components/layout/SideModal.vue'
-import { Smartphone, RotateCcw, Calendar, Camera, Info } from 'lucide-vue-next'
+import { Smartphone, RotateCcw, AlertOctagon, Loader2, AlertTriangle, Upload, X } from 'lucide-vue-next'
 import { useEquipementStore } from '../../stores/equipement'
+import { usePanneStore } from '../../stores/panne'
 import { useSinistreStore } from '../../stores/sinistre'
 import { useToast } from 'primevue/usetoast'
 
 const equipementStore = useEquipementStore();
+const panneStore = usePanneStore();
 const sinistreStore = useSinistreStore();
 const toast = useToast();
 
-const showSinistreModal = ref(false);
+const showIncidentModal = ref(false);
 const selectedEquipement = ref(null);
 const isSubmitting = ref(false);
+const incidentType = ref('panne');
 
-const sinistreForm = reactive({
-  type: 'perte',
+const form = reactive({
+  type: 'panne',
+  gravite: 'moyenne',
   description: ''
 });
+
+const photos = ref([])
+const photoPreviews = ref([])
 
 onMounted(() => {
   equipementStore.fetchEquipements();
 });
 
-const openSinistreModal = (equip) => {
+const openIncidentModal = (equip) => {
   selectedEquipement.value = equip;
-  sinistreForm.type = 'perte';
-  sinistreForm.description = '';
-  showSinistreModal.value = true;
+  form.type = 'panne';
+  incidentType.value = 'panne';
+  form.gravite = 'moyenne';
+  form.description = '';
+  photos.value = [];
+  photoPreviews.value = [];
+  showIncidentModal.value = true;
 };
 
-const formatDate = (dateStr) => {
-  if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleDateString('fr-FR', { 
-    day: 'numeric', 
-    month: 'long', 
-    year: 'numeric' 
-  });
+const onFileChange = (e) => {
+  const files = Array.from(e.target.files)
+  files.forEach(file => {
+    photos.value.push(file)
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      photoPreviews.value.push(e.target.result)
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
+const removePhoto = (index) => {
+  photos.value.splice(index, 1)
+  photoPreviews.value.splice(index, 1)
+}
+
+const handleDeclareIncident = async () => {
+  if (!form.description) {
+    toast.add({ severity: 'warn', summary: 'Attention', detail: 'Veuillez fournir une description', life: 3000 });
+    return;
+  }
+
+  isSubmitting.value = true;
+  try {
+    if (incidentType.value === 'panne') {
+      const formData = new FormData()
+      formData.append('equipement_id', selectedEquipement.value.id)
+      formData.append('gravite', form.gravite)
+      formData.append('description', form.description)
+      photos.value.forEach((file) => {
+        formData.append('images[]', file)
+      })
+      await panneStore.createPanne(formData)
+    } else {
+      await sinistreStore.declareSinistre({
+        equipement_id: selectedEquipement.value.id,
+        type: incidentType.value,
+        description: form.description
+      });
+    }
+    toast.add({ severity: 'success', summary: 'Succès', detail: 'Déclaration envoyée avec succès', life: 3000 });
+    showIncidentModal.value = false;
+    equipementStore.fetchEquipements();
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Échec de l\'envoi de la déclaration', life: 3000 });
+  } finally {
+    isSubmitting.value = false;
+  }
 };
 
 const getEtatClass = (etat) => {
   switch (etat) {
     case 'en_service': return 'bg-emerald-50 text-emerald-600';
+    case 'repare': return 'bg-emerald-50 text-emerald-600 border border-emerald-200';
     case 'en_panne': return 'bg-red-50 text-red-600';
     case 'en_attente_sinistre': return 'bg-orange-50 text-orange-600';
     default: return 'bg-slate-50 text-slate-600';
@@ -53,11 +107,11 @@ const getEtatLabel = (etat) => {
   const labels = {
     neuf: 'Neuf',
     en_service: 'En service',
+    repare: 'Réparé',
     en_panne: 'En panne',
     en_maintenance: 'En maintenance',
     en_attente_sinistre: 'En attente sinistre',
-    reforme: 'Réformé',
-    perdu: 'Perdu'
+    reforme: 'Réformé'
   };
   return labels[etat] || etat;
 };
@@ -98,19 +152,13 @@ const getEtatLabel = (etat) => {
           </span>
           <div class="flex items-center gap-2">
             <button 
-              @click.stop="openDetails(equip)"
-              class="p-2 sm:p-2.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all"
-              title="Détails"
+              @click="openIncidentModal(equip)"
+              class="p-2.5 text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
+              title="Signaler un incident"
             >
-              <Info class="w-5 h-5" />
+              <AlertTriangle class="w-5 h-5" />
             </button>
-            <button 
-              @click.stop="$router.push('/agent/pannes')"
-              class="p-2 sm:p-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
-              title="Signaler une panne"
-            >
-              <RotateCcw class="w-5 h-5" />
-            </button>
+            
           </div>
         </div>
       </div>
@@ -121,96 +169,115 @@ const getEtatLabel = (etat) => {
       </div>
     </div>
 
-    <!-- Modal Détails -->
-    <SideModal 
-      :show="showDetailModal" 
-      title="Détails de l'équipement" 
-      @close="showDetailModal = false"
-    >
-      <div v-if="selectedEquip" class="space-y-8 animate-in fade-in duration-300">
-        <div class="flex items-center gap-5">
-          <div class="w-20 h-20 rounded-2xl bg-primary-50 flex items-center justify-center text-primary-600">
-            <Smartphone class="w-10 h-10" />
-          </div>
-          <div>
-            <h3 class="text-xl font-bold text-slate-900">{{ selectedEquip.marque }} {{ selectedEquip.modele }}</h3>
-            <p class="text-slate-500 font-medium">{{ selectedEquip.reference }}</p>
-            <div class="mt-2 inline-flex px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider" :class="getEtatClass(selectedEquip.etat)">
-              {{ getEtatLabel(selectedEquip.etat) }}
-            </div>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Numéro de série</p>
-            <p class="text-sm font-bold text-slate-900">{{ selectedEquip.numero_serie || '—' }}</p>
-          </div>
-          <div v-if="selectedEquip.imei" class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">IMEI</p>
-            <p class="text-sm font-bold text-slate-900">{{ selectedEquip.imei }}</p>
-          </div>
-          <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Date d'affectation</p>
-            <p class="text-sm font-bold text-slate-900">{{ formatDate(selectedEquip.current_affectation?.date_affectation) }}</p>
-          </div>
-          <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Garantie jusqu'au</p>
-            <p class="text-sm font-bold text-slate-900">{{ formatDate(selectedEquip.garantie_fin) }}</p>
-          </div>
-        </div>
-
-        <div v-if="selectedEquip.current_affectation?.photo_remise_url" class="space-y-3">
-          <h4 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <Camera class="w-4 h-4 text-primary-500" />
-            Photo lors de la remise
-          </h4>
-          <div class="rounded-2xl border border-slate-200 overflow-hidden shadow-sm bg-slate-100 aspect-video relative group">
-            <img 
-              :src="selectedEquip.current_affectation.photo_remise_url" 
-              alt="Photo de remise"
-              class="w-full h-full object-cover"
-            />
-          </div>
-        </div>
-
-        <div v-if="selectedEquip.current_affectation?.observations" class="p-4 bg-primary-50/50 rounded-2xl border border-primary-100">
-          <h4 class="text-[10px] font-bold text-primary-600 uppercase tracking-widest mb-1">Observations de remise</h4>
-          <p class="text-sm text-slate-600 italic leading-relaxed">
-            "{{ selectedEquip.current_affectation.observations }}"
+    <!-- Modal Déclaration Incident (Fusionné) -->
+    <SideModal :show="showIncidentModal" title="Signaler un incident" @close="showIncidentModal = false">
+      <div v-if="selectedEquipement" class="space-y-6">
+        <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+          <p class="text-sm text-slate-600 font-medium">
+            Équipement concerné : 
+            <span class="font-black text-slate-900">{{ selectedEquipement.marque }} {{ selectedEquipement.modele }} ({{ selectedEquipement.reference }})</span>
           </p>
         </div>
 
-        <div class="space-y-4">
-          <div class="space-y-1.5">
-            <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Type de sinistre</label>
-            <select v-model="sinistreForm.type" class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary-500/10 outline-none">
-              <option value="perte">Perte</option>
-              <option value="casse">Casse</option>
-              <option value="vol">Vol</option>
+        <!-- Type d'incident -->
+        <div class="space-y-3">
+          <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Type d'incident</label>
+          <div class="grid grid-cols-2 gap-3">
+            <button 
+              type="button"
+              @click="incidentType = 'panne'"
+              :class="['p-4 rounded-2xl border-2 transition-all text-left flex flex-col gap-2', incidentType === 'panne' ? 'border-primary-600 bg-primary-50/50' : 'border-slate-100 hover:border-slate-200']"
+            >
+              <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+                <AlertTriangle class="w-6 h-6" />
+              </div>
+              <div>
+                <p class="text-sm font-black text-slate-900">Une panne</p>
+                <p class="text-[10px] text-slate-500 font-medium">Problème technique</p>
+              </div>
+            </button>
+            
+            <button 
+              type="button"
+              @click="incidentType = 'perte'"
+              :class="['p-4 rounded-2xl border-2 transition-all text-left flex flex-col gap-2', ['perte', 'vol', 'casse'].includes(incidentType) ? 'border-rose-600 bg-rose-50/50' : 'border-slate-100 hover:border-slate-200']"
+            >
+              <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center">
+                <AlertOctagon class="w-6 h-6" />
+              </div>
+              <div>
+                <p class="text-sm font-black text-slate-900">Un sinistre</p>
+                <p class="text-[10px] text-slate-500 font-medium">Perte, vol ou casse</p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Sous-type pour Sinistre -->
+        <div v-if="['perte', 'vol', 'casse'].includes(incidentType)" class="space-y-3 animate-in slide-in-from-top-2 duration-300">
+          <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Type de sinistre</label>
+          <div class="flex gap-2">
+            <button 
+              v-for="type in ['perte', 'vol', 'casse']" 
+              :key="type"
+              type="button"
+              @click="incidentType = type"
+              :class="['flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider border transition-all', incidentType === type ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-500 border-slate-200']"
+            >
+              {{ type }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Photo Upload (Uniquement pour Pannes) -->
+        <div v-if="incidentType === 'panne'" class="space-y-4 animate-in slide-in-from-top-2 duration-300">
+          <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Photos du problème (facultatif)</label>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div v-for="(preview, index) in photoPreviews" :key="index" class="relative aspect-square rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 group">
+              <img :src="preview" class="w-full h-full object-cover">
+              <button type="button" @click="removePhoto(index)" class="absolute top-1 right-1 p-1 bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                <X class="w-3 h-3" />
+              </button>
+            </div>
+            <label class="relative aspect-square rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-primary-400 hover:bg-primary-50 transition-all text-slate-400 hover:text-primary-600">
+              <input type="file" multiple accept="image/*" class="hidden" @change="onFileChange">
+              <Upload class="w-6 h-6" />
+              <span class="text-[10px] font-bold">Ajouter</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="space-y-5">
+          <div v-if="incidentType === 'panne'" class="space-y-1.5 animate-in slide-in-from-top-2 duration-300">
+            <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Gravité de la panne</label>
+            <select v-model="form.gravite" class="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-primary-500/20">
+              <option value="faible">Faible (fonctionne encore)</option>
+              <option value="moyenne">Moyenne (gênant)</option>
+              <option value="critique">Critique (inutilisable)</option>
             </select>
           </div>
 
           <div class="space-y-1.5">
-            <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Description des faits</label>
+            <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Description & Circonstances</label>
             <textarea 
-              v-model="sinistreForm.description"
+              v-model="form.description" 
+              required
               rows="4" 
-              placeholder="Expliquez brièvement les circonstances..."
-              class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary-500/10 outline-none resize-none"
+              class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-primary-500/20 resize-none"
+              placeholder="Décrivez précisément ce qu'il s'est passé..."
             ></textarea>
           </div>
         </div>
 
         <button 
-          @click="$router.push('/agent/pannes')"
-          class="w-full py-4 bg-red-50 text-red-600 font-bold rounded-2xl hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
+          @click="handleDeclareIncident"
+          :disabled="isSubmitting"
+          class="w-full h-12 bg-primary-600 text-white rounded-xl text-sm font-black shadow-lg shadow-primary-200 hover:bg-primary-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
         >
-          <AlertTriangle class="w-5 h-5" />
-          Signaler un problème sur cet appareil
+          <Loader2 v-if="isSubmitting" class="w-4 h-4 animate-spin" />
+          {{ isSubmitting ? 'Envoi en cours...' : 'Confirmer la déclaration' }}
         </button>
       </div>
     </SideModal>
   </div>
 </template>
-

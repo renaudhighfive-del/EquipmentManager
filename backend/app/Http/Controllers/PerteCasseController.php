@@ -15,7 +15,12 @@ class PerteCasseController extends Controller
         $query = PerteCasse::with(['equipement', 'declarePar', 'validePar']);
 
         if ($user->role === 'agent') {
-            $query->where('declare_par', $user->id);
+            $query->where(function($q) use ($user) {
+                $q->where('declare_par', $user->id)
+                  ->orWhereHas('equipement.currentAffectation', function($sq) use ($user) {
+                      $sq->where('agent_id', $user->agent->id);
+                  });
+            });
         }
 
         return response()->json($query->latest()->get());
@@ -27,7 +32,17 @@ class PerteCasseController extends Controller
             'equipement_id' => 'required|exists:equipements,id',
             'type' => 'required|in:perte,casse,vol', // Lowercase to match migration
             'description' => 'required|string',
+            'images' => 'nullable|array',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:5120',
         ]);
+
+        $photoPaths = [];
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                $path = $image->store('sinistres', 'public');
+                $photoPaths[] = $path;
+            }
+        }
 
         $sinistre = PerteCasse::create([
             'equipement_id' => $validated['equipement_id'],
@@ -36,6 +51,7 @@ class PerteCasseController extends Controller
             'date_declaration' => now(),
             'description' => $validated['description'],
             'statut' => 'en_attente_validation',
+            'photos' => $photoPaths,
         ]);
 
         // Update equipment status

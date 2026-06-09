@@ -289,28 +289,31 @@ const openZoom = (url) => {
   showZoomModal.value = true;
 };
 
-const getEtatClass = (etat) => {
-  switch (etat) {
-    case 'neuf': return 'bg-blue-50 text-blue-600';
-    case 'en_service': return 'bg-emerald-50 text-emerald-600';
-    case 'en_panne': return 'bg-red-50 text-red-600';
-    case 'en_maintenance': return 'bg-amber-50 text-amber-600';
-    case 'perdu': return 'bg-slate-50 text-slate-600';
-    default: return 'bg-slate-50 text-slate-600';
+const getStatusClass = (status) => {
+  switch (status) {
+    case 'neuf': return 'bg-blue-50 text-blue-600 border-blue-100';
+    case 'en_service': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
+    case 'repare': return 'bg-emerald-50 text-emerald-600 border-emerald-200 border';
+    case 'en_panne': return 'bg-rose-50 text-rose-600 border-rose-100';
+    case 'en_maintenance': return 'bg-amber-50 text-amber-600 border-amber-100';
+    case 'perdu': return 'bg-slate-900 text-white border-slate-900';
+    case 'reforme': return 'bg-slate-100 text-slate-500 border-slate-200';
+    default: return 'bg-slate-50 text-slate-500 border-slate-100';
   }
 };
 
-const getEtatLabel = (etat) => {
+const getStatusLabel = (status) => {
   const labels = {
     neuf: 'Neuf',
-    en_service: 'En service',
-    en_panne: 'En panne',
-    en_maintenance: 'En maintenance',
-    en_attente_sinistre: 'En attente sinistre',
+    en_service: 'En Service',
+    repare: 'Réparé',
+    en_panne: 'En Panne',
+    en_maintenance: 'En Maintenance',
+    en_attente_sinistre: 'En Attente Sinistre',
     reforme: 'Réformé',
     perdu: 'Perdu'
   };
-  return labels[etat] || etat;
+  return labels[status] || status;
 };
 
 const formatDate = (dateString) => {
@@ -399,8 +402,8 @@ const openFiche = (equip) => {
         <div class="relative h-48 overflow-hidden bg-slate-100">
           <img :src="equip.images?.[0]?.path ? `http://localhost:8000/storage/${equip.images[0].path}` : 'https://images.unsplash.com/photo-1556656793-062ff9878258?w=400&h=250&fit=crop'" :alt="equip.marque" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
           <div class="absolute top-4 left-4">
-            <span :class="['px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider shadow-sm', getEtatClass(equip.etat)]">
-              {{ getEtatLabel(equip.etat) }}
+            <span :class="['px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider shadow-sm border', getStatusClass(equip.etat)]">
+              {{ getStatusLabel(equip.etat) }}
             </span>
           </div>
         </div>
@@ -549,7 +552,7 @@ const openFiche = (equip) => {
           </div>
           <div class="p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">État actuel</p>
-            <p class="text-sm font-bold text-slate-900">{{ getEtatLabel(selectedEquipement.etat) }}</p>
+            <p class="text-sm font-bold text-slate-900">{{ getStatusLabel(selectedEquipement.etat) }}</p>
           </div>
           <div class="p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Localisation</p>

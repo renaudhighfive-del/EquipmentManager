@@ -23,10 +23,12 @@ export const useSinistreStore = defineStore('sinistre', {
       }
     },
 
-    async declareSinistre(sinistreData) {
+    async declareSinistre(formData) {
       this.loading = true
       try {
-        const response = await api.post('/sinistres', sinistreData)
+        const response = await api.post('/sinistres', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
         this.sinistres.unshift(response.data)
         return response.data
       } catch (error) {
