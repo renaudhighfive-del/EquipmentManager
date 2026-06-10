@@ -486,6 +486,7 @@ const submitAffectation = async () => {
             ref="photoInput" 
             class="hidden" 
             accept="image/*" 
+            capture="environment"
             @change="onFileChange"
           >
           <div 
@@ -587,6 +588,7 @@ const submitAffectation = async () => {
             ref="editPhotoInput" 
             class="hidden" 
             accept="image/*" 
+            capture="environment"
             @change="onEditFileChange"
           >
           <div 
@@ -689,6 +691,7 @@ const submitAffectation = async () => {
             ref="returnPhotoInput" 
             class="hidden" 
             accept="image/*" 
+            capture="environment"
             @change="onReturnFileChange"
           >
           <div 
