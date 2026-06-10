@@ -7,11 +7,11 @@ export const useMouvementStore = defineStore('mouvement', () => {
   const loading = ref(false)
   const error = ref(null)
 
-  const fetchMouvements = async () => {
+  const fetchMouvements = async (filters = {}) => {
     loading.value = true
     error.value = null
     try {
-      const response = await api.get('/mouvements')
+      const response = await api.get('/mouvements' , {params: filters} )
       mouvements.value = response.data.data
       return true
     } catch (err) {

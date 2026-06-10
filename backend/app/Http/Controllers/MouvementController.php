@@ -26,23 +26,24 @@ public function index(Request $request)
             $query->where('user_id', $user->id); 
         } 
 
-        // --- 2. FILTRES DYNAMIQUES (Ajout du "when") ---
-        
-        // Filtre par équipement (ex: ?equipement_id=5)
-        $query->when($request->filled('equipement_id'), function ($q) use ($request) {
-            $q->where('equipement_id', $request->input('equipement_id'));
-        });
+       // --- 2. FILTRES DYNAMIQUES ---
 
-        // Filtre par type de mouvement (ex: ?type=panne ou ?type=reparation)
-        $query->when($request->filled('type'), function ($q) use ($request) {
-            $q->where('type', $request->input('type'));
-        });
+// Filtre par type de mouvement (ajusté sur votre colonne 'type_mouvement')
+$query->when($request->filled('type_mouvement'), function ($q) use ($request) {
+    $q->where('type_mouvement', $request->input('type_mouvement'));
+});
 
-        // Filtre par plage de dates (ex: ?date_debut=2026-01-01)
-        $query->when($request->filled('date_debut'), function ($q) use ($request) {
-            $q->whereDate('created_at', '>=', $request->input('date_debut'));
-        });
+// Filtre par l'auteur du mouvement (celui qui a fait le mouvement)
+$query->when($request->filled('user_name'), function ($q) use ($request) {
+    $q->whereHas('user', function ($subQ) use ($request) {
+        $subQ->where('name', 'LIKE', '%' . $request->input('user_name') . '%');
+    });
+});
 
+// Filtre par date de début
+$query->when($request->filled('date_debut'), function ($q) use ($request) {
+    $q->whereDate('created_at', '>=', $request->input('date_debut'));
+});
         // --- 3. RÉCUPÉRATION DES DONNÉES ---
         $mouvements = $query->latest('created_at')->get();
 
@@ -58,5 +59,5 @@ public function index(Request $request)
             'message' => 'Erreur lors de la récupération des mouvements : ' . $e->getMessage()
         ], 500);
     }
-}
+ }
 }
