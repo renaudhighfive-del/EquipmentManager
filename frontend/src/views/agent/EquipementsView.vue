@@ -7,6 +7,7 @@ import { useEquipementStore } from '../../stores/equipement'
 import { usePanneStore } from '../../stores/panne'
 import { useSinistreStore } from '../../stores/sinistre'
 import { useToast } from 'primevue/usetoast'
+// import { formatDate } from '../../utils/date'
 
 const equipementStore = useEquipementStore();
 const panneStore = usePanneStore();
@@ -23,6 +24,15 @@ const form = reactive({
   gravite: 'moyenne',
   description: ''
 });
+
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  return new Date(dateString).toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+};
 
 const photos = ref([])
 const photoPreviews = ref([])
@@ -115,6 +125,8 @@ const getEtatLabel = (etat) => {
   };
   return labels[etat] || etat;
 };
+
+
 </script>
 
 <template>
