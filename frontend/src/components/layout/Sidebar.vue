@@ -55,12 +55,14 @@ const menusByRole = {
     { label: 'Pertes & Casses', icon: AlertOctagon,    path: '/gestionnaire/sinistres' },
     { label: 'Rapports',        icon: BarChart3,       path: '/gestionnaire/rapports' },
     { label: 'Mon profil',      icon: CircleUser,      path: '/gestionnaire/profile' },
+    { label: 'Mes mouvements',   icon: Activity,        path: '/gestionnaire/mouvements' },
   ],
   agent: [
     { label: 'Mon espace',       icon: LayoutDashboard, path: '/agent/dashboard' },
     { label: 'Mes équipements',  icon: Smartphone,      path: '/agent/equipements' },
     { label: 'Mes Incidents',    icon: AlertTriangle,   path: '/agent/incidents' },
     { label: 'Mon profil',       icon: CircleUser,      path: '/agent/profile' },
+    { label: 'Mes mouvements',   icon: Activity,        path: '/agent/mouvements' },
   ],
 };
 
