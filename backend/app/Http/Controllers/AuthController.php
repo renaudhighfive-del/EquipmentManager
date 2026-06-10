@@ -9,18 +9,23 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
 
 class AuthController extends Controller
 {
     /**
-     * Handle login request.
+     * Connexion par session Sanctum SPA.
+     * Flux :
+     *  1. Vérifie credentials + is_active
+     *  2. Si déjà un OTP vérifié → crée la session directement
+     *  3. Sinon → envoie OTP par email, retourne requires_otp: true
      */
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
+            'email'    => 'required|email',
             'password' => 'required',
         ]);
 
@@ -28,9 +33,9 @@ class AuthController extends Controller
             return response()->json(['message' => $validator->errors()->first()], 422);
         }
 
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('email', $request->input('email'))->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (!$user || !Hash::check($request->input('password'), $user->password)) {
             return response()->json(['message' => 'Identifiants invalides'], 401);
         }
 
@@ -38,60 +43,58 @@ class AuthController extends Controller
             return response()->json(['message' => 'Votre compte est désactivé'], 403);
         }
 
-        // Check if user has already verified an OTP once (First connection logic)
+        // Vérifie si l'utilisateur a déjà validé un OTP (première connexion déjà faite)
         $hasVerifiedOtp = UserOtp::where('user_id', $user->id)
             ->where('verified', true)
             ->exists();
 
         if ($hasVerifiedOtp) {
-            $token = $user->createToken('auth_token')->plainTextToken;
+            // ── Authentification par SESSION ──────────────────────────────
+            Auth::login($user, $request->boolean('remember'));
+            $request->session()->regenerate();
+
             return response()->json([
-                'user' => $user,
-                'token' => $token,
-                'requires_otp' => false
+                'user'         => $this->userWithAvatarUrl($user),
+                'requires_otp' => false,
             ]);
         }
 
-        // Generate OTP
+        // ── Première connexion : envoie OTP ───────────────────────────────
         $otpCode = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-        
+
         UserOtp::create([
-            'user_id' => $user->id,
-            'code' => $otpCode,
+            'user_id'    => $user->id,
+            'code'       => $otpCode,
             'expires_at' => Carbon::now()->addMinutes(15),
-            'verified' => false
+            'verified'   => false,
         ]);
 
-        // Send Email (in production, use a Queue)
         try {
             Mail::to($user->email)->send(new OTPMail($otpCode));
         } catch (\Exception $e) {
-            // Log error but continue for dev
+            // En dev on continue sans email
         }
 
         return response()->json([
-            'user' => [
-                'email' => $user->email,
-                'name' => $user->name
-            ],
-            'requires_otp' => true
+            'user'         => ['email' => $user->email, 'name' => $user->name],
+            'requires_otp' => true,
         ]);
     }
 
     /**
-     * Verify OTP and complete login.
+     * Vérification du code OTP → crée la session.
      */
     public function verifyOtp(Request $request)
     {
         $request->validate([
             'email' => 'required|email',
-            'code' => 'required|string|size:6',
+            'code'  => 'required|string|size:6',
         ]);
 
-        $user = User::where('email', $request->email)->firstOrFail();
+        $user = User::where('email', $request->input('email'))->firstOrFail();
 
         $otp = UserOtp::where('user_id', $user->id)
-            ->where('code', $request->code)
+            ->where('code', $request->input('code'))
             ->where('verified', false)
             ->where('expires_at', '>', Carbon::now())
             ->latest()
@@ -103,63 +106,81 @@ class AuthController extends Controller
 
         $otp->update(['verified' => true]);
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        // ── Crée la session après validation OTP ──────────────────────────
+        Auth::login($user, $request->boolean('remember'));
+        $request->session()->regenerate();
 
         return response()->json([
-            'user' => $user,
-            'token' => $token,
+            'user' => $this->userWithAvatarUrl($user),
         ]);
     }
 
     /**
-     * Resend OTP to user.
+     * Renvoi d'un OTP.
      */
     public function resendOtp(Request $request)
     {
-        $request->validate([
-            'email' => 'required|email',
-        ]);
+        $request->validate(['email' => 'required|email']);
 
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('email', $request->input('email'))->first();
 
         if (!$user) {
             return response()->json(['message' => 'Utilisateur non trouvé'], 404);
         }
 
-        // Generate new OTP
         $otpCode = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-        
+
         UserOtp::create([
-            'user_id' => $user->id,
-            'code' => $otpCode,
+            'user_id'    => $user->id,
+            'code'       => $otpCode,
             'expires_at' => Carbon::now()->addMinutes(15),
-            'verified' => false
+            'verified'   => false,
         ]);
 
         try {
             Mail::to($user->email)->send(new OTPMail($otpCode));
         } catch (\Exception $e) {
-            // Log error
+            //
         }
 
         return response()->json(['message' => 'Un nouveau code a été envoyé']);
     }
 
     /**
-     * Logout user.
+     * Déconnexion — invalide la session courante.
      */
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return response()->json(['message' => 'Déconnecté avec succès']);
     }
 
     /**
-     * Get authenticated user.
+     * Retourne l'utilisateur authentifié (session courante).
+     * Utilisé par le frontend au montage pour restaurer l'état.
      */
     public function me(Request $request)
     {
-        return response()->json($request->user());
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'Non authentifié'], 401);
+        }
+
+        return response()->json($this->userWithAvatarUrl($user->load('agent')));
+    }
+
+    /**
+     * Helper : retourne un tableau user avec avatar_url calculée.
+     */
+    private function userWithAvatarUrl(User $user): array
+    {
+        $arr = $user->toArray();
+        $arr['avatar_url'] = $user->avatar
+            ? Storage::url($user->avatar)
+            : null;
+        return $arr;
     }
 }

@@ -8,8 +8,10 @@ import PrimeVue from 'primevue/config'
 import Aura from '@primeuix/themes/aura'
 import ToastService from 'primevue/toastservice'
 import ConfirmationService from 'primevue/confirmationservice'
+import { useAuthStore } from './stores/auth'
 
 const app = createApp(App)
+const pinia = createPinia()
 
 // Directive v-click-outside : ferme les dropdowns au clic extérieur
 app.directive('click-outside', {
@@ -23,10 +25,10 @@ app.directive('click-outside', {
   },
   unmounted(el) {
     document.removeEventListener('mousedown', el._clickOutsideHandler);
-  }
+  },
 });
 
-app.use(createPinia())
+app.use(pinia)
 app.use(router)
 app.use(ToastService)
 app.use(ConfirmationService)
@@ -36,4 +38,15 @@ app.use(PrimeVue, {
     }
 })
 
-app.mount('#app')
+// Restaurer la session utilisateur au montage de l'application
+const initApp = async () => {
+  const authStore = useAuthStore()
+  try {
+    await authStore.fetchUser()
+  } catch (error) {
+    // L'utilisateur n'est pas authentifié, c'est okay
+  }
+  app.mount('#app')
+}
+
+initApp()

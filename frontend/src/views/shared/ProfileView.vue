@@ -92,14 +92,13 @@ const submitProfile = async () => {
     }
 
     const updated = await userStore.updateProfile(payload)
-    // Sync auth store
-    authStore.user = { ...authStore.user, ...updated }
-    localStorage.setItem('user', JSON.stringify(authStore.user))
+    // Sync auth store en récupérant l'utilisateur fraîchement depuis le backend
+    await authStore.fetchUser()
     // Reset le fichier sélectionné après succès
     avatarFile.value = null
     // Mettre à jour le preview avec l'URL absolue retournée par l'API
-    if (updated.avatar_url) {
-      avatarPreview.value = updated.avatar_url
+    if (authStore.user.avatar_url) {
+      avatarPreview.value = authStore.user.avatar_url
     }
     profileSuccess.value = 'Informations mises à jour.'
   } catch (err) {

@@ -99,6 +99,7 @@ class AgentController extends Controller
     /**
      * Mise à jour d'un agent (admin uniquement).
      * Supporte le remplacement de photo.
+     * Si l'agent est lié à un utilisateur, synchronise users.name, users.email et users.avatar.
      */
     public function update(Request $request, Agent $agent)
     {
@@ -129,6 +130,35 @@ class AgentController extends Controller
         }
 
         $agent->update($data);
+
+        // ── Synchroniser le profil utilisateur lié si existant ───────────────
+        if ($agent->user) {
+            $userData = [];
+
+            // Concaténer prénom + nom pour le name utilisateur
+            if ($request->filled('prenom') || $request->filled('nom')) {
+                $prenom = $request->filled('prenom') ? $request->input('prenom') : $agent->prenom;
+                $nom    = $request->filled('nom') ? $request->input('nom') : $agent->nom;
+                $userData['name'] = trim("{$prenom} {$nom}");
+            }
+
+            if ($request->filled('email')) {
+                $userData['email'] = $request->input('email');
+            }
+
+            // Synchroniser l'avatar utilisateur avec la photo agent
+            if (isset($data['photo'])) {
+                // Supprimer l'ancien avatar utilisateur si différent
+                if ($agent->user->avatar && $agent->user->avatar !== $data['photo']) {
+                    Storage::disk('public')->delete($agent->user->avatar);
+                }
+                $userData['avatar'] = $data['photo'];
+            }
+
+            if (!empty($userData)) {
+                $agent->user->update($userData);
+            }
+        }
 
         return response()->json([
             'message' => 'Agent mis à jour',

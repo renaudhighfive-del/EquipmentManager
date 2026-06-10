@@ -1,21 +1,18 @@
 import { defineStore } from 'pinia'
-import axios from 'axios'
 import api from '../services/axios'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
-    user: JSON.parse(localStorage.getItem('user')) || null,
-    token: localStorage.getItem('token') || null,
-    isAuthenticated: !!localStorage.getItem('token'),
+    user: null,
+    isAuthenticated: false,
     requiresOTP: false,
-    tempUser: null, // For OTP phase
+    tempUser: null,
   }),
 
   actions: {
     async login(credentials) {
       try {
         // En Laravel Sanctum, on récupère d'abord le cookie CSRF
-        // On utilise l'instance 'api' qui a withCredentials: true et withXSRFToken: true
         await api.get('/../sanctum/csrf-cookie')
         
         const response = await api.post('/auth/login', credentials)
@@ -69,12 +66,19 @@ export const useAuthStore = defineStore('auth', {
 
     setAuth(data) {
       this.user = data.user
-      this.token = data.token
       this.isAuthenticated = true
-      localStorage.setItem('user', JSON.stringify(data.user))
-      localStorage.setItem('token', data.token)
-      // Configurer le header Authorization pour les futures requêtes
-      api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`
+    },
+
+    async fetchUser() {
+      try {
+        const response = await api.get('/auth/me')
+        this.user = response.data
+        this.isAuthenticated = true
+      } catch (error) {
+        this.user = null
+        this.isAuthenticated = false
+        throw error
+      }
     },
 
     async logout() {
@@ -84,12 +88,8 @@ export const useAuthStore = defineStore('auth', {
         console.error('Logout error', error)
       } finally {
         this.user = null
-        this.token = null
         this.isAuthenticated = false
         this.requiresOTP = false
-        localStorage.removeItem('user')
-        localStorage.removeItem('token')
-        delete api.defaults.headers.common['Authorization']
       }
     }
   }

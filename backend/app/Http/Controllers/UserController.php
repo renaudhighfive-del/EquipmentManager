@@ -129,7 +129,10 @@ class UserController extends Controller
     }
 
     /**
-     * Mise à jour du profil connecté — retourne avatar_url (URL publique complète).
+     * Mise à jour du profil connecté.
+     * - Met à jour users.name, users.email, users.avatar
+     * - Si l'user est un agent → synchronise agents.nom, agents.prenom, agents.email, agents.photo
+     *   pour que les vues admin/gestionnaire voient le changement en temps réel
      */
     public function updateProfile(Request $request)
     {
@@ -156,9 +159,38 @@ class UserController extends Controller
 
         $user->update($data);
 
+        // ── Synchroniser le profil agent si l'utilisateur est un agent ──────
+        if ($user->agent) {
+            $agentData = [];
+
+            // Décomposer le name en prenom + nom (premier mot = prénom, reste = nom)
+            if ($request->filled('name')) {
+                $parts = explode(' ', trim($request->input('name')), 2);
+                $agentData['prenom'] = $parts[0];
+                $agentData['nom']    = $parts[1] ?? $parts[0];
+            }
+
+            if ($request->filled('email')) {
+                $agentData['email'] = $request->input('email');
+            }
+
+            // Synchroniser la photo de l'agent avec l'avatar utilisateur
+            if (isset($data['avatar'])) {
+                // Supprimer l'ancienne photo agent si différente
+                if ($user->agent->photo && $user->agent->photo !== $data['avatar']) {
+                    Storage::disk('public')->delete($user->agent->photo);
+                }
+                $agentData['photo'] = $data['avatar'];
+            }
+
+            if (!empty($agentData)) {
+                $user->agent->update($agentData);
+            }
+        }
+
         return response()->json([
             'message' => 'Profil mis à jour avec succès',
-            'data'    => $this->withAvatarUrl($user),
+            'data'    => $this->withAvatarUrl($user->fresh('agent')),
         ]);
     }
 
