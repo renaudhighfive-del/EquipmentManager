@@ -49,8 +49,6 @@ Route::middleware(['auth:sanctum', 'check.active'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index']);
 
     // Affectations
-    Route::post('affectations/{affectation}/request-return', [AffectationController::class, 'requestReturn']);
-    Route::patch('affectations/{affectation}/validate-return', [AffectationController::class, 'validateReturn']);
     Route::apiResource('affectations', AffectationController::class);
 
     // Pannes
