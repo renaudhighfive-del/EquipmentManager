@@ -39,11 +39,8 @@ const form = reactive({
 
 const formatDate = (dateString) => {
   if (!dateString) return '';
-  return new Date(dateString).toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  });
+  const date = new Date(dateString);
+  return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
 };
 
 const photos = ref([])
@@ -193,11 +190,7 @@ const getEtatLabel = (etat) => {
   return labels[etat] || etat;
 };
 
-const formatDate = (dateString) => {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
-};
+
 </script>
 
 <template>
