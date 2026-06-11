@@ -111,7 +111,7 @@ export const useAffectationStore = defineStore('affectation', () => {
       loading.value=false
     }
   }
-
+//Exportation des fonctions et des variablee
   return {
     affectations,
     loading,
