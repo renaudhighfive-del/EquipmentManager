@@ -97,11 +97,11 @@ const handleDeclareSinistre = async () => {
 const stats = computed(() => [
   { 
   label: "Confirmation d'affection", 
-  value: dashboardStats.value?.mes_equipements || 0, 
-  icon: MessageSquare, // L'icône de messagerie (ex: Lucide Vue)
+   value: affectationsAConfirmer.value.length, // On change pour compter la liste des confirmations
+  icon: PackageCheck, // L'icône de messagerie (ex: Lucide Vue)
   colorClass: 'bg-blue-50 text-blue-600',
   hasButton: true,     // Flag pour indiquer qu'il faut afficher un bouton
-  buttonText: 'OK'     // Le texte du bouton
+ onClick: openConfirmationModal // La fonction à appeler au clic
 },
   { 
     label: 'Mes équipements', 
@@ -164,8 +164,15 @@ const getEtatLabel = (etat) => {
     </PageHeader>
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-      <StatCard v-for="stat in stats" :key="stat.label" v-bind="stat" />
-    </div>
+  <div 
+    v-for="stat in stats" 
+    :key="stat.label" 
+    @click="stat.isClickable ? stat.onClick() : null"
+    :class="stat.isClickable ? 'cursor-pointer hover:scale-105 transition-transform' : ''"
+  >
+    <StatCard v-bind="stat" />
+  </div>
+</div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
       <!-- Équipements -->
@@ -301,6 +308,51 @@ const getEtatLabel = (etat) => {
           <Loader2 v-if="isSubmitting" class="w-4 h-4 animate-spin" />
           {{ isSubmitting ? 'Envoi en cours...' : 'Envoyer la déclaration' }}
         </button>
+      </div>
+    </SideModal>
+
+
+        <!-- Modal Confirmation de Réception -->
+    <SideModal :show="showConfirmationModal" title="Confirmer réception matériel" @close="showConfirmationModal = false">
+      <div class="space-y-6">
+        <div v-if="loadingConfirmation" class="flex flex-col items-center justify-center py-10">
+          <Loader2 class="w-8 h-8 text-primary-500 animate-spin mb-3" />
+          <p class="text-sm text-slate-500">Traitement en cours...</p>
+        </div>
+
+        <div v-else-if="affectationsAConfirmer.length === 0" class="text-center py-10">
+          <PackageCheck class="w-12 h-12 text-emerald-500 mx-auto mb-3" />
+          <p class="text-sm font-bold text-slate-900">Aucune affectation à confirmer</p>
+        </div>
+
+        <div v-else class="space-y-4">
+          <div 
+            v-for="aff in affectationsAConfirmer" 
+            :key="aff.id"
+            class="p-5 bg-slate-50/50 rounded-2xl border border-slate-200 flex items-center justify-between gap-4"
+          >
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400">
+                <Smartphone class="w-6 h-6" />
+              </div>
+              <div>
+                <p class="text-sm font-bold text-slate-900">{{ aff.equipement.marque }} {{ aff.equipement.modele }}</p>
+                <p class="text-xs text-slate-500">Référence: {{ aff.equipement.reference }}</p>
+                <p class="text-xs text-slate-400 mt-1">
+                  Date: {{ new Date(aff.date_affectation).toLocaleDateString('fr-FR') }}
+                </p>
+              </div>
+            </div>
+            
+            <button 
+              @click="confirmerReception(aff.id)"
+              :disabled="loadingConfirmation"
+              class="px-5 py-2.5 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 transition-colors disabled:opacity-50"
+            >
+              OK
+            </button>
+          </div>
+        </div>
       </div>
     </SideModal>
   </div>
