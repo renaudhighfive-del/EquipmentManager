@@ -64,7 +64,7 @@ class AgentController extends Controller
             : 1;
         $matricule = 'MAT-' . $year . '-' . str_pad($sequence, 5, '0', STR_PAD_LEFT);
 
-        // Upload photo
+        // Uploader les photos
         $photoPath = null;
         if ($request->hasFile('photo')) {
             $photoPath = $request->file('photo')->store('agents/photos', 'public');
