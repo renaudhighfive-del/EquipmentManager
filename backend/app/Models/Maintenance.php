@@ -12,10 +12,9 @@ class Maintenance extends Model
     protected $fillable = [
         'equipement_id',
         'panne_id',
-        'type',
-        'technicien',
         'responsable_id',
-        'diagnostic',
+        'technicien',
+        'type',
         'actions_effectuees',
         'cout',
         'date_debut',

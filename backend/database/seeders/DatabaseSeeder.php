@@ -10,26 +10,32 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // ── D'abord, on appelle CategorieSeeder pour avoir les catégories ──────────
+        $this->call(CategorieSeeder::class);
+        
         // ── Comptes système (admin & gestionnaire) ────────────────
         User::create([
-            'name'      => 'Alexandre Martin',
-            'email'     => 'admin@equip.com',
-            'password'  => Hash::make('password'),
-            'role'      => 'admin',
-            'is_active' => true,
+            'name'         => 'Alexandre Martin',
+            'email'        => 'admin@equip.com',
+            'password'     => Hash::make('password'),
+            'role'         => 'admin',
+            'is_active'    => true,
+            'avatar'       => null,
+            'categorie_id' => null,
         ]);
 
         User::create([
-            'name'      => 'Gestionnaire Parc',
-            'email'     => 'gestion@equip.com',
-            'password'  => Hash::make('password'),
-            'role'      => 'gestionnaire',
-            'is_active' => true,
+            'name'         => 'Gestionnaire Parc',
+            'email'        => 'gestion@equip.com',
+            'password'     => Hash::make('password'),
+            'role'         => 'gestionnaire',
+            'is_active'    => true,
+            'avatar'       => null,
+            'categorie_id' => null,
         ]);
 
         // ── Seeders dans l'ordre des dépendances ──────────────────
         $this->call([
-            CategorieSeeder::class,   // 1. Catégories
             AgentSeeder::class,       // 2. Agents + leurs comptes users (rôle agent)
             EquipementSeeder::class,  // 3. Équipements (dépend des catégories)
         ]);

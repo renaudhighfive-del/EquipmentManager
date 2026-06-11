@@ -90,9 +90,19 @@ const router = createRouter({
   ]
 })
 
-router.beforeEach((to, from) => {
+router.beforeEach(async (to, from) => {
   const authStore = useAuthStore()
 
+  //  Si l'utilisateur n'a pas encore été chargé ET qu'on n'est PAS sur la page login, le faire d'abord !
+  if (!authStore.hasFetchedUser && to.name !== 'login' && to.name !== 'otp') {
+    try {
+      await authStore.fetchUser()
+    } catch (error) {
+      // Pas connecté, c'est okay
+    }
+  }
+
+  // Maintenant on peut vérifier normalement
   if (to.meta.auth && !authStore.isAuthenticated) {
     return '/login'
   }

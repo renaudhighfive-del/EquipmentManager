@@ -11,12 +11,14 @@ import StatCard from '../../components/dashboard/StatCard.vue'
 import SideModal from '../../components/layout/SideModal.vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
+import { useAffectationStore } from '../../stores/affectation'
 import { 
   AlertTriangle, 
   RotateCcw,
   Smartphone,
   Loader2,
-  MessageSquare
+  MessageSquare,
+  PackageCheck 
 } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
@@ -37,11 +39,21 @@ const sinistreForm = reactive({
   description: ''
 });
 
+const affectationStore = useAffectationStore()
+
+const showConfirmationModal=ref([false])
+const affectationsAConfirmer=ref([])//Pour simuler les donnée avant le backend
+const loadingConfirmation= ref(false)
+
 onMounted(() => {
   equipementStore.fetchEquipements()
   panneStore.fetchPannes()
   dashboardStore.fetchStats()
 })
+
+//Fonctionn pour ouvrir le modal
+
+affectationsAConfirmer.value=
 
 const openSinistreModal = (equip = null) => {
   selectedEquipementId.value = equip ? equip.id : '';
