@@ -41,7 +41,7 @@ const sinistreForm = reactive({
 
 const affectationStore = useAffectationStore()
 
-const showConfirmationModal=ref([false])
+const showConfirmationModal=ref(false)
 const affectationsAConfirmer=ref([])//Pour simuler les donnée avant le backend
 const loadingConfirmation= ref(false)
 
@@ -52,8 +52,17 @@ onMounted(() => {
 })
 
 //Fonctionn pour ouvrir le modal
+const openConfirmationModal = () => {
 
-affectationsAConfirmer.value=
+  affectationsAConfirmer.value=[
+    {
+       id: 1, // donné en dure
+      equipement: { marque: 'Apple', modele: 'iPhone 14', reference: 'REF-1234' },
+      date_affectation: new Date().toISOString()
+    }
+  ]
+  showConfirmationModal.value=true
+}
 
 const openSinistreModal = (equip = null) => {
   selectedEquipementId.value = equip ? equip.id : '';
