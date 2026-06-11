@@ -15,7 +15,8 @@ import {
   AlertTriangle, 
   RotateCcw,
   Smartphone,
-  Loader2
+  Loader2,
+  MessageSquare
 } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
@@ -73,6 +74,14 @@ const handleDeclareSinistre = async () => {
 };
 
 const stats = computed(() => [
+  { 
+  label: "Confirmation d'affection", 
+  value: dashboardStats.value?.mes_equipements || 0, 
+  icon: MessageSquare, // L'icône de messagerie (ex: Lucide Vue)
+  colorClass: 'bg-blue-50 text-blue-600',
+  hasButton: true,     // Flag pour indiquer qu'il faut afficher un bouton
+  buttonText: 'OK'     // Le texte du bouton
+},
   { 
     label: 'Mes équipements', 
     value: dashboardStats.value?.mes_equipements || 0, 
