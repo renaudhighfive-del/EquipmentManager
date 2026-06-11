@@ -2,29 +2,17 @@
 import { onMounted, ref, reactive } from 'vue'
 import PageHeader from '../../components/layout/PageHeader.vue'
 import SideModal from '../../components/layout/SideModal.vue'
-import { Smartphone, RotateCcw, AlertOctagon, Loader2, AlertTriangle, Upload, X, CheckCircle, Calendar } from 'lucide-vue-next'
+import { Smartphone, RotateCcw, AlertOctagon, Loader2, AlertTriangle, Upload, X } from 'lucide-vue-next'
 import { useEquipementStore } from '../../stores/equipement'
 import { usePanneStore } from '../../stores/panne'
 import { useSinistreStore } from '../../stores/sinistre'
-import { useAffectationStore } from '../../stores/affectation'
 import { useToast } from 'primevue/usetoast'
 // import { formatDate } from '../../utils/date'
 
 const equipementStore = useEquipementStore();
 const panneStore = usePanneStore();
 const sinistreStore = useSinistreStore();
-const affectationStore = useAffectationStore();
 const toast = useToast();
-
-const showReturnModal = ref(false);
-const selectedAffectationForReturn = ref(null);
-const returnForm = reactive({
-  date_retour: new Date().toISOString().split('T')[0],
-  etat_retour: 'Bon état',
-  observations: ''
-});
-const returnPhotos = ref([]);
-const returnPhotoPreviews = ref([]);
 
 const showIncidentModal = ref(false);
 const selectedEquipement = ref(null);
@@ -112,61 +100,6 @@ const handleDeclareIncident = async () => {
   }
 };
 
-const openReturnModal = (equip) => {
-  selectedAffectationForReturn.value = equip.current_affectation;
-  returnForm.date_retour = new Date().toISOString().split('T')[0];
-  returnForm.etat_retour = 'Bon état';
-  returnForm.observations = '';
-  returnPhotos.value = [];
-  returnPhotoPreviews.value = [];
-  showReturnModal.value = true;
-};
-
-const onReturnFileChange = (e) => {
-  const files = Array.from(e.target.files)
-  files.forEach(file => {
-    returnPhotos.value.push(file)
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      returnPhotoPreviews.value.push(e.target.result)
-    }
-    reader.readAsDataURL(file)
-  })
-}
-
-const removeReturnPhoto = (index) => {
-  returnPhotos.value.splice(index, 1)
-  returnPhotoPreviews.value.splice(index, 1)
-}
-
-const handleRequestReturn = async () => {
-  if (returnPhotos.value.length === 0) {
-    toast.add({ severity: 'warn', summary: 'Attention', detail: 'Veuillez fournir une photo de retour', life: 3000 });
-    return;
-  }
-
-  isSubmitting.value = true;
-  try {
-    const formData = new FormData();
-    formData.append('date_retour', returnForm.date_retour);
-    formData.append('etat_retour', returnForm.etat_retour);
-    formData.append('observations', returnForm.observations);
-    returnPhotos.value.forEach(file => {
-      formData.append('photo_retour', file);
-    });
-    
-    await affectationStore.requestReturnAffectation(selectedAffectationForReturn.value.id, formData);
-    
-    toast.add({ severity: 'success', summary: 'Succès', detail: 'Demande de retour envoyée', life: 3000 });
-    showReturnModal.value = false;
-    equipementStore.fetchEquipements();
-  } catch (error) {
-    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Échec de l\'envoi de la demande', life: 3000 });
-  } finally {
-    isSubmitting.value = false;
-  }
-};
-
 const getEtatClass = (etat) => {
   switch (etat) {
     case 'en_service': return 'bg-emerald-50 text-emerald-600';
@@ -189,8 +122,6 @@ const getEtatLabel = (etat) => {
   };
   return labels[etat] || etat;
 };
-
-
 </script>
 
 <template>
@@ -204,47 +135,33 @@ const getEtatLabel = (etat) => {
     <div v-else class="space-y-4">
       <div 
         v-for="equip in equipementStore.equipements" :key="equip.id"
-        class="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:shadow-md transition-all cursor-pointer group"
-        @click="openDetails(equip)"
+        class="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:shadow-md transition-all"
       >
         <div class="flex items-center gap-4 sm:gap-5">
-          <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-primary-50 group-hover:text-primary-600 transition-colors">
+          <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400">
             <Smartphone class="w-6 h-6 sm:w-7 sm:h-7" />
           </div>
           <div>
             <p class="font-bold text-slate-900">{{ equip.marque }} {{ equip.modele }}</p>
             <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
               <span class="text-xs text-slate-500 font-medium">{{ equip.reference }}</span>
-              <span v-if="equip.current_affectation" class="flex items-center gap-1 text-[10px] text-primary-600 font-bold bg-primary-50 px-2 py-0.5 rounded-md">
-                <Calendar class="w-3 h-3" />
-                Depuis le {{ formatDate(equip.current_affectation.date_affectation) }}
-              </span>
             </div>
           </div>
         </div>
         <div class="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-4 sm:pt-0">
-            <span :class="['px-3 py-1 rounded-lg text-[10px] font-black uppercase', getEtatClass(equip.etat)]">
-              {{ getEtatLabel(equip.etat) }}
-            </span>
-            <div class="flex items-center gap-2">
-              <button 
-                v-if="equip.current_affectation && equip.current_affectation.statut === 'en_cours'"
-                @click.stop="openReturnModal(equip)"
-                class="p-2.5 text-primary-500 hover:bg-primary-50 rounded-xl transition-all"
-                title="Demander le retour"
-              >
-                <CheckCircle class="w-5 h-5" />
-              </button>
-              <button 
-                @click="openIncidentModal(equip)"
-                class="p-2.5 text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
-                title="Signaler un incident"
-              >
-                <AlertTriangle class="w-5 h-5" />
-              </button>
-              
-            </div>
+          <span :class="['px-3 py-1 rounded-lg text-[10px] font-black uppercase', getEtatClass(equip.etat)]">
+            {{ getEtatLabel(equip.etat) }}
+          </span>
+          <div class="flex items-center gap-2">
+            <button 
+              @click="openIncidentModal(equip)"
+              class="p-2.5 text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
+              title="Signaler un incident"
+            >
+              <AlertTriangle class="w-5 h-5" />
+            </button>
           </div>
+        </div>
       </div>
       
       <div v-if="equipementStore.equipements.length === 0" class="text-center py-12 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
@@ -318,13 +235,13 @@ const getEtatLabel = (etat) => {
           <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Photos du problème (facultatif)</label>
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div v-for="(preview, index) in photoPreviews" :key="index" class="relative aspect-square rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 group">
-              <img :src="preview" class="w-full h-full object-cover">
+              <img :src="preview" class="w-full h-full object-cover" />
               <button type="button" @click="removePhoto(index)" class="absolute top-1 right-1 p-1 bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
                 <X class="w-3 h-3" />
               </button>
             </div>
             <label class="relative aspect-square rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-primary-400 hover:bg-primary-50 transition-all text-slate-400 hover:text-primary-600">
-              <input type="file" multiple accept="image/*" class="hidden" @change="onFileChange">
+              <input type="file" multiple accept="image/*" class="hidden" @change="onFileChange" />
               <Upload class="w-6 h-6" />
               <span class="text-[10px] font-bold">Ajouter</span>
             </label>
@@ -360,74 +277,6 @@ const getEtatLabel = (etat) => {
         >
           <Loader2 v-if="isSubmitting" class="w-4 h-4 animate-spin" />
           {{ isSubmitting ? 'Envoi en cours...' : 'Confirmer la déclaration' }}
-        </button>
-      </div>
-    </SideModal>
-
-    <!-- Modal Demande de Retour -->
-    <SideModal :show="showReturnModal" title="Demander le retour d'équipement" @close="showReturnModal = false">
-      <div v-if="selectedAffectationForReturn" class="space-y-6">
-        <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-          <p class="text-sm text-slate-600 font-medium">
-            Équipement concerné : 
-            <span class="font-black text-slate-900">{{ selectedAffectationForReturn.equipement?.marque }} {{ selectedAffectationForReturn.equipement?.modele }}</span>
-          </p>
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Date de retour</label>
-          <input 
-            type="date" 
-            v-model="returnForm.date_retour"
-            :max="new Date().toISOString().split('T')[0]"
-            required
-            class="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-primary-500/20"
-          >
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">État de l'équipement</label>
-          <select v-model="returnForm.etat_retour" class="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-primary-500/20">
-            <option value="Bon état">Bon état</option>
-            <option value="Rayé">Rayé</option>
-            <option value="Abîmé">Abîmé</option>
-          </select>
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Photo de retour (obligatoire)</label>
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <div v-for="(preview, index) in returnPhotoPreviews" :key="index" class="relative aspect-square rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 group">
-              <img :src="preview" class="w-full h-full object-cover">
-              <button type="button" @click="removeReturnPhoto(index)" class="absolute top-1 right-1 p-1 bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                <X class="w-3 h-3" />
-              </button>
-            </div>
-            <label class="relative aspect-square rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-primary-400 hover:bg-primary-50 transition-all text-slate-400 hover:text-primary-600">
-              <input type="file" accept="image/*" class="hidden" @change="onReturnFileChange">
-              <Upload class="w-6 h-6" />
-              <span class="text-[10px] font-bold">Ajouter</span>
-            </label>
-          </div>
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Observations</label>
-          <textarea 
-            v-model="returnForm.observations" 
-            rows="3" 
-            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-primary-500/20 resize-none"
-            placeholder="Notes éventuelles..."
-          ></textarea>
-        </div>
-
-        <button 
-          @click="handleRequestReturn"
-          :disabled="isSubmitting"
-          class="w-full h-12 bg-primary-600 text-white rounded-xl text-sm font-black shadow-lg shadow-primary-200 hover:bg-primary-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-        >
-          <Loader2 v-if="isSubmitting" class="w-4 h-4 animate-spin" />
-          {{ isSubmitting ? 'Envoi en cours...' : 'Confirmer la demande de retour' }}
         </button>
       </div>
     </SideModal>

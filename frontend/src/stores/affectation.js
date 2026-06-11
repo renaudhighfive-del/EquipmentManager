@@ -45,14 +45,16 @@ export const useAffectationStore = defineStore('affectation', () => {
     }
   }
 
-  // Demande de retour par l'agent
-  const requestReturnAffectation = async (id, returnData) => {
+  // Pour le retour
+  const returnAffectation = async (id, returnData) => {
     loading.value = true
     error.value = null
     successMessage.value = null
     try {
-      const response = await api.post(`/affectations/${id}/request-return`, returnData)
+      // Pour les uploads de fichiers en Laravel avec PATCH, on utilise souvent POST avec _method
+      const response = await api.post(`/affectations/${id}`, returnData)
       
+      // Mettre à jour l'affectation dans la liste locale
       const index = affectations.value.findIndex(a => a.id === id)
       if (index !== -1) {
         affectations.value[index] = response.data.data
@@ -61,30 +63,7 @@ export const useAffectationStore = defineStore('affectation', () => {
       successMessage.value = response.data.message
       return true
     } catch (err) {
-      error.value = err.response?.data?.message || 'Erreur lors de la demande de retour'
-      return false
-    } finally {
-      loading.value = false
-    }
-  }
-
-  // Validation du retour par admin/gestionnaire
-  const validateReturnAffectation = async (id) => {
-    loading.value = true
-    error.value = null
-    successMessage.value = null
-    try {
-      const response = await api.patch(`/affectations/${id}/validate-return`)
-      
-      const index = affectations.value.findIndex(a => a.id === id)
-      if (index !== -1) {
-        affectations.value[index] = response.data.data
-      }
-      
-      successMessage.value = response.data.message
-      return true
-    } catch (err) {
-      error.value = err.response?.data?.message || 'Erreur lors de la validation du retour'
+      error.value = err.response?.data?.message || 'Erreur lors du retour de l\'équipement'
       return false
     } finally {
       loading.value = false
@@ -143,7 +122,6 @@ export const useAffectationStore = defineStore('affectation', () => {
     fetchAffectationById,
     createAffectation,
     updateAffectation,
-    requestReturnAffectation,
-    validateReturnAffectation,
+    returnAffectation,
   }
 })
