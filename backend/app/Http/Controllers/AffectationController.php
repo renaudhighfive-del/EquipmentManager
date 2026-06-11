@@ -96,36 +96,85 @@ class AffectationController extends Controller
         }
     }
 
+    // Demande de retour par l'agent
+    public function requestReturn(Request $request, Affectation $affectation)
+    {
+        try {
+            if ($affectation->statut !== 'en_cours') {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Cette affectation n\'est pas en cours'
+                ], 422);
+            }
+
+            $validated = $request->validate([
+                'date_retour' => 'required|date',
+                'etat_retour' => 'required|string',
+                'photo_retour' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120',
+                'observations' => 'nullable|string',
+            ]);
+
+            if ($request->hasFile('photo_retour')) {
+                $file = $request->file('photo_retour');
+                $filename = 'retour_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs('affectations', $filename, 'public');
+                $validated['photo_retour'] = $path;
+            }
+
+            $validated['statut'] = 'retour_en_attente';
+            $affectation->update($validated);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Demande de retour envoyée, en attente de validation',
+                'data' => $affectation->load(['equipement', 'agent'])
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Une erreur est survenue : ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Validation du retour par l'admin/gestionnaire
+    public function validateReturn(Request $request, Affectation $affectation)
+    {
+        try {
+            if ($affectation->statut !== 'retour_en_attente') {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Cette affectation n\'est pas en attente de validation de retour'
+                ], 422);
+            }
+
+            $affectation->update(['statut' => 'retourne']);
+
+            // Mettre à jour l'équipement pour le rendre disponible
+            $equipement = $affectation->equipement;
+            if ($equipement) {
+                $equipement->update(['etat' => 'neuf']);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Retour validé avec succès, équipement disponible',
+                'data' => $affectation->load(['equipement', 'agent'])
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Une erreur est survenue : ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function update(Request $request, Affectation $affectation)
     {
         try {
-            // Si c'est un retour d'équipement
-            if ($request->has('date_retour') && $affectation->statut === 'en_cours') {
-                $validated = $request->validate([
-                    'date_retour' => 'required|date',
-                    'etat_retour' => 'required|string',
-                    'photo_retour' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120',
-                    'observations' => 'nullable|string',
-                ]);
-
-                if ($request->hasFile('photo_retour')) {
-                    $file = $request->file('photo_retour');
-                    $filename = 'retour_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                    $path = $file->storeAs('affectations', $filename, 'public');
-                    $validated['photo_retour'] = $path;
-                }
-
-                $validated['statut'] = 'retourne';
-                $affectation->update($validated);
-
-                return response()->json([
-                    'status' => 'success',
-                    'message' => 'Équipement retourné avec succès',
-                    'data' => $affectation->load(['equipement', 'agent'])
-                ], 200);
-            }
-
-            // Sinon, c'est une modification générale
+            // Modification générale seulement (pas de retour)
             $validated = $request->validate([
                 'agent_id' => 'sometimes|required|exists:agents,id',
                 'date_affectation' => 'sometimes|required|date|before_or_equal:today',
