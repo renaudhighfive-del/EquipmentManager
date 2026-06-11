@@ -252,6 +252,20 @@ const openFiche = async (id) => {
   }
 };
 
+const handleValidateReturn = async (aff) => {
+  try {
+    const success = await affectationStore.validateReturnAffectation(aff.id);
+    if (success) {
+      showToast('success', 'Succès', successMessage.value);
+    } else {
+      showToast('error', 'Erreur', storeError.value);
+    }
+  } catch (error) {
+    showToast('error', 'Erreur', "Une erreur est survenue lors de la validation.");
+    console.error(error);
+  }
+};
+
 const openCreateModal = () => {
   fetchInitialData();
   showCreateModal.value = true;
@@ -367,11 +381,12 @@ const submitAffectation = async () => {
                 class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight"
                 :class="{
                   'bg-blue-50 text-blue-600': aff.statut === 'en_cours',
+                  'bg-amber-50 text-amber-600': aff.statut === 'retour_en_attente',
                   'bg-slate-100 text-slate-500': aff.statut === 'retourne',
                   'bg-purple-50 text-purple-600': aff.statut === 'renouvele'
                 }"
               >
-                {{ aff.statut === 'en_cours' ? 'En cours' : (aff.statut === 'retourne' ? 'Retourné' : 'Renouvelé') }}
+                {{ aff.statut === 'en_cours' ? 'En cours' : (aff.statut === 'retour_en_attente' ? 'Retour en attente' : (aff.statut === 'retourne' ? 'Retourné' : 'Renouvelé')) }}
               </span>
             </td>
             <td class="px-8 py-5 text-right">
@@ -394,12 +409,14 @@ const submitAffectation = async () => {
                 </button>
                 
                 <button 
-                  v-if="aff.statut === 'en_cours'"
-                  @click="openReturnModal(aff)"
-                  class="text-xs font-bold text-primary-600 hover:text-primary-700 bg-primary-50 px-4 py-2 rounded-lg transition-colors"
+                  v-if="aff.statut === 'retour_en_attente'"
+                  @click="handleValidateReturn(aff)"
+                  class="text-xs font-bold text-green-600 hover:text-green-700 bg-green-50 px-4 py-2 rounded-lg transition-colors"
                 >
-                  Retour
+                  Valider
                 </button>
+                
+                <span v-else-if="aff.statut === 'en_cours'" class="text-xs font-bold text-slate-300 px-2 py-2">Attente demande</span>
                 <span v-else class="text-xs font-bold text-slate-300 px-2 py-2">Clôturé</span>
               </div>
             </td>

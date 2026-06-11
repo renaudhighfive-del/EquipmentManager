@@ -95,7 +95,7 @@ const menuItems = computed(() => {
         </div>
         <div v-if="!isCollapsed || isOpenMobile" class="animate-in fade-in slide-in-from-left-2 duration-300">
           <h1 class="text-xl font-bold text-slate-900 leading-tight">EquipTrack</h1>
-          <p class="text-xs text-slate-500 font-medium">Une traçabilité impécable</p>
+          <p class="text-xs text-slate-500 font-medium">Une traçabilité impeccable</p>
         </div>
       </div>
       <button 

@@ -58,8 +58,10 @@ class MaintenanceController extends Controller
         });
     }
 
-    public function cloturer(Request $request, Maintenance $maintenance)
+    public function cloturer(Request $request, $id)
     {
+        $maintenance = Maintenance::findOrFail($id);
+        
         $validated = $request->validate([
             'date_fin' => 'required|date',
             'actions_effectuees' => 'nullable|string',
@@ -96,8 +98,10 @@ class MaintenanceController extends Controller
         });
     }
 
-    public function declarerPerte(Request $request, Maintenance $maintenance)
+    public function declarerPerte(Request $request, $id)
     {
+        $maintenance = Maintenance::findOrFail($id);
+        
         $validated = $request->validate([
             'type' => 'required|in:perte,casse,vol',
             'description' => 'required|string',
@@ -137,6 +141,9 @@ class MaintenanceController extends Controller
 
             // Mettre à jour l'état de l'équipement
             $maintenance->equipement->update(['etat' => 'perdu']);
+
+            // Mettre à jour l'équipement via la relation si nécessaire
+            $maintenance->equipement->save();
 
             return response()->json([
                 'maintenance' => $maintenance->load(['equipement', 'panne']),
