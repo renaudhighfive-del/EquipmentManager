@@ -127,11 +127,13 @@ class AgentSeeder extends Seeder
         foreach ($agents as $data) {
             // Crée le compte utilisateur lié à l'agent (rôle agent)
             $user = User::create([
-                'name'      => $data['prenom'] . ' ' . $data['nom'],
-                'email'     => $data['email'],
-                'password'  => Hash::make('password'),
-                'role'      => 'agent',
-                'is_active' => $data['statut'] === 'actif',
+                'name'         => $data['prenom'] . ' ' . $data['nom'],
+                'email'        => $data['email'],
+                'password'     => Hash::make('password'),
+                'role'         => 'agent',
+                'is_active'    => $data['statut'] === 'actif',
+                'avatar'       => null,
+                'categorie_id' => null,
             ]);
 
             Agent::create([
@@ -145,6 +147,7 @@ class AgentSeeder extends Seeder
                 'service'   => $data['service'],
                 'poste'     => $data['poste'],
                 'statut'    => $data['statut'],
+                'photo'     => null,
             ]);
         }
     }
