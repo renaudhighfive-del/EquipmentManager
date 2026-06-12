@@ -27,11 +27,8 @@ const form = reactive({
 
 const formatDate = (dateString) => {
   if (!dateString) return '';
-  return new Date(dateString).toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  });
+  const date = new Date(dateString);
+  return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
 };
 
 const photos = ref([])
@@ -125,8 +122,6 @@ const getEtatLabel = (etat) => {
   };
   return labels[etat] || etat;
 };
-
-
 </script>
 
 <template>
@@ -140,21 +135,16 @@ const getEtatLabel = (etat) => {
     <div v-else class="space-y-4">
       <div 
         v-for="equip in equipementStore.equipements" :key="equip.id"
-        class="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:shadow-md transition-all cursor-pointer group"
-        @click="openDetails(equip)"
+        class="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:shadow-md transition-all"
       >
         <div class="flex items-center gap-4 sm:gap-5">
-          <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-primary-50 group-hover:text-primary-600 transition-colors">
+          <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400">
             <Smartphone class="w-6 h-6 sm:w-7 sm:h-7" />
           </div>
           <div>
             <p class="font-bold text-slate-900">{{ equip.marque }} {{ equip.modele }}</p>
             <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
               <span class="text-xs text-slate-500 font-medium">{{ equip.reference }}</span>
-              <span v-if="equip.current_affectation" class="flex items-center gap-1 text-[10px] text-primary-600 font-bold bg-primary-50 px-2 py-0.5 rounded-md">
-                <Calendar class="w-3 h-3" />
-                Depuis le {{ formatDate(equip.current_affectation.date_affectation) }}
-              </span>
             </div>
           </div>
         </div>
@@ -170,7 +160,6 @@ const getEtatLabel = (etat) => {
             >
               <AlertTriangle class="w-5 h-5" />
             </button>
-            
           </div>
         </div>
       </div>
@@ -246,13 +235,13 @@ const getEtatLabel = (etat) => {
           <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Photos du problème (facultatif)</label>
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div v-for="(preview, index) in photoPreviews" :key="index" class="relative aspect-square rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 group">
-              <img :src="preview" class="w-full h-full object-cover">
+              <img :src="preview" class="w-full h-full object-cover" />
               <button type="button" @click="removePhoto(index)" class="absolute top-1 right-1 p-1 bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
                 <X class="w-3 h-3" />
               </button>
             </div>
             <label class="relative aspect-square rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-primary-400 hover:bg-primary-50 transition-all text-slate-400 hover:text-primary-600">
-              <input type="file" multiple accept="image/*" class="hidden" @change="onFileChange">
+              <input type="file" multiple accept="image/*" class="hidden" @change="onFileChange" />
               <Upload class="w-6 h-6" />
               <span class="text-[10px] font-bold">Ajouter</span>
             </label>

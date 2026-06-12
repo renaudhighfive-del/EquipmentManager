@@ -278,7 +278,8 @@ const handleArchive = async (id) => {
         toast.add({ severity: 'success', summary: 'Succès', detail: 'Équipement archivé', life: 3000 });
         showFiche.value = false;
       } catch (error) {
-        toast.add({ severity: 'error', summary: 'Erreur', detail: 'Échec de l\'archivage', life: 3000 });
+        const errorMessage = error.response?.data?.message || 'Échec de l\'archivage';
+        toast.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 5000 });
       }
     }
   });

@@ -8,7 +8,6 @@ import PrimeVue from 'primevue/config'
 import Aura from '@primeuix/themes/aura'
 import ToastService from 'primevue/toastservice'
 import ConfirmationService from 'primevue/confirmationservice'
-import { useAuthStore } from './stores/auth'
 
 const app = createApp(App)
 const pinia = createPinia()
@@ -38,15 +37,5 @@ app.use(PrimeVue, {
     }
 })
 
-// Restaurer la session utilisateur au montage de l'application
-const initApp = async () => {
-  const authStore = useAuthStore()
-  try {
-    await authStore.fetchUser()
-  } catch (error) {
-    // L'utilisateur n'est pas authentifié, c'est okay
-  }
-  app.mount('#app')
-}
-
-initApp()
+// Montez l'application directement (le router s'occupe de charger l'utilisateur)
+app.mount('#app')

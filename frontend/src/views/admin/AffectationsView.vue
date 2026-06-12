@@ -124,6 +124,8 @@ const showToast = (severity, summary, detail) => {
   toast.add({ severity, summary, detail, life: 3000 });
 };
 
+
+//pour recuperer les equip et les agents 
 const fetchInitialData = async () => {
   try {
     const [equipRes, agentRes] = await Promise.all([

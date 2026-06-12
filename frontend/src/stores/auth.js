@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import axios from 'axios'
 import api from '../services/axios'
 
 export const useAuthStore = defineStore('auth', {
@@ -7,13 +8,15 @@ export const useAuthStore = defineStore('auth', {
     isAuthenticated: false,
     requiresOTP: false,
     tempUser: null,
+    hasFetchedUser: false, //  Pour savoir si on a déjà chargé l'utilisateur
   }),
 
   actions: {
     async login(credentials) {
       try {
-        // En Laravel Sanctum, on récupère d'abord le cookie CSRF
-        await api.get('/../sanctum/csrf-cookie')
+        // En Laravel Sanctum, on récupère d'abord le cookie CSRF (sans le préfixe /api)
+        const csrfUrl = `${import.meta.env.VITE_API_URL.replace('/api', '')}/sanctum/csrf-cookie`
+        await axios.get(csrfUrl, { withCredentials: true })
         
         const response = await api.post('/auth/login', credentials)
         
@@ -67,6 +70,7 @@ export const useAuthStore = defineStore('auth', {
     setAuth(data) {
       this.user = data.user
       this.isAuthenticated = true
+      this.hasFetchedUser = true
     },
 
     async fetchUser() {
@@ -78,18 +82,23 @@ export const useAuthStore = defineStore('auth', {
         this.user = null
         this.isAuthenticated = false
         throw error
+      } finally {
+        this.hasFetchedUser = true
       }
     },
 
     async logout() {
+      // D'abord, on vide TOUT le store et redirige (pour être sûr !)
+      this.user = null
+      this.isAuthenticated = false
+      this.requiresOTP = false
+      this.hasFetchedUser = false
+
+      // Ensuite, on essaie d'appeler l'API logout (mais on s'en fiche si ça échoue)
       try {
         await api.post('/auth/logout')
       } catch (error) {
-        console.error('Logout error', error)
-      } finally {
-        this.user = null
-        this.isAuthenticated = false
-        this.requiresOTP = false
+        console.error('Logout error (non bloquant)', error)
       }
     }
   }

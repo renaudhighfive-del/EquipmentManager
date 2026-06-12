@@ -13,12 +13,15 @@ class EquipementController extends Controller
      */
     public function index()
     {
+        //Récupère l'instance de l'utilisateur actuellement connecté et on Prépare une requête pour récupérer les équipements non archivés
+        // 'with(...)' permet d'inclure directement les relations (Eager Loading) pour éviter les requêtes à répétition
         $user = Auth::user();
         $query = Equipement::with(['images', 'categorie', 'currentAffectation.agent'])
             ->where('is_archived', false);
-
+    //Restriction de sécurité : Si l'utilisateur connecté est un simple 'agent', L'agent ne doit pas voir les équipements marqués comme "perdu"
         if ($user->role === 'agent') {
             $query->where('etat', '!=', 'perdu')
+            //// Et on filtre pour qu'il ne voie QUE les équipements qui lui sont actuellement affectés
                 ->whereHas('currentAffectation', function ($q) use ($user) {
                     $q->where('agent_id', $user->agent->id);
                 });
@@ -28,7 +31,7 @@ class EquipementController extends Controller
     }
 
     /**
-     * create d'équipment
+     * create de nouvel équipment
      */
     public function store(Request $request)
     {
@@ -67,11 +70,13 @@ class EquipementController extends Controller
      */
     public function show(Equipement $equipement)
     {
+        // Grâce au Route Model Binding, Laravel trouve automatiquement l'équipement via l'ID de l'URL.
+        // On charge ses images, sa catégorie, et tout son historique d'affectations avec les agents.
         return response()->json($equipement->load(['images', 'categorie', 'affectations.agent']));
     }
 
     /**
-     * update d'équipment
+     * Modification/Mise à jour d'un équipement existant
      */
     public function update(Request $request, Equipement $equipement)
     {
@@ -108,6 +113,15 @@ class EquipementController extends Controller
 
     public function archive(Equipement $equipement)
     {
+        // Vérifier s'il y a une affectation en cours
+        $hasActiveAffectation = $equipement->currentAffectation()->exists();
+        
+        if ($hasActiveAffectation) {
+            return response()->json([
+                'message' => 'Impossible d\'archiver cet équipement : il a une affectation en cours. Faites d\'abord retourner l\'équipement.'
+            ], 422);
+        }
+        
         $equipement->update(['is_archived' => true]);
         return response()->json(['message' => 'Equipement archivé']);
     }

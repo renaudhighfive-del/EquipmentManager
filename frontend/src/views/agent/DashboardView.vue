@@ -11,11 +11,14 @@ import StatCard from '../../components/dashboard/StatCard.vue'
 import SideModal from '../../components/layout/SideModal.vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
+import { useAffectationStore } from '../../stores/affectation'
 import { 
   AlertTriangle, 
   RotateCcw,
   Smartphone,
-  Loader2
+  Loader2,
+  MessageSquare,
+  PackageCheck 
 } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
@@ -36,11 +39,30 @@ const sinistreForm = reactive({
   description: ''
 });
 
+const affectationStore = useAffectationStore()
+
+const showConfirmationModal=ref(false)
+const affectationsAConfirmer=ref([])//Pour simuler les donnée avant le backend
+const loadingConfirmation= ref(false)
+
 onMounted(() => {
   equipementStore.fetchEquipements()
   panneStore.fetchPannes()
   dashboardStore.fetchStats()
 })
+
+//Fonctionn pour ouvrir le modal
+const openConfirmationModal = () => {
+
+  affectationsAConfirmer.value=[
+    {
+       id: 1, // donné en dure
+      equipement: { marque: 'Apple', modele: 'iPhone 14', reference: 'REF-1234' },
+      date_affectation: new Date().toISOString()
+    }
+  ]
+  showConfirmationModal.value=true
+}
 
 const openSinistreModal = (equip = null) => {
   selectedEquipementId.value = equip ? equip.id : '';
@@ -73,6 +95,14 @@ const handleDeclareSinistre = async () => {
 };
 
 const stats = computed(() => [
+  { 
+  label: "Confirmation d'affection", 
+  value: dashboardStats.value?.mes_equipements || 0, 
+  icon: MessageSquare, // L'icône de messagerie (ex: Lucide Vue)
+  colorClass: 'bg-blue-50 text-blue-600',
+  hasButton: true,     // Flag pour indiquer qu'il faut afficher un bouton
+  buttonText: 'OK'     // Le texte du bouton
+},
   { 
     label: 'Mes équipements', 
     value: dashboardStats.value?.mes_equipements || 0, 

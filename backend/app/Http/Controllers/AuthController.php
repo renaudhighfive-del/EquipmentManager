@@ -151,11 +151,19 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        try {
+            Auth::logout();
+            
+            if ($request->hasSession()) {
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+            }
 
-        return response()->json(['message' => 'Déconnecté avec succès']);
+            return response()->json(['message' => 'Déconnecté avec succès']);
+        } catch (\Exception $e) {
+            // En cas d'erreur, on retourne quand même un succès
+            return response()->json(['message' => 'Déconnecté avec succès']);
+        }
     }
 
     /**
