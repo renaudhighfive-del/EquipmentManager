@@ -33,7 +33,7 @@ export const useAgentsStore = defineStore('agents', () => {
       throw error;
     }
   };
-
+//creation d'un agent
   const createAgent = async (agentData) => {
     try {
       const response = await api.post('/agents', agentData);
@@ -45,7 +45,7 @@ export const useAgentsStore = defineStore('agents', () => {
       throw error;
     }
   };
-
+//modification d'un agent
   const updateAgent = async (id, agentData) => {
     try {
       const response = await api.put(`/agents/${id}`, agentData);
@@ -62,7 +62,7 @@ export const useAgentsStore = defineStore('agents', () => {
       throw error;
     }
   };
-
+// desactivation d'un agent
   const desactiverAgent = async (id) => {
     try {
       const response = await api.patch(`/agents/${id}/desactiver`);
@@ -79,7 +79,7 @@ export const useAgentsStore = defineStore('agents', () => {
       throw error;
     }
   };
-
+//reativation d'un agent
   const reactiverAgent = async (id) => {
     try {
       const response = await api.patch(`/agents/${id}/reactiver`);
@@ -96,7 +96,7 @@ export const useAgentsStore = defineStore('agents', () => {
       throw error;
     }
   };
-
+//exportation des fonctions et variables
   return {
     agents,
     loading,

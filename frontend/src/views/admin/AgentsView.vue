@@ -128,7 +128,11 @@ const openFiche = async (agent) => {
 const initiales = (a) => `${a.prenom?.charAt(0) ?? ''}${a.nom?.charAt(0) ?? ''}`
 const fullName  = (a) => `${a.prenom} ${a.nom}`
 const isAdmin   = computed(() => authStore.user?.role === 'admin')
-const avatarUrl = (agent) => agent.photo_url ?? null
+const avatarUrl = (agent) => {
+  if (!agent.photo_url) return null
+  if (agent.photo_url.startsWith('http')) return agent.photo_url
+  return import.meta.env.VITE_API_URL.replace('/api', '') + agent.photo_url
+}
 
 onMounted(() => agentStore.fetchAgents())
 </script>
@@ -223,7 +227,7 @@ onMounted(() => agentStore.fetchAgents())
               <!-- Agent -->
               <td class="px-8 py-4">
                 <div class="flex items-center gap-4">
-                  <div class="w-11 h-11 rounded-xl overflow-hidden flex-shrink-0 border border-slate-200 bg-primary-50">
+                  <div class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border border-slate-200 bg-primary-50">
                     <img v-if="avatarUrl(agent)" :src="avatarUrl(agent)" class="w-full h-full object-cover" :alt="fullName(agent)">
                     <div v-else class="w-full h-full flex items-center justify-center text-primary-700 font-bold text-sm">
                       {{ initiales(agent) }}
@@ -234,8 +238,7 @@ onMounted(() => agentStore.fetchAgents())
                       <span class="text-sm font-bold text-slate-900">{{ fullName(agent) }}</span>
                       <span v-if="agent.is_nouveau" class="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-md">Nouveau</span>
                     </div>
-                    <p class="text-xs text-slate-500 font-medium flex items-center gap-1 mt-0.5">
-                      <Mail class="w-3 h-3" />
+                    <p class="text-xs text-slate-500 font-medium mt-0.5">
                       {{ agent.email || '—' }}
                     </p>
                   </div>
@@ -451,14 +454,26 @@ onMounted(() => agentStore.fetchAgents())
           </div>
           <div class="space-y-1.5">
             <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Direction</label>
-            <input v-model="formData.direction" type="text" placeholder="Direction IT"
-              class="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 transition-all">
+              <select v-model="formData.direction"
+              class="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 transition-all" >
+                <option value="">---Selectionner une Direction---</option>
+                <option value="Direction des Systèmes d'Information (DSI)">Direction des Systèmes d'Information (DSI)</option>
+                <option value="Direction des Moyens Généraux (DMG)">Direction des Moyens Généraux (DMG)</option>
+                <option value="Direction Technique (DT) ou Direction des Opérations">Direction Technique (DT) ou Direction des Opérations</option>
+                <option value="Direction de la Logistique et des Approvisionnements">Direction de la Logistique et des Approvisionnements </option>
+                <option value="Direction Administrative et Financière (DAF)">Direction Administrative et Financière (DAF)</option>
+              </select>
           </div>
           <div class="space-y-1.5">
             <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Service</label>
-            <input v-model="formData.service" type="text" placeholder="Support"
-              class="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 transition-all">
-          </div>
+            <select v-model="formData.service"
+              class="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 transition-all" >
+              <option value="">---Selectionner un Service---</option>
+              <option value="Service Infrastructures et Réseaux">Service Infrastructures et Réseaux</option>
+              <option value="Service Support et Parc Informatique">Service Support et Parc Informatique</option>
+              <option value="Service Sécurité Informatique">Service Sécurité Informatique</option>
+            </select>
+            </div>
           <div class="col-span-2 space-y-1.5">
             <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Poste</label>
             <input v-model="formData.poste" type="text" placeholder="Technicien terrain"

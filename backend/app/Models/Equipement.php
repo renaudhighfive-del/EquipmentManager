@@ -10,6 +10,8 @@ class Equipement extends Model
 {
     use HasFactory;
 
+    protected $with = ['images']; // Charge les images par défaut
+
     protected $fillable = [
         'categorie_id',
         'reference',

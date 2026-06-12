@@ -13,10 +13,11 @@ const api = axios.create({
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
       const authStore = useAuthStore()
       authStore.user = null
       authStore.isAuthenticated = false
+      authStore.hasFetchedUser = false
       if (window.location.pathname !== '/login') {
         window.location.href = '/login'
       }
