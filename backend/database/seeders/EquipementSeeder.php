@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Categorie;
 use App\Models\Equipement;
+use App\Models\EquipementImage;
 use Illuminate\Database\Seeder;
 
 class EquipementSeeder extends Seeder
@@ -68,6 +69,16 @@ class EquipementSeeder extends Seeder
         'en_panne', 'en_maintenance',
     ];
 
+    // Mots clés pour les images Picsum par catégorie
+    private array $keywordsByCategory = [
+        'Équipement sportif' => 'sports,watch,fitness',
+        'Équipement informatique' => 'computer,laptop,tech',
+        'Équipement médical' => 'medical,hospital,health',
+        'Équipement militaire' => 'military,army,tactical',
+        'Équipement de bureau' => 'office,desk,printer',
+        'Équipements commerciaux / administratifs' => 'business,terminal,work',
+    ];
+
     public function run(): void
     {
         $counter = 80000;
@@ -86,7 +97,7 @@ class EquipementSeeder extends Seeder
             }
 
             foreach ($items as $item) {
-                Equipement::create([
+                $equipement = Equipement::create([
                     'categorie_id'    => $categorie->id,
                     'reference'       => "REF-{$counter}",
                     'numero_serie'    => 'SN-' . strtoupper(substr(str_shuffle('ABCDEFGHJKLMNPQRSTUVWXYZ0123456789'), 0, 8)),
@@ -103,6 +114,20 @@ class EquipementSeeder extends Seeder
                     'notes'           => null,
                     'is_archived'     => false,
                 ]);
+
+                // Ajoute 1 à 3 images par équipement
+                $keywords = $this->keywordsByCategory[$nomCategorie] ?? 'technology';
+                $nbImages = rand(1, 3);
+                for ($i = 0; $i < $nbImages; $i++) {
+                    // On utilise un seed pour avoir des images cohérentes par équipement
+                    $seed = $counter . $i;
+                    // On stocke le path comme un chemin dans storage (mais on utilise aussi l'URL Picsum pour le dev)
+                    $path = "equipements/{$equipement->id}_{$i}.jpg";
+                    EquipementImage::create([
+                        'equipement_id' => $equipement->id,
+                        'path' => $path,
+                    ]);
+                }
 
                 $counter++;
             }
