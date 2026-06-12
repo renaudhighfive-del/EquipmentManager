@@ -15,6 +15,15 @@ class DatabaseSeeder extends Seeder
         
         // ── Comptes système (admin & gestionnaire) ────────────────
         User::create([
+            'name'         => 'Admin Test',
+            'email'        => 'renaudhighfive@gmail.com',
+            'password'     => Hash::make('password'),
+            'role'         => 'admin',
+            'is_active'    => true,
+            'avatar'       => null,
+            'categorie_id' => null,
+        ]);
+        User::create([
             'name'         => 'Alexandre Martin',
             'email'        => 'admin@equip.com',
             'password'     => Hash::make('password'),
