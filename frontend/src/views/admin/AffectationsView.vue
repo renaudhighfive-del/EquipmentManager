@@ -368,12 +368,14 @@ const submitAffectation = async () => {
               <span 
                 class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight"
                 :class="{
-                  'bg-blue-50 text-blue-600': aff.statut === 'en_cours',
-                  'bg-slate-100 text-slate-500': aff.statut === 'retourne',
-                  'bg-purple-50 text-purple-600': aff.statut === 'renouvele'
+                    'bg-blue-50 text-blue-600': aff.statut === 'en_cours',
+                    'bg-emerald-50 text-emerald-600': aff.statut === 'confirmee',
+                    'bg-amber-50 text-amber-600': aff.statut === 'retour_en_attente',
+                    'bg-slate-100 text-slate-500': aff.statut === 'retourne',
+                    'bg-purple-50 text-purple-600': aff.statut === 'renouvele'
                 }"
               >
-                {{ aff.statut === 'en_cours' ? 'En cours' : (aff.statut === 'retourne' ? 'Retourné' : 'Renouvelé') }}
+                {{ aff.statut === 'en_cours' ? 'À confirmer' : (aff.statut === 'confirmee' ? 'Confirmée' : (aff.statut === 'retour_en_attente' ? 'Retour en attente' : (aff.statut === 'retourne' ? 'Retourné' : 'Renouvelé'))) }}
               </span>
             </td>
             <td class="px-8 py-5 text-right">

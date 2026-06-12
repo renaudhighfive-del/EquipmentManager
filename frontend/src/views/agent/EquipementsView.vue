@@ -149,17 +149,27 @@ const getEtatLabel = (etat) => {
           </div>
         </div>
         <div class="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-4 sm:pt-0">
-          <span :class="['px-3 py-1 rounded-lg text-[10px] font-black uppercase', getEtatClass(equip.etat)]">
-            {{ getEtatLabel(equip.etat) }}
-          </span>
-          <div class="flex items-center gap-2">
-            <button 
-              @click="openIncidentModal(equip)"
-              class="p-2.5 text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
-              title="Signaler un incident"
-            >
-              <AlertTriangle class="w-5 h-5" />
-            </button>
+            <span :class="['px-3 py-1 rounded-lg text-[10px] font-black uppercase', getEtatClass(equip.etat)]">
+              {{ getEtatLabel(equip.etat) }}
+            </span>
+            <div class="flex items-center gap-2">
+              <button 
+                v-if="equip.current_affectation && equip.current_affectation.statut === 'confirmee'"
+                @click.stop="openReturnModal(equip)"
+                class="p-2.5 text-primary-500 hover:bg-primary-50 rounded-xl transition-all"
+                title="Demander le retour"
+              >
+                <CheckCircle class="w-5 h-5" />
+              </button>
+              <button 
+                @click="openIncidentModal(equip)"
+                class="p-2.5 text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
+                title="Signaler un incident"
+              >
+                <AlertTriangle class="w-5 h-5" />
+              </button>
+              
+            </div>
           </div>
         </div>
       </div>
