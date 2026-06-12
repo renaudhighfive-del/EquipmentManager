@@ -175,7 +175,7 @@ class AgentController extends Controller
             $agent->user->update(['is_active' => false]);
         }
 
-        return response()->json(['message' => 'Agent désactivé', 'agent' => $agent]);
+        return response()->json(['message' => 'Agent désactivé', 'agent' => $this->withPhotoUrl($agent)]);
     }
 
     public function reactiver(Agent $agent)
@@ -186,6 +186,6 @@ class AgentController extends Controller
             $agent->user->update(['is_active' => true]);
         }
 
-        return response()->json(['message' => 'Agent réactivé', 'agent' => $agent]);
+        return response()->json(['message' => 'Agent réactivé', 'agent' => $this->withPhotoUrl($agent)]);
     }
 }
