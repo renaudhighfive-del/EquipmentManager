@@ -26,7 +26,7 @@ class AuthController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'email'    => 'required|email',
-            'password' => 'required',
+            'password'  => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -35,12 +35,19 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->input('email'))->first();
 
-        if (!$user || !Hash::check($request->input('password'), $user->password)) {
-            return response()->json(['message' => 'Identifiants invalides'], 401);
+        // Vérifie d'abord si l'utilisateur existe
+        if (!$user) {
+            return response()->json(['message' => 'Aucun compte associé à cet e-mail. Veuillez contacter l\'administrateur.'], 404);
         }
 
+        // Vérifie ensuite le mot de passe
+        if (!Hash::check($request->input('password'), $user->password)) {
+            return response()->json(['message' => 'Identifiants invalides. Veuillez réessayer.'], 401);
+        }
+
+        // Vérifie si le compte est actif
         if (!$user->is_active) {
-            return response()->json(['message' => 'Votre compte est désactivé'], 403);
+            return response()->json(['message' => 'Votre compte est désactivé. Veuillez contacter l\'administrateur.'], 403);
         }
 
         // Vérifie si l'utilisateur a déjà validé un OTP (première connexion déjà faite)
