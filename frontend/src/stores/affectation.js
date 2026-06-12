@@ -156,6 +156,52 @@ export const useAffectationStore = defineStore('affectation', () => {
     }
   };
 
+  // Demande de retour par l'agent
+  const requestReturnAffectation = async (id, returnData) => {
+    loading.value = true;
+    error.value = null;
+    successMessage.value = null;
+    try {
+      const response = await api.post(`/affectations/${id}/request-return`, returnData);
+
+      const index = affectations.value.findIndex(a => a.id === id);
+      if (index !== -1) {
+        affectations.value[index] = response.data.data;
+      }
+
+      successMessage.value = response.data.message;
+      return true;
+    } catch (err) {
+      error.value = err.response?.data?.message || 'Erreur lors de la demande de retour';
+      return false;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  // Valider le retour par Admin/Gestionnaire
+  const validateReturn = async (id) => {
+    loading.value = true;
+    error.value = null;
+    successMessage.value = null;
+    try {
+      const response = await api.patch(`/affectations/${id}/validate-return`);
+
+      const index = affectations.value.findIndex(a => a.id === id);
+      if (index !== -1) {
+        affectations.value[index] = response.data.data;
+      }
+
+      successMessage.value = response.data.message;
+      return true;
+    } catch (err) {
+      error.value = err.response?.data?.message || 'Erreur lors de la validation du retour';
+      return false;
+    } finally {
+      loading.value = false;
+    }
+  };
+
 
 
   return {
@@ -175,5 +221,7 @@ export const useAffectationStore = defineStore('affectation', () => {
     createAffectation,
     updateAffectation,
     returnAffectation,
+    requestReturnAffectation,
+    validateReturn,
   }
 })

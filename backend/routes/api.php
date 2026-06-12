@@ -55,6 +55,7 @@ Route::middleware(['auth:sanctum', 'check.active'])->group(function () {
     Route::get('affectations/a-confirmer', [AffectationController::class, 'getAConfirmer']);
     Route::patch('affectations/{affectation}/confirmer-reception', [AffectationController::class, 'confirmerReception']);
     Route::apiResource('affectations', AffectationController::class);
+    
 
     // Pannes
     Route::apiResource('pannes', PanneController::class);

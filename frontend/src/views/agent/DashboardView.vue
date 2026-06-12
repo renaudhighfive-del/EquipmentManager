@@ -52,7 +52,6 @@ onMounted(() => {
 
    // Charger les affectations à confirmer au démarrage
    affectationStore.fetchAffectationsAConfirmer()
-   console.log('dans le onMounted');
    
 })
 
@@ -86,7 +85,6 @@ const confirmerReception = async (affectationId) => {
   }
   
   loadingConfirmation.value = false
-  console.log('dans le confirmeReception');
   
 }
 

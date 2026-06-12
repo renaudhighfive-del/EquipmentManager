@@ -302,6 +302,23 @@ const submitAffectation = async () => {
     submitting.value = false;
   }
 };
+
+const handleValidateReturn = async (aff) => {
+  try {
+    submitting.value = true;
+    const success = await affectationStore.validateReturn(aff.id);
+    if (success) {
+      showToast('success', 'Succès', successMessage.value);
+    } else {
+      showToast('error', 'Erreur', storeError.value);
+    }
+  } catch (error) {
+    showToast('error', 'Erreur', "Une erreur est survenue lors de la validation du retour.");
+    console.error(error);
+  } finally {
+    submitting.value = false;
+  }
+};
 </script>
 
 <template>
@@ -398,13 +415,22 @@ const submitAffectation = async () => {
                 </button>
                 
                 <button 
-                  v-if="aff.statut === 'en_cours'"
+                  v-if="aff.statut === 'en_cours' || aff.statut === 'confirmee'"
                   @click="openReturnModal(aff)"
                   class="text-xs font-bold text-primary-600 hover:text-primary-700 bg-primary-50 px-4 py-2 rounded-lg transition-colors"
                 >
                   Retour
                 </button>
-                <span v-else class="text-xs font-bold text-slate-300 px-2 py-2">Clôturé</span>
+
+                <button 
+                  v-if="aff.statut === 'retour_en_attente'"
+                  @click="handleValidateReturn(aff)"
+                  class="text-xs font-bold text-green-600 hover:text-green-700 bg-green-50 px-4 py-2 rounded-lg transition-colors"
+                >
+                  Valider
+                </button>
+                
+                <span v-if="aff.statut === 'retourne'" class="text-xs font-bold text-slate-300 px-2 py-2">Clôturé</span>
               </div>
             </td>
           </tr>
