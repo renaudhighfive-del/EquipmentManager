@@ -228,7 +228,7 @@ const getEtatLabel = (etat) => {
             </span>
             <div class="flex items-center gap-2">
               <button 
-                v-if="equip.current_affectation && equip.current_affectation.statut === 'en_cours'"
+                v-if="equip.current_affectation && equip.current_affectation.statut === 'confirmee'"
                 @click.stop="openReturnModal(equip)"
                 class="p-2.5 text-primary-500 hover:bg-primary-50 rounded-xl transition-all"
                 title="Demander le retour"

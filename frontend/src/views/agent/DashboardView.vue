@@ -49,19 +49,19 @@ onMounted(() => {
   equipementStore.fetchEquipements()
   panneStore.fetchPannes()
   dashboardStore.fetchStats()
+
+   // Charger les affectations à confirmer au démarrage
+   affectationStore.fetchAffectationsAConfirmer()
+   console.log('dans le onMounted');
+   
 })
 
 //Fonctionn pour ouvrir le modal
 const openConfirmationModal = () => {
 
-  affectationsAConfirmer.value=[
-    {
-       id: 1, // donné en dure
-      equipement: { marque: 'Apple', modele: 'iPhone 14', reference: 'REF-1234' },
-      date_affectation: new Date().toISOString()
-    }
-  ]
-  showConfirmationModal.value=true
+  // On recharge la liste depuis le store avant d'ouvrir la modal
+  affectationStore.fetchAffectationsAConfirmer()
+  showConfirmationModal.value=true;
 }
 
 const openSinistreModal = (equip = null) => {
@@ -70,6 +70,25 @@ const openSinistreModal = (equip = null) => {
   sinistreForm.description = '';
   showSinistreModal.value = true;
 };
+
+const confirmerReception = async (affectationId) => {
+  loadingConfirmation.value = true
+  const success = await affectationStore.confirmerReceptionAffectation(affectationId)
+  
+  if (success) {
+    toast.add({ severity: 'success', summary: 'Succès', detail: affectationStore.successMessage || 'Réception confirmée !', life: 3000 })
+    // Recharger les équipements pour que l'équipement apparaisse dans "Mes équipements"
+    equipementStore.fetchEquipements()
+    // Recharger la liste des affectations à confirmer
+    affectationStore.fetchAffectationsAConfirmer()
+  } else {
+    toast.add({ severity: 'error', summary: 'Erreur', detail: affectationStore.error || 'Erreur lors de la confirmation', life: 3000 })
+  }
+  
+  loadingConfirmation.value = false
+  console.log('dans le confirmeReception');
+  
+}
 
 const handleDeclareSinistre = async () => {
   if (!selectedEquipementId.value || !sinistreForm.description) {
@@ -97,10 +116,11 @@ const handleDeclareSinistre = async () => {
 const stats = computed(() => [
   { 
   label: "Confirmation d'affection", 
-   value: affectationsAConfirmer.value.length, // On change pour compter la liste des confirmations
+   value: affectationStore.affectationsAConfirmer.length, // On change pour compter la liste des confirmations
   icon: PackageCheck, // L'icône de messagerie (ex: Lucide Vue)
   colorClass: 'bg-blue-50 text-blue-600',
-  hasButton: true,     // Flag pour indiquer qu'il faut afficher un bouton
+  // hasButton: true,     // Flag pour indiquer qu'il faut afficher un bouton
+  isClickable: true,
  onClick: openConfirmationModal // La fonction à appeler au clic
 },
   { 
@@ -312,7 +332,7 @@ const getEtatLabel = (etat) => {
     </SideModal>
 
 
-        <!-- Modal Confirmation de Réception -->
+        <!-- Modal Confirmation de Réception de l'affectation -->
     <SideModal :show="showConfirmationModal" title="Confirmer réception matériel" @close="showConfirmationModal = false">
       <div class="space-y-6">
         <div v-if="loadingConfirmation" class="flex flex-col items-center justify-center py-10">
@@ -320,14 +340,14 @@ const getEtatLabel = (etat) => {
           <p class="text-sm text-slate-500">Traitement en cours...</p>
         </div>
 
-        <div v-else-if="affectationsAConfirmer.length === 0" class="text-center py-10">
+        <div v-else-if="affectationStore.affectationsAConfirmer.length === 0" class="text-center py-10">
           <PackageCheck class="w-12 h-12 text-emerald-500 mx-auto mb-3" />
           <p class="text-sm font-bold text-slate-900">Aucune affectation à confirmer</p>
         </div>
 
         <div v-else class="space-y-4">
           <div 
-            v-for="aff in affectationsAConfirmer" 
+            v-for="aff in affectationStore.affectationsAConfirmer" 
             :key="aff.id"
             class="p-5 bg-slate-50/50 rounded-2xl border border-slate-200 flex items-center justify-between gap-4"
           >
@@ -346,7 +366,7 @@ const getEtatLabel = (etat) => {
             
             <button 
               @click="confirmerReception(aff.id)"
-              :disabled="loadingConfirmation"
+              :disabled="affectationStore.loadingConfirmation"
               class="px-5 py-2.5 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 transition-colors disabled:opacity-50"
             >
               OK

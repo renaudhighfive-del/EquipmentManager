@@ -10,6 +10,12 @@ export const useAffectationStore = defineStore('affectation', () => {
 
   const currentAffectation=ref(null)
 
+    // Pour la confirmation de réception
+  const affectationsAConfirmer = ref([])
+  const loadingAConfirmer = ref(false)
+
+  
+
   // Pour l'affichage
   const fetchAffectations = async () => {
     loading.value = true
@@ -133,12 +139,58 @@ export const useAffectationStore = defineStore('affectation', () => {
     }
   }
 
+
+    // Récupérer la liste des affectations à confirmer par l'agent
+  const fetchAffectationsAConfirmer = async () => {
+    loadingAConfirmer.value = true
+    error.value = null
+    try {
+      const response = await api.get('/affectations/a-confirmer') // Endpoint backend qu'on créera plus tard
+      affectationsAConfirmer.value = response.data.data
+      return true
+    } catch (err) {
+      error.value = err.response?.data?.message || 'Erreur lors du chargement des confirmations'
+      return false
+    } finally {
+      loadingAConfirmer.value = false
+    }
+  }
+
+        // Confirmer la réception d'une affectation
+  const confirmerReceptionAffectation = async (id) => {
+    loading.value = true
+    error.value = null
+    successMessage.value = null
+    try {
+      const response = await api.patch(`/affectations/${id}/confirmer-reception`)
+
+       // On retire l'affectation de la liste "à confirmer"
+      affectationsAConfirmer.value = affectationsAConfirmer.value.filter(a => a.id !== id)
+      
+      successMessage.value = response.data.message
+      return true
+    } catch (err) {
+      error.value = err.response?.data?.message || 'Erreur lors de la confirmation'
+      return false
+    } finally {
+      loading.value = false
+    }
+  };
+
+
+
   return {
     affectations,
     loading,
     error,
     successMessage,
     currentAffectation,
+
+      affectationsAConfirmer,
+    loadingAConfirmer,
+    fetchAffectationsAConfirmer,
+    confirmerReceptionAffectation,
+
     fetchAffectations,
     fetchAffectationById,
     createAffectation,

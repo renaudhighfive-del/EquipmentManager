@@ -212,4 +212,81 @@ class AffectationController extends Controller
             ], 500);
         }
     }
+
+
+        // Récupérer les affectations à confirmer pour l'agent connecté
+    public function getAConfirmer()
+    {
+        try {
+            $user = Auth::user();
+
+            // Vérifier que l'utilisateur est bien un agent et a une fiche agent liée
+            if (!$user->agent) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Aucune fiche agent associée à ce compte'
+                ], 403);
+            }
+
+            $affectations = Affectation::with(['equipement', 'agent'])
+                ->where('agent_id', $user->agent->id)
+                ->where('statut', 'en_cours') // Seulement les affectations en cours (pas encore confirmées)
+                ->latest()
+                ->get();
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $affectations
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Erreur lors de la récupération : ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Confirmer la réception d'une affectation par l'agent
+    public function confirmerReception(Affectation $affectation)
+    {
+        try {
+            $user = Auth::user();
+
+            // Vérifier que l'agent est bien le propriétaire de l'affectation
+            if (!$user->agent || $user->agent->id !== $affectation->agent_id) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Vous ne pouvez pas confirmer cette affectation'
+                ], 403);
+            }
+
+            // Vérifier que le statut est bien "en_cours"
+            if ($affectation->statut !== 'en_cours') {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Cette affectation ne peut plus être confirmée'
+                ], 422);
+            }
+
+            $affectation->update(['statut' => 'confirmee']);
+
+            // Créer un mouvement pour le journal (si tu as un observer, tu peux laisser faire, sinon ajoute ça)
+            $affectation->mouvements()->create([
+                'equipement_id' => $affectation->equipement_id,
+                'user_id' => $user->id,
+                'type_mouvement' => 'reception_confirmee',
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Réception confirmée avec succès',
+                'data' => $affectation->load(['equipement', 'agent'])
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Erreur lors de la confirmation : ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
