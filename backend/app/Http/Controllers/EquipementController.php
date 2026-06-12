@@ -20,6 +20,9 @@ class EquipementController extends Controller
             ->where('is_archived', false);
     //Restriction de sécurité : Si l'utilisateur connecté est un simple 'agent', L'agent ne doit pas voir les équipements marqués comme "perdu"
         if ($user->role === 'agent') {
+            if (!$user->agent) {
+                return response()->json([]);
+            }
             $query->where('etat', '!=', 'perdu')
             //// Et on filtre pour qu'il ne voit QUE les équipements qui lui sont actuellement affectés (confirmés)
                 ->whereHas('currentAffectation', function ($q) use ($user) {

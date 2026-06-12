@@ -174,9 +174,9 @@ class AffectationController extends Controller
             // Vérifier que l'utilisateur est bien un agent et a une fiche agent liée
             if (!$user->agent) {
                 return response()->json([
-                    'status' => 'error',
-                    'message' => 'Aucune fiche agent associée à ce compte'
-                ], 403);
+                    'status' => 'success',
+                    'data' => []
+                ]);
             }
 
             $affectations = Affectation::with(['equipement', 'agent'])
