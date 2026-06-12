@@ -290,5 +290,4 @@ const getEtatLabel = (etat) => {
         </button>
       </div>
     </SideModal>
-  </div>
 </template>
