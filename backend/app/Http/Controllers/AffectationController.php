@@ -174,9 +174,9 @@ class AffectationController extends Controller
             // Vérifier que l'utilisateur est bien un agent et a une fiche agent liée
             if (!$user->agent) {
                 return response()->json([
-                    'status' => 'error',
-                    'message' => 'Aucune fiche agent associée à ce compte'
-                ], 403);
+                    'status' => 'success',
+                    'data' => []
+                ]);
             }
 
             $affectations = Affectation::with(['equipement', 'agent'])
@@ -221,7 +221,7 @@ class AffectationController extends Controller
 
             $affectation->update(['statut' => 'confirmee']);
 
-            // Créer un mouvement pour le journal (si tu as un observer, tu peux laisser faire, sinon ajoute ça)
+            // Créer un mouvement pour le journal 
             $affectation->mouvements()->create([
                 'equipement_id' => $affectation->equipement_id,
                 'user_id' => $user->id,

@@ -193,9 +193,7 @@ class AuthController extends Controller
     private function userWithAvatarUrl(User $user): array
     {
         $arr = $user->toArray();
-        $arr['avatar_url'] = $user->avatar
-            ? Storage::url($user->avatar)
-            : null;
+        $arr['avatar_url'] = $user->avatar_url;
         return $arr;
     }
 }
