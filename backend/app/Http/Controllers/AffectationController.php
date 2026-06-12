@@ -240,4 +240,95 @@ class AffectationController extends Controller
             ], 500);
         }
     }
+
+    // Demande de retour par l'agent
+    public function requestReturn(Request $request, Affectation $affectation)
+    {
+        try {
+            $user = Auth::user();
+
+            // Vérifier que l'agent est bien le propriétaire de l'affectation
+            if (!$user->agent || $user->agent->id !== $affectation->agent_id) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Vous ne pouvez pas demander le retour de cet équipement'
+                ], 403);
+            }
+
+            // Vérifier que le statut est bien "confirmee"
+            if (!in_array($affectation->statut, ['confirmee', 'en_cours'])) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Cette affectation ne peut pas faire l\'objet d\'une demande de retour'
+                ], 422);
+            }
+
+            $validated = $request->validate([
+                'date_retour' => 'required|date',
+                'etat_retour' => 'required|string',
+                'photo_retour' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120',
+                'observations' => 'nullable|string',
+            ]);
+
+            // Gestion de l'upload de la photo
+            if ($request->hasFile('photo_retour')) {
+                $file = $request->file('photo_retour');
+                $filename = 'demande_retour_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs('affectations', $filename, 'public');
+                $validated['photo_retour'] = $path;
+            }
+
+            $validated['statut'] = 'retour_en_attente';
+            $affectation->update($validated);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Demande de retour envoyée avec succès',
+                'data' => $affectation->load(['equipement', 'agent'])
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Erreur lors de la demande de retour : ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Valider le retour par Admin/Gestionnaire
+    public function validateReturn(Affectation $affectation)
+    {
+        try {
+            // Vérifier que le statut est bien "retour_en_attente"
+            if ($affectation->statut !== 'retour_en_attente') {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Cette affectation ne peut pas être validée'
+                ], 422);
+            }
+
+            $affectation->update(['statut' => 'retourne']);
+
+            // Mettre à jour l'équipement
+            $equipement = $affectation->equipement;
+            $equipement->update(['etat' => 'neuf']);
+
+            // Créer un mouvement pour le journal
+            $affectation->mouvements()->create([
+                'equipement_id' => $affectation->equipement_id,
+                'user_id' => Auth::id(),
+                'type_mouvement' => 'retour_valide',
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Retour validé avec succès',
+                'data' => $affectation->load(['equipement', 'agent'])
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Erreur lors de la validation du retour : ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
