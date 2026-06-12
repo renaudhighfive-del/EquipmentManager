@@ -28,7 +28,7 @@ public function index(Request $request)
 
        // --- 2. FILTRES DYNAMIQUES ---
 
-// Filtre par type de mouvement (ajusté sur votre colonne 'type_mouvement')
+        // Filtre par type de mouvement (ajusté sur votre colonne 'type_mouvement')
 $query->when($request->filled('type_mouvement'), function ($q) use ($request) {
     $q->where('type_mouvement', $request->input('type_mouvement'));
 });

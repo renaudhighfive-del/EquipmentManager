@@ -51,7 +51,7 @@ class Equipement extends Model
 
     public function currentAffectation()
     {
-        return $this->hasOne(Affectation::class)->where('statut', 'confirmee')->latestOfMany();
+        return $this->hasOne(Affectation::class)->whereIn('statut', ['confirmee', 'retour_en_attente'])->latestOfMany();
     }
 
     public function pendingAffectation()

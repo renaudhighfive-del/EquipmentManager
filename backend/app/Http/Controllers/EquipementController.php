@@ -24,7 +24,7 @@ class EquipementController extends Controller
                 return response()->json([]);
             }
             $query->where('etat', '!=', 'perdu')
-            //// Et on filtre pour qu'il ne voit QUE les équipements qui lui sont actuellement affectés (confirmés)
+            //// Et on filtre pour qu'il ne voit QUE les équipements qui lui sont actuellement affectés (confirmés ou en attente de retour)
                 ->whereHas('currentAffectation', function ($q) use ($user) {
                     $q->where('agent_id', $user->agent->id);
                 });
