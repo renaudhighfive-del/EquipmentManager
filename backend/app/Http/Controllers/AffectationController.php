@@ -221,7 +221,7 @@ class AffectationController extends Controller
 
             $affectation->update(['statut' => 'confirmee']);
 
-            // Créer un mouvement pour le journal (si tu as un observer, tu peux laisser faire, sinon ajoute ça)
+            // Créer un mouvement pour le journal 
             $affectation->mouvements()->create([
                 'equipement_id' => $affectation->equipement_id,
                 'user_id' => $user->id,
