@@ -137,8 +137,8 @@ const stats = computed(() => [
 
 const recentEquipments = computed(() => {
   return [...equipementStore.equipements].sort((a, b) => {
-    const dateA = a.current_affectation?.date_affectation || 0;
-    const dateB = b.current_affectation?.date_affectation || 0;
+    const dateA = a.latest_affectation?.date_affectation || 0;
+    const dateB = b.latest_affectation?.date_affectation || 0;
     return new Date(dateB) - new Date(dateA);
   }).slice(0, 3)
 })
@@ -230,8 +230,11 @@ const getEtatLabel = (etat) => {
                     <span :class="['text-[9px] sm:text-[10px] font-black uppercase', equip.etat === 'en_service' ? 'text-emerald-600' : 'text-amber-600']">
                       {{ getEtatLabel(equip.etat) }}
                     </span>
-                    <span v-if="equip.current_affectation" class="text-[9px] text-primary-600 font-bold bg-primary-50 px-1.5 py-0.5 rounded">
-                      Reçu le {{ formatDate(equip.current_affectation.date_affectation) }}
+                    <span v-if="equip.latest_affectation" class="text-[9px] text-primary-600 font-bold bg-primary-50 px-1.5 py-0.5 rounded">
+                      Reçu le {{ formatDate(equip.latest_affectation.date_affectation) }}
+                    </span>
+                    <span v-if="equip.latest_affectation?.affecte_par" class="text-[9px] text-slate-600 font-bold bg-slate-100 px-1.5 py-0.5 rounded">
+                      Affecté par {{ equip.latest_affectation.affecte_par.name }}
                     </span>
                   </div>
                 </div>
@@ -358,6 +361,9 @@ const getEtatLabel = (etat) => {
                 <p class="text-xs text-slate-500">Référence: {{ aff.equipement.reference }}</p>
                 <p class="text-xs text-slate-400 mt-1">
                   Date: {{ new Date(aff.date_affectation).toLocaleDateString('fr-FR') }}
+                </p>
+                <p v-if="aff.affecte_par" class="text-xs text-primary-600 font-medium mt-1">
+                  Affecté par: {{ aff.affecte_par.name }}
                 </p>
               </div>
             </div>
