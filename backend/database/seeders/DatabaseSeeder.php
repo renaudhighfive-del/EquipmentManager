@@ -24,6 +24,34 @@ class DatabaseSeeder extends Seeder
             'categorie_id' => null,
         ]);
         User::create([
+            'name'         => 'Hamidou Raimi',
+            'email'        => 'hamraimi05@gmail.com',
+            'password'     => Hash::make('password'),
+            'role'         => 'admin',
+            'is_active'    => true,
+            'avatar'       => null,
+            'categorie_id' => null,
+        ]);
+
+        User::create([
+            'name'         => 'Arsène Sounouvi',
+            'email'        => 'sounouviarsene32@gmail.com',
+            'password'     => Hash::make('password'),
+            'role'         => 'admin',
+            'is_active'    => true,
+            'avatar'       => null,
+            'categorie_id' => null,
+        ]);
+        User::create([
+            'name'         => 'Olayemi ORONKPONDE',
+            'email'        => 'pedrielle3@gmail.com',
+            'password'     => Hash::make('password'),
+            'role'         => 'admin',
+            'is_active'    => true,
+            'avatar'       => null,
+            'categorie_id' => null,
+        ]);
+        User::create([
             'name'         => 'Alexandre Martin',
             'email'        => 'admin@equip.com',
             'password'     => Hash::make('password'),

@@ -77,7 +77,7 @@ watch(() => form.value.role, async (newRole) => {
 
   // S'assurer que la liste des agents est chargée pour le filtre local
   if (newRole === 'agent' && !isEditMode.value && agentStore.agents.length === 0) {
-    await agentStore.fetchAgents()
+    await agentStore.fetchAgents(1, 100)
   }
 })
 

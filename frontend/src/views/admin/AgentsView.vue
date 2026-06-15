@@ -7,7 +7,8 @@ import { useAuthStore } from '../../stores/auth'
 import {
   Search, Plus, Edit, UserX, UserCheck, Mail, Phone,
   MapPin, Briefcase, Smartphone, ChevronRight, Loader2,
-  Camera, AlertCircle, CheckCircle2, Package
+  Camera, AlertCircle, CheckCircle2, Package, ChevronLeft,
+  ChevronRight as ChevronRightIcon
 } from 'lucide-vue-next'
 
 const agentStore = useAgentStore()
@@ -24,6 +25,7 @@ const formSuccess  = ref('')
 // ── Filtres (frontend only) ──────────────────────────────────────────────
 const searchQuery  = ref('')
 const filterStatut = ref('') // '' | 'actif' | 'inactif'
+const perPage = ref(10)
 
 const filteredAgents = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
@@ -42,6 +44,11 @@ const countByStatut = computed(() => ({
   actif:    agentStore.agentsActifs.length,
   inactif:  agentStore.agentsInactifs.length,
 }))
+
+const pageNumbers = computed(() => {
+  const lastPage = agentStore.pagination.lastPage || 1
+  return Array.from({ length: lastPage }, (_, index) => index + 1)
+})
 
 // ── Formulaire ───────────────────────────────────────────────────────────
 const photoPreview = ref(null)
@@ -134,14 +141,23 @@ const avatarUrl = (agent) => {
   return import.meta.env.VITE_API_URL.replace('/api', '') + agent.photo_url
 }
 
-onMounted(() => agentStore.fetchAgents())
+const goToPage = async (page) => {
+  if (page < 1 || page > (agentStore.pagination.lastPage || 1)) return
+  await agentStore.fetchAgents(page, perPage.value, searchQuery.value)
+}
+
+const searchAgents = async () => {
+  await agentStore.fetchAgents(1, perPage.value, searchQuery.value)
+}
+
+onMounted(() => agentStore.fetchAgents(1, perPage.value))
 </script>
 
 <template>
   <div class="space-y-6 animate-in fade-in duration-500">
 
     <!-- Header -->
-    <PageHeader title="Agents" :subtitle="`${filteredAgents.length} agent(s) affiché(s)`">
+    <PageHeader title="Agents" :subtitle="`${agentStore.pagination.total || filteredAgents.length} agent(s) au total`">
       <template #actions>
         <button
           v-if="isAdmin"
@@ -193,6 +209,7 @@ onMounted(() => agentStore.fetchAgents())
             <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               v-model="searchQuery"
+              @input="searchAgents"
               type="text"
               placeholder="Nom, matricule, email..."
               class="w-full h-10 pl-10 pr-4 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary-500/10 outline-none"
@@ -308,6 +325,41 @@ onMounted(() => agentStore.fetchAgents())
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <div class="flex flex-col gap-3 border-t border-slate-100 px-6 py-4 md:flex-row md:items-center md:justify-between bg-slate-50/60">
+        <p class="text-xs font-semibold text-slate-500">
+          Page {{ agentStore.pagination.currentPage }} / {{ agentStore.pagination.lastPage }} · {{ agentStore.pagination.total }} agent(s) au total
+        </p>
+        <div class="flex items-center gap-2">
+          <button
+            @click="goToPage(agentStore.pagination.currentPage - 1)"
+            :disabled="agentStore.pagination.currentPage === 1"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 disabled:cursor-not-allowed disabled:opacity-40 hover:bg-slate-100"
+          >
+            <ChevronLeft class="w-4 h-4" />
+          </button>
+          <button
+            v-for="page in pageNumbers"
+            :key="page"
+            @click="goToPage(page)"
+            :class="[
+              'h-9 min-w-9 rounded-xl border px-3 text-sm font-bold transition-all',
+              page === agentStore.pagination.currentPage
+                ? 'border-primary-600 bg-primary-600 text-white shadow-sm'
+                : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-100'
+            ]"
+          >
+            {{ page }}
+          </button>
+          <button
+            @click="goToPage(agentStore.pagination.currentPage + 1)"
+            :disabled="agentStore.pagination.currentPage === agentStore.pagination.lastPage"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 disabled:cursor-not-allowed disabled:opacity-40 hover:bg-slate-100"
+          >
+            <ChevronRightIcon class="w-4 h-4" />
+          </button>
+        </div>
       </div>
     </div>
 

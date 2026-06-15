@@ -87,7 +87,6 @@ class EquipementSeeder extends Seeder
 
         foreach ($this->catalogue as $nomCategorie => $items) {
             $categorie = $categories->get($nomCategorie);
-
             // Crée la catégorie si elle n'existe pas (cas où CategorieSeeder n'a pas encore tourné)
             if (! $categorie) {
                 $categorie = Categorie::create([
