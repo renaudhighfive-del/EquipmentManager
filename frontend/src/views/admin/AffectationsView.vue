@@ -192,13 +192,12 @@ const submitReturn = async () => {
     submitting.value = true;
     
     const formData = new FormData();
-    formData.append('_method', 'PATCH'); // Pour simuler PATCH via POST
     formData.append('date_retour', returnForm.value.date_retour);
     formData.append('etat_retour', returnForm.value.etat_retour);
     formData.append('observations', returnForm.value.observations || '');
     formData.append('photo_retour', returnPhotoFile.value);
 
-    const success = await affectationStore.returnAffectation(selectedAffectation.value.id, formData);
+    const success = await affectationStore.requestReturnAffectation(selectedAffectation.value.id, formData);
     if (success) {
       showToast('success', 'Succès', successMessage.value);
       showReturnModal.value = false;
@@ -357,6 +356,7 @@ const handleValidateReturn = async (aff) => {
           <tr class="bg-slate-50/50 text-[11px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-100">
             <th class="px-8 py-5">Équipement</th>
             <th class="px-6 py-5">Agent</th>
+            <th class="px-6 py-5">Affecté par</th>
             <th class="px-6 py-5">Date</th>
             <th class="px-6 py-5">Statut</th>
             <th class="px-8 py-5 text-right">Actions</th>
@@ -376,6 +376,14 @@ const handleValidateReturn = async (aff) => {
                   {{ aff.agent?.nom.charAt(0) }}
                 </div>
                 <span class="text-sm font-medium text-slate-700">{{ aff.agent?.prenom }} {{ aff.agent?.nom }}</span>
+              </div>
+            </td>
+            <td class="px-6 py-5">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-primary-50 flex items-center justify-center text-[10px] font-bold text-primary-600">
+                  {{ aff.affecte_par?.name.charAt(0) }}
+                </div>
+                <span class="text-xs font-medium text-slate-600">{{ aff.affecte_par?.name }}</span>
               </div>
             </td>
             <td class="px-6 py-5 text-sm text-slate-500 font-medium">
@@ -801,9 +809,14 @@ const handleValidateReturn = async (aff) => {
             >
               {{ currentAffectation.statut === 'en_cours' ? 'Affectation active' : 'Clôturée' }}
             </div>
-            <p v-if="currentAffectation.affecte_par" class="mt-2 text-[10px] text-slate-400 font-medium">
-              Enregistré par : {{ currentAffectation.affecte_par?.name }}
-            </p>
+            <div v-if="currentAffectation.affecte_par" class="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-slate-100 rounded-lg">
+              <div class="w-6 h-6 rounded-full bg-primary-50 flex items-center justify-center text-[10px] font-bold text-primary-600">
+                {{ currentAffectation.affecte_par.name.charAt(0) }}
+              </div>
+              <span class="text-[10px] font-medium text-slate-700">
+                Enregistré par : {{ currentAffectation.affecte_par.name }}
+              </span>
+            </div>
           </div>
         </div>
 

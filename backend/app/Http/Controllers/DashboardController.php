@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class DashboardController extends Controller
 {
@@ -180,5 +181,179 @@ class DashboardController extends Controller
             'mes_equipements' => $mesEquipements,
             'mes_pannes' => $mesPannes
         ]);
+    }
+
+    /**
+     * Exporter le dashboard en PDF.
+     */
+    public function exportPdf()
+    {
+        try {
+            $user = Auth::user();
+            $stats = $user->role === 'agent' ? $this->agentStatsArray($user) : $this->adminStatsArray($user);
+            
+            // Générer le PDF avec une vue
+            $pdf = Pdf::loadView('exports.dashboard', [
+                'stats' => $stats,
+                'user' => $user,
+                'date' => Carbon::now()->format('d/m/Y H:i')
+            ]);
+
+            // Télécharger le PDF
+            return $pdf->download('rapport_dashboard_' . Carbon::now()->format('d_m_Y_H_i') . '.pdf');
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Erreur lors de l\'export PDF : ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Récupérer les stats admin sous forme de tableau (pas de réponse JSON).
+     */
+    private function adminStatsArray($user)
+    {
+        $query = Equipement::query();
+        if ($user->role === 'gestionnaire' && $user->categorie_id) {
+            $query->where('categorie_id', $user->categorie_id);
+        }
+
+        $totalEquipements = (clone $query)->count();
+        
+        $statsByEtatRaw = (clone $query)->select('etat', DB::raw('count(*) as total'))
+            ->groupBy('etat')
+            ->pluck('total', 'etat')
+            ->toArray();
+
+        $etats = ['neuf', 'en_service', 'en_panne', 'en_maintenance', 'reforme', 'perdu'];
+        $formattedStats = [];
+        foreach ($etats as $etat) {
+            $formattedStats[$etat] = (int)($statsByEtatRaw[$etat] ?? 0);
+        }
+
+        $statsByCategorie = Categorie::select('id', 'nom')
+            ->withCount(['equipements' => function($q) use ($user) {
+                if ($user->role === 'gestionnaire' && $user->categorie_id) {
+                    $q->where('categorie_id', $user->categorie_id);
+                }
+            }])
+            ->get()
+            ->map(function($cat) {
+                return [
+                    'label' => $cat->nom,
+                    'total' => (int)$cat->equipements_count
+                ];
+            });
+
+        $startDate = Carbon::now()->subMonths(11)->startOfMonth();
+        
+        $assignments = Affectation::select(
+                DB::raw('DATE_FORMAT(date_affectation, "%Y-%m") as month_key'),
+                DB::raw('count(*) as total')
+            )
+            ->where('date_affectation', '>=', $startDate)
+            ->when($user->role === 'gestionnaire' && $user->categorie_id, function($q) use ($user) {
+                $q->whereHas('equipement', function($sq) use ($user) {
+                    $sq->where('categorie_id', $user->categorie_id);
+                });
+            })
+            ->groupBy('month_key')
+            ->pluck('total', 'month_key')
+            ->toArray();
+
+        $returns = Affectation::select(
+                DB::raw('DATE_FORMAT(date_retour, "%Y-%m") as month_key'),
+                DB::raw('count(*) as total')
+            )
+            ->where('date_retour', '>=', $startDate)
+            ->where('statut', 'retourne')
+            ->when($user->role === 'gestionnaire' && $user->categorie_id, function($q) use ($user) {
+                $q->whereHas('equipement', function($sq) use ($user) {
+                    $sq->where('categorie_id', $user->categorie_id);
+                });
+            })
+            ->groupBy('month_key')
+            ->pluck('total', 'month_key')
+            ->toArray();
+
+        $monthsLabels = [];
+        $assignmentsData = [];
+        $returnsData = [];
+
+        for ($i = 11; $i >= 0; $i--) {
+            $date = Carbon::now()->subMonths($i);
+            $key = $date->format('Y-m');
+            $monthsLabels[] = $date->format('M');
+            $assignmentsData[] = (int)($assignments[$key] ?? 0);
+            $returnsData[] = (int)($returns[$key] ?? 0);
+        }
+
+        $recentActivity = Mouvement::with(['equipement', 'user'])
+            ->when($user->role === 'gestionnaire' && $user->categorie_id, function($q) use ($user) {
+                $q->whereHas('equipement', function($sq) use ($user) {
+                    $sq->where('categorie_id', $user->categorie_id);
+                });
+            })
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        $alerts = [
+            'pannes_critiques' => (int)Panne::where('gravite', 'critique')
+                ->whereNotIn('statut', ['resolue', 'irrecuperable'])
+                ->when($user->role === 'gestionnaire' && $user->categorie_id, function($q) use ($user) {
+                    $q->whereHas('equipement', function($sq) use ($user) {
+                        $sq->where('categorie_id', $user->categorie_id);
+                    });
+                })
+                ->count(),
+            'maintenances_en_cours' => (int)Panne::where('statut', 'en_maintenance')
+                ->when($user->role === 'gestionnaire' && $user->categorie_id, function($q) use ($user) {
+                    $q->whereHas('equipement', function($sq) use ($user) {
+                        $sq->where('categorie_id', $user->categorie_id);
+                    });
+                })
+                ->count(),
+        ];
+
+        return [
+            'total_equipements' => $totalEquipements,
+            'stats_etat' => $formattedStats,
+            'stats_categorie' => $statsByCategorie,
+            'evolution' => [
+                'labels' => $monthsLabels,
+                'assignments' => $assignmentsData,
+                'returns' => $returnsData
+            ],
+            'recent_activity' => $recentActivity,
+            'alerts' => $alerts
+        ];
+    }
+
+    /**
+     * Récupérer les stats agent sous forme de tableau (pas de réponse JSON).
+     */
+    private function agentStatsArray($user)
+    {
+        if (!$user->agent) {
+            return [
+                'mes_equipements' => 0,
+                'mes_pannes' => 0
+            ];
+        }
+        
+        $mesEquipements = Equipement::whereHas('currentAffectation', function($q) use ($user) {
+            $q->where('agent_id', $user->agent->id);
+        })->count();
+
+        $mesPannes = Panne::where('declare_par', $user->id)
+            ->whereNotIn('statut', ['resolue', 'irrecuperable'])
+            ->count();
+
+        return [
+            'mes_equipements' => $mesEquipements,
+            'mes_pannes' => $mesPannes
+        ];
     }
 }

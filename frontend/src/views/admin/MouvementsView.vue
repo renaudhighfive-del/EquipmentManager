@@ -46,6 +46,9 @@ const resetFilters = () => {
 const getMouvementConfig = (type) => {
   const configs = {
     'affectation': { label: 'Affectation', icon: ArrowLeftRight, color: 'text-blue-500', bg: 'bg-blue-50' },
+    'reception_confirmee': { label: 'Réception confirmée', icon: ArrowLeftRight, color: 'text-indigo-500', bg: 'bg-indigo-50' },
+    'retour_demande': { label: 'Demande de retour', icon: RotateCcw, color: 'text-orange-500', bg: 'bg-orange-50' },
+    'retour_valide': { label: 'Retour validé', icon: RotateCcw, color: 'text-emerald-500', bg: 'bg-emerald-50' },
     'retour': { label: 'Retour', icon: RotateCcw, color: 'text-emerald-500', bg: 'bg-emerald-50' },
     'panne': { label: 'Déclaration panne', icon: AlertTriangle, color: 'text-amber-500', bg: 'bg-amber-50' },
     'maintenance': { label: 'Maintenance', icon: Wrench, color: 'text-blue-600', bg: 'bg-blue-50' },
@@ -84,6 +87,9 @@ const formatDate = (dateStr) => {
         >
           <option value="">Tous les types</option>
           <option value="affectation">Affectation</option>
+          <option value="reception_confirmee">Réception confirmée</option>
+          <option value="retour_demande">Demande de retour</option>
+          <option value="retour_valide">Retour validé</option>
           <option value="retour">Retour</option>
           <option value="panne">Déclaration panne</option>
           <option value="maintenance">Maintenance</option>

@@ -47,6 +47,7 @@ Route::middleware(['auth:sanctum', 'check.active'])->group(function () {
     
     // Dashboard
     Route::get('dashboard', [DashboardController::class, 'index']);
+    Route::get('dashboard/export-pdf', [DashboardController::class, 'exportPdf']);
 
     // Affectations
     Route::post('affectations/{affectation}/request-return', [AffectationController::class, 'requestReturn']);
