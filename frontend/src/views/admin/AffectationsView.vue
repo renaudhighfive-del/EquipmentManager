@@ -18,9 +18,19 @@ import {
   Pencil
 } from 'lucide-vue-next';
 
+// import { Paginator } from 'primevue/paginator'
+import Paginator from 'primevue/paginator';
+
 const affectationStore = useAffectationStore();
-const { affectations, loading, error: storeError ,currentAffectation, successMessage } = storeToRefs(affectationStore);
+const { affectations, loading, error: storeError ,currentAffectation, successMessage,pagination } = storeToRefs(affectationStore);
 const toast = useToast();
+
+//gestion de la pagination
+const currentPage=ref(1);
+const onPageChange = (event) => {
+  currentPage.value = event.page + 1 
+  affectationStore.fetchAffectations(currentPage.value)
+}
 
 const showReturnModal = ref(false);
 const showCreateModal = ref(false);
@@ -147,7 +157,7 @@ const fetchInitialData = async () => {
 };
 
 onMounted(async () => {
-  const success = await affectationStore.fetchAffectations();
+  const success = await affectationStore.fetchAffectations(1);
   if (!success) {
     showToast('error', 'Erreur', storeError.value);
   }
@@ -439,13 +449,12 @@ const handleValidateReturn = async (aff) => {
                   Retour
                 </button>
 
-                <button 
+                <button
                   v-if="aff.statut === 'retour_en_attente'"
                   @click="handleValidateReturn(aff)"
-                  :disabled="submitting"
-                  class="text-xs font-bold text-primary-600 hover:text-primary-700 bg-primary-50 px-4 py-2 rounded-lg transition-colors"
+                  class="text-xs font-bold text-green-600 hover:text-green-700 bg-green-50 px-4 py-2 rounded-lg transition-colors"
                 >
-                  Retour
+                  Valider
                 </button>
                 
                 <span v-if="aff.statut === 'retourne'" class="text-xs font-bold text-slate-300 px-2 py-2">Clôturé</span>
@@ -453,7 +462,20 @@ const handleValidateReturn = async (aff) => {
             </td>
           </tr>
         </tbody>
+
+
+        
       </table>
+      
+        <!-- La pagination -->
+      <Paginator
+  :first="(affectationStore.pagination.current_page - 1) * affectationStore.pagination.per_page"
+  :rows="affectationStore.pagination.per_page"
+  :total-records="affectationStore.pagination.total"
+  @page="onPageChange"
+  class="mt-4"
+/>
+      
     </div>
 
     <SideModal 

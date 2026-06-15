@@ -16,8 +16,10 @@ import {
   X
 } from 'lucide-vue-next';
 
+import Paginator from 'primevue/paginator'
+
 const mouvementStore = useMouvementStore();
-const { mouvements, loading } = storeToRefs(mouvementStore);
+const { mouvements, loading, pagination } = storeToRefs(mouvementStore);
 
 // --- 1. VARIABLES DES FILTRES DEMANDÉS ---
 const filters = ref({
@@ -26,8 +28,15 @@ const filters = ref({
   date_debut: ''
 });
 
+const currentPage=ref(1)
+
+const onPageChange = (event) => {
+  currentPage.value = event.page + 1 
+  mouvementStore.fetchMouvements(filters.value ,currentPage.value)
+}
+
 onMounted(() => {
-  mouvementStore.fetchMouvements();
+  mouvementStore.fetchMouvements({},1);
 });
 
 // --- 2. LOGIQUE DE FILTRAGE ---
@@ -35,12 +44,14 @@ const handleFilter = () => {
   const activeFilters = Object.fromEntries(
     Object.entries(filters.value).filter(([_, v]) => v !== '')
   );
-  mouvementStore.fetchMouvements(activeFilters);
+  currentPage.value=1
+  mouvementStore.fetchMouvements(activeFilters , 1);
 };
 
 const resetFilters = () => {
   filters.value = { type_mouvement: '', user_name: '', date_debut: '' };
-  mouvementStore.fetchMouvements();
+  currentPage.value=1;
+  mouvementStore.fetchMouvements({},1);
 };
 
 const getMouvementConfig = (type) => {
@@ -194,5 +205,13 @@ const formatDate = (dateStr) => {
         </div>
       </div>
     </div>
+
+     <Paginator
+  :first="(mouvementStore.pagination.current_page - 1) * mouvementStore.pagination.per_page"
+  :rows="mouvementStore.pagination.per_page"
+  :total-records="mouvementStore.pagination.total"
+  @page="onPageChange"
+  class="mt-4"
+/>
   </div>
 </template>

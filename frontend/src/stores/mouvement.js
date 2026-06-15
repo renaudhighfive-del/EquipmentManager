@@ -7,12 +7,24 @@ export const useMouvementStore = defineStore('mouvement', () => {
   const loading = ref(false)
   const error = ref(null)
 
-  const fetchMouvements = async (filters = {}) => {
+  //pour gerer la pagination
+  const pagination=ref({
+    current_page:1,
+    per_page:10,
+    total:0,
+    last_page:1,
+    from:null,
+    to:null
+  })
+
+  const fetchMouvements = async (filters = {} , page= 1) => {
     loading.value = true
     error.value = null
     try {
-      const response = await api.get('/mouvements' , {params: filters} )
+      const response = await api.get(`/mouvements?page=${page}`, {params: filters} )
       mouvements.value = response.data.data
+      pagination.value=response.data.pagination
+
       return true
     } catch (err) {
       error.value = err.response?.data?.message || 'Erreur lors du chargement des mouvements'
@@ -26,6 +38,7 @@ export const useMouvementStore = defineStore('mouvement', () => {
     mouvements,
     loading,
     error,
-    fetchMouvements
+    fetchMouvements,
+    pagination
   }
 })

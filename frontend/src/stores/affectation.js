@@ -14,16 +14,26 @@ export const useAffectationStore = defineStore('affectation', () => {
   const affectationsAConfirmer = ref([])
   const loadingAConfirmer = ref(false)
 
+  //pour gerer la pagination
+  const pagination=ref({
+    current_page:1,
+    per_page:10,
+    total:0,
+    last_page:1,
+    from:null,
+    to:null
+  })
   
 
   // Pour l'affichage
-  const fetchAffectations = async () => {
+  const fetchAffectations = async (page = 1) => {
     loading.value = true
     error.value = null
     successMessage.value = null
     try {
-      const response = await api.get('/affectations')
+      const response = await api.get(`/affectations?page=${page}`)
       affectations.value = response.data.data
+      pagination.value=response.data.pagination
       return true
     } catch (err) {
       error.value = err.response?.data?.message || 'Erreur lors du chargement des affectations'
@@ -223,5 +233,7 @@ export const useAffectationStore = defineStore('affectation', () => {
     returnAffectation,
     requestReturnAffectation,
     validateReturn,
+
+    pagination
   }
 })
