@@ -13,11 +13,18 @@ class AffectationController extends Controller
     {
         $affectations = Affectation::with(['equipement', 'agent', 'affectePar'])
             ->latest()
-            ->get();
-
-        return response()->json([
-            'status' => 'success',
-            'data' => $affectations
+            ->paginate(2);
+     return response()->json([
+        'status' => 'success',
+        'data' => $affectations->items(),
+        'pagination' => [
+        'current_page' => $affectations->currentPage(),
+        'per_page' => $affectations->perPage(),
+        'total' => $affectations->total(),
+        'last_page' => $affectations->lastPage(),
+        'from' => $affectations->firstItem(),
+        'to' => $affectations->lastItem(),
+                        ]
         ]);
     }
 
@@ -57,13 +64,10 @@ class AffectationController extends Controller
 
             $affectation = Affectation::create($validated);
 
-            // Mettre à jour l'équipement
-            $equipement->update(['etat' => 'en_service']);
-
             return response()->json([
                 'status' => 'success',
                 'message' => 'Affectation effectuée avec succès',
-                'data' => $affectation->load(['equipement', 'agent'])
+                'data' => $affectation->load(['equipement', 'agent', 'affectePar'])
             ], 201);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -99,33 +103,7 @@ class AffectationController extends Controller
     public function update(Request $request, Affectation $affectation)
     {
         try {
-            // Si c'est un retour d'équipement
-            if ($request->has('date_retour') && $affectation->statut === 'en_cours') {
-                $validated = $request->validate([
-                    'date_retour' => 'required|date',
-                    'etat_retour' => 'required|string',
-                    'photo_retour' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120',
-                    'observations' => 'nullable|string',
-                ]);
-
-                if ($request->hasFile('photo_retour')) {
-                    $file = $request->file('photo_retour');
-                    $filename = 'retour_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                    $path = $file->storeAs('affectations', $filename, 'public');
-                    $validated['photo_retour'] = $path;
-                }
-
-                $validated['statut'] = 'retourne';
-                $affectation->update($validated);
-
-                return response()->json([
-                    'status' => 'success',
-                    'message' => 'Équipement retourné avec succès',
-                    'data' => $affectation->load(['equipement', 'agent'])
-                ], 200);
-            }
-
-            // Sinon, c'est une modification générale
+            // Seulement modification générale (plus de logique de retour ici)
             $validated = $request->validate([
                 'agent_id' => 'sometimes|required|exists:agents,id',
                 'date_affectation' => 'sometimes|required|date|before_or_equal:today',
@@ -147,7 +125,7 @@ class AffectationController extends Controller
             return response()->json([
                 'status' => 'success',
                 'message' => 'Affectation mise à jour avec succès',
-                'data' => $affectation->load(['equipement', 'agent'])
+                'data' => $affectation->load(['equipement', 'agent', 'affectePar'])
             ], 200);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -179,7 +157,7 @@ class AffectationController extends Controller
                 ]);
             }
 
-            $affectations = Affectation::with(['equipement', 'agent'])
+            $affectations = Affectation::with(['equipement', 'agent', 'affectePar'])
                 ->where('agent_id', $user->agent->id)
                 ->where('statut', 'en_cours') // Seulement les affectations en cours (pas encore confirmées)
                 ->latest()
@@ -221,17 +199,10 @@ class AffectationController extends Controller
 
             $affectation->update(['statut' => 'confirmee']);
 
-            // Créer un mouvement pour le journal 
-            $affectation->mouvements()->create([
-                'equipement_id' => $affectation->equipement_id,
-                'user_id' => $user->id,
-                'type_mouvement' => 'reception_confirmee',
-            ]);
-
             return response()->json([
                 'status' => 'success',
                 'message' => 'Réception confirmée avec succès',
-                'data' => $affectation->load(['equipement', 'agent'])
+                'data' => $affectation->load(['equipement', 'agent', 'affectePar'])
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
@@ -284,7 +255,7 @@ class AffectationController extends Controller
             return response()->json([
                 'status' => 'success',
                 'message' => 'Demande de retour envoyée avec succès',
-                'data' => $affectation->load(['equipement', 'agent'])
+                'data' => $affectation->load(['equipement', 'agent', 'affectePar'])
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
@@ -308,21 +279,10 @@ class AffectationController extends Controller
 
             $affectation->update(['statut' => 'retourne']);
 
-            // Mettre à jour l'équipement
-            $equipement = $affectation->equipement;
-            $equipement->update(['etat' => 'neuf']);
-
-            // Créer un mouvement pour le journal
-            $affectation->mouvements()->create([
-                'equipement_id' => $affectation->equipement_id,
-                'user_id' => Auth::id(),
-                'type_mouvement' => 'retour_valide',
-            ]);
-
             return response()->json([
                 'status' => 'success',
                 'message' => 'Retour validé avec succès',
-                'data' => $affectation->load(['equipement', 'agent'])
+                'data' => $affectation->load(['equipement', 'agent', 'affectePar'])
             ], 200);
         } catch (\Exception $e) {
             return response()->json([

@@ -45,12 +45,20 @@ $query->when($request->filled('date_debut'), function ($q) use ($request) {
     $q->whereDate('created_at', '>=', $request->input('date_debut'));
 });
         // --- 3. RÉCUPÉRATION DES DONNÉES ---
-        $mouvements = $query->latest('created_at')->get();
+        $mouvements = $query->latest('created_at')->paginate(3);
 
         return response()->json([
             'status' => 'success',
-            'data' => $mouvements,
-            'total' => $mouvements->count(),
+            'data' => $mouvements->items(),
+            // 'total' => $mouvements->count(),
+            'pagination'=>[
+                'current_page' => $mouvements->currentPage(),
+        'per_page' => $mouvements->perPage(),
+        'total' => $mouvements->total(),
+        'last_page' => $mouvements->lastPage(),
+        'from' => $mouvements->firstItem(),
+        'to' => $mouvements->lastItem(),
+            ]
         ]);
         
     } catch (\Exception $e) {

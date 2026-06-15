@@ -213,6 +213,31 @@ const getEtatLabel = (etat) => {
   };
   return labels[etat] || etat;
 };
+
+const getAffectationStatutClass = (statut) => {
+  switch (statut) {
+    case "en_cours":
+      return "bg-blue-50 text-blue-600";
+    case "confirmee":
+      return "bg-emerald-50 text-emerald-600";
+    case "retour_en_attente":
+      return "bg-amber-50 text-amber-600";
+    case "retourne":
+      return "bg-slate-100 text-slate-600";
+    default:
+      return "bg-slate-50 text-slate-600";
+  }
+};
+
+const getAffectationStatutLabel = (statut) => {
+  const labels = {
+    en_cours: "À confirmer",
+    confirmee: "Confirmée",
+    retour_en_attente: "Retour en attente",
+    retourne: "Retour accepté",
+  };
+  return labels[statut] || statut;
+};
 </script>
 
 <template>
@@ -244,9 +269,12 @@ const getEtatLabel = (etat) => {
             </p>
             <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
               <span class="text-xs text-slate-500 font-medium">{{ equip.reference }}</span>
-              <span v-if="equip.current_affectation" class="flex items-center gap-1 text-[10px] text-primary-600 font-bold bg-primary-50 px-2 py-0.5 rounded-md">
+              <span v-if="equip.latest_affectation" class="flex items-center gap-1 text-[10px] text-primary-600 font-bold bg-primary-50 px-2 py-0.5 rounded-md">
                 <Calendar class="w-3 h-3" />
-                Depuis le {{ formatDate(equip.current_affectation.date_affectation) }}
+                Depuis le {{ formatDate(equip.latest_affectation.date_affectation) }}
+              </span>
+              <span v-if="equip.latest_affectation?.affecte_par" class="flex items-center gap-1 text-[10px] text-slate-600 font-bold bg-slate-100 px-2 py-0.5 rounded-md">
+                Affecté par {{ equip.latest_affectation.affecte_par.name }}
               </span>
               <span v-if="equip.current_affectation" 
                 class="flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-md"
@@ -261,11 +289,16 @@ const getEtatLabel = (etat) => {
           </div>
         </div>
         <div class="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-4 sm:pt-0">
-          <span :class="['px-3 py-1 rounded-lg text-[10px] font-black uppercase', getEtatClass(equip.etat)]">
-            {{ getEtatLabel(equip.etat) }}
-          </span>
+          <div class="flex gap-2">
+            <span :class="['px-3 py-1 rounded-lg text-[10px] font-black uppercase', getEtatClass(equip.etat)]">
+              {{ getEtatLabel(equip.etat) }}
+            </span>
+            <span v-if="equip.latest_affectation" :class="['px-3 py-1 rounded-lg text-[10px] font-black uppercase', getAffectationStatutClass(equip.latest_affectation.statut)]">
+              {{ getAffectationStatutLabel(equip.latest_affectation.statut) }}
+            </span>
+          </div>
           <div class="flex items-center gap-2">
-            <button v-if="equip.current_affectation && equip.current_affectation.statut === 'confirmee'"
+            <button v-if="equip.latest_affectation && equip.latest_affectation.statut === 'confirmee'"
               @click.stop="openReturnModal(equip)"
               class="p-2.5 text-primary-500 hover:bg-primary-50 rounded-xl transition-all flex items-center gap-1 text-xs font-bold" title="Demander le retour">
               <RotateCcw class="w-5 h-5" />
@@ -277,7 +310,8 @@ const getEtatLabel = (etat) => {
               <CheckCircle class="w-5 h-5" />
               En attente
             </button>
-            <button @click="openIncidentModal(equip)"
+            <button v-if="!['retourne'].includes(equip.latest_affectation?.statut)"
+              @click="openIncidentModal(equip)"
               class="p-2.5 text-rose-500 hover:bg-rose-50 rounded-xl transition-all" title="Signaler un incident">
               <AlertTriangle class="w-5 h-5" />
             </button>

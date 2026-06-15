@@ -16,7 +16,7 @@ class EquipementController extends Controller
         //Récupère l'instance de l'utilisateur actuellement connecté et on Prépare une requête pour récupérer les équipements non archivés
         // 'with(...)' permet d'inclure directement les relations (Eager Loading) pour éviter les requêtes à répétition
         $user = Auth::user();
-        $query = Equipement::with(['images', 'categorie', 'currentAffectation.agent', 'pendingAffectation.agent'])
+        $query = Equipement::with(['images', 'categorie', 'currentAffectation.agent', 'pendingAffectation.agent', 'latestAffectation.agent', 'latestAffectation.affectePar'])
             ->where('is_archived', false);
     //Restriction de sécurité : Si l'utilisateur connecté est un simple 'agent', L'agent ne doit pas voir les équipements marqués comme "perdu"
         if ($user->role === 'agent') {
@@ -24,8 +24,11 @@ class EquipementController extends Controller
                 return response()->json([]);
             }
             $query->where('etat', '!=', 'perdu')
-            //// Et on filtre pour qu'il ne voit QUE les équipements qui lui sont actuellement affectés (confirmés ou en attente de retour)
-                ->whereHas('currentAffectation', function ($q) use ($user) {
+
+
+            //// Et on filtre pour qu'il ne voit QUE les équipements qui lui sont affectés (peu importe le statut de l'affectation)
+                ->whereHas('latestAffectation', function ($q) use ($user) {
+
                     $q->where('agent_id', $user->agent->id);
                 });
         }

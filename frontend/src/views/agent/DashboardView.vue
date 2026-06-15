@@ -18,7 +18,8 @@ import {
   Smartphone,
   Loader2,
   MessageSquare,
-  PackageCheck 
+  PackageCheck,
+  Download
 } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
@@ -137,8 +138,8 @@ const stats = computed(() => [
 
 const recentEquipments = computed(() => {
   return [...equipementStore.equipements].sort((a, b) => {
-    const dateA = a.current_affectation?.date_affectation || 0;
-    const dateB = b.current_affectation?.date_affectation || 0;
+    const dateA = a.latest_affectation?.date_affectation || 0;
+    const dateB = b.latest_affectation?.date_affectation || 0;
     return new Date(dateB) - new Date(dateA);
   }).slice(0, 3)
 })
@@ -162,6 +163,24 @@ const getEtatLabel = (etat) => {
   }
   return labels[etat] || etat
 }
+
+const handleExportPdf = async () => {
+  try {
+    const apiUrl = `${import.meta.env.VITE_API_URL}/dashboard/export-pdf`;
+    
+    // Créer un lien temporaire pour télécharger le PDF
+    const link = document.createElement('a');
+    link.href = apiUrl;
+    link.target = '_blank';
+    link.download = `rapport_dashboard_${Date.now()}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Erreur lors de l\'export PDF:', error);
+    alert('Une erreur est survenue lors de l\'export PDF');
+  }
+};
 </script>
 
 <template>
@@ -171,6 +190,10 @@ const getEtatLabel = (etat) => {
       :subtitle="`Bienvenue, ${authStore.user?.name}`"
     >
       <template #actions>
+        <button @click="handleExportPdf" class="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm">
+          <Download class="w-4 h-4" />
+          Exporter
+        </button>
         <button 
           @click="router.push('/agent/incidents')"
           class="flex items-center gap-2 px-5 py-2.5 bg-rose-600 rounded-xl text-sm font-bold text-white hover:bg-rose-700 transition-all shadow-lg shadow-rose-200"
@@ -230,8 +253,11 @@ const getEtatLabel = (etat) => {
                     <span :class="['text-[9px] sm:text-[10px] font-black uppercase', equip.etat === 'en_service' ? 'text-emerald-600' : 'text-amber-600']">
                       {{ getEtatLabel(equip.etat) }}
                     </span>
-                    <span v-if="equip.current_affectation" class="text-[9px] text-primary-600 font-bold bg-primary-50 px-1.5 py-0.5 rounded">
-                      Reçu le {{ formatDate(equip.current_affectation.date_affectation) }}
+                    <span v-if="equip.latest_affectation" class="text-[9px] text-primary-600 font-bold bg-primary-50 px-1.5 py-0.5 rounded">
+                      Reçu le {{ formatDate(equip.latest_affectation.date_affectation) }}
+                    </span>
+                    <span v-if="equip.latest_affectation?.affecte_par" class="text-[9px] text-slate-600 font-bold bg-slate-100 px-1.5 py-0.5 rounded">
+                      Affecté par {{ equip.latest_affectation.affecte_par.name }}
                     </span>
                   </div>
                 </div>
@@ -358,6 +384,9 @@ const getEtatLabel = (etat) => {
                 <p class="text-xs text-slate-500">Référence: {{ aff.equipement.reference }}</p>
                 <p class="text-xs text-slate-400 mt-1">
                   Date: {{ new Date(aff.date_affectation).toLocaleDateString('fr-FR') }}
+                </p>
+                <p v-if="aff.affecte_par" class="text-xs text-primary-600 font-medium mt-1">
+                  Affecté par: {{ aff.affecte_par.name }}
                 </p>
               </div>
             </div>

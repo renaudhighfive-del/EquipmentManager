@@ -13,6 +13,7 @@ class AffectationObserver
      */
     public function created(Affectation $affectation): void
     {
+        // Créer le mouvement d'affectation
         Mouvement::create([
             'equipement_id' => $affectation->equipement_id,
             'user_id' => Auth::id() ?? $affectation->affecte_par,
@@ -25,6 +26,9 @@ class AffectationObserver
             'reference_id' => $affectation->id,
             'reference_type' => Affectation::class,
         ]);
+
+        // Mettre à jour l'équipement à "en_service"
+        $affectation->equipement->update(['etat' => 'en_service']);
     }
 
     /**
@@ -32,24 +36,46 @@ class AffectationObserver
      */
     public function updated(Affectation $affectation): void
     {
-        if ($affectation->isDirty('statut') && $affectation->statut === 'retourne') {
-            // Créer le mouvement de retour
-            Mouvement::create([
-                'equipement_id' => $affectation->equipement_id,
-                'user_id' => Auth::id() ?? 1,
-                'type_mouvement' => 'retour',
-                'ancienne_valeur' => json_encode(['statut' => 'en_cours']),
-                'nouvelle_valeur' => json_encode([
-                    'statut' => 'retourne',
-                    'date_retour' => $affectation->date_retour,
-                    'etat_retour' => $affectation->etat_retour,
-                ]),
-                'reference_id' => $affectation->id,
-                'reference_type' => Affectation::class,
-            ]);
+        // Vérifier si le statut a changé
+        if ($affectation->isDirty('statut')) {
+            $ancienStatut = $affectation->getOriginal('statut');
+            $nouveauStatut = $affectation->statut;
 
-            // Remettre l'équipement en état 'neuf' (ou disponible) pour qu'il puisse être réaffecté
-            $affectation->equipement->update(['etat' => 'neuf']);
+            switch ($nouveauStatut) {
+                case 'confirmee':
+                    $this->creerMouvement($affectation, 'reception_confirmee', $ancienStatut);
+                    break;
+
+                case 'retour_en_attente':
+                    $this->creerMouvement($affectation, 'retour_demande', $ancienStatut);
+                    break;
+
+                case 'retourne':
+                    $this->creerMouvement($affectation, 'retour_valide', $ancienStatut);
+                    // Remettre l'équipement en état 'neuf' (disponible pour réaffectation)
+                    $affectation->equipement->update(['etat' => 'neuf']);
+                    break;
+            }
         }
+    }
+
+    /**
+     * Créer un mouvement avec les valeurs appropriées
+     */
+    protected function creerMouvement(Affectation $affectation, string $typeMouvement, ?string $ancienStatut): void
+    {
+        Mouvement::create([
+            'equipement_id' => $affectation->equipement_id,
+            'user_id' => Auth::id(),
+            'type_mouvement' => $typeMouvement,
+            'ancienne_valeur' => json_encode(['statut' => $ancienStatut]),
+            'nouvelle_valeur' => json_encode([
+                'statut' => $affectation->statut,
+                'date_retour' => $affectation->date_retour,
+                'etat_retour' => $affectation->etat_retour,
+            ]),
+            'reference_id' => $affectation->id,
+            'reference_type' => Affectation::class,
+        ]);
     }
 }
