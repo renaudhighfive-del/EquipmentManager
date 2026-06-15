@@ -37,6 +37,10 @@ class AgentController extends Controller
             });
         }
 
+        if ($request->filled('statut')) {
+            $query->where('statut', $request->input('statut'));
+        }
+
         $perPage = (int) $request->input('per_page', 10);
         $agents = $query->paginate(max(1, min($perPage, 100)));
 
