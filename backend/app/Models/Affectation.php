@@ -20,6 +20,7 @@ class Affectation extends Model
         'photo_retour',
         'observations',
         'statut',
+        'motif_rejet',
     ];
 
     protected $casts = [

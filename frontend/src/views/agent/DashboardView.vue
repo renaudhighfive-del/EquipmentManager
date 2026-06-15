@@ -259,6 +259,13 @@ const handleExportPdf = async () => {
                     <span v-if="equip.latest_affectation?.affecte_par" class="text-[9px] text-slate-600 font-bold bg-slate-100 px-1.5 py-0.5 rounded">
                       Affecté par {{ equip.latest_affectation.affecte_par.name }}
                     </span>
+                    <span v-if="equip.latest_affectation?.motif_rejet" class="text-[9px] text-red-600 font-bold bg-red-50 px-1.5 py-0.5 rounded">
+                      Retour rejeté
+                    </span>
+                  </div>
+                  <div v-if="equip.latest_affectation?.motif_rejet" class="mt-2 p-2 bg-red-50 border border-red-100 rounded-lg">
+                    <p class="text-[9px] font-bold text-red-600 mb-0.5">Motif :</p>
+                    <p class="text-xs text-red-700 italic">{{ equip.latest_affectation.motif_rejet }}</p>
                   </div>
                 </div>
               </div>

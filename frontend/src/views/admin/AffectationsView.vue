@@ -25,8 +25,12 @@ const toast = useToast();
 const showReturnModal = ref(false);
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
+const showReviewReturnModal = ref(false);
 const selectedAffectation = ref(null);
 const submitting = ref(false);
+const rejectForm = ref({
+  motif_rejet: ''
+});
 
 // Refs pour la photo de remise (création)
 const photoInput = ref(null);
@@ -302,17 +306,48 @@ const submitAffectation = async () => {
   }
 };
 
-const handleValidateReturn = async (aff) => {
+const openReviewReturnModal = (aff) => {
+  selectedAffectation.value = aff;
+  rejectForm.value = { motif_rejet: '' };
+  localError.value = null;
+  showReviewReturnModal.value = true;
+};
+
+const handleValidateReturn = async () => {
   try {
     submitting.value = true;
-    const success = await affectationStore.validateReturn(aff.id);
+    const success = await affectationStore.validateReturn(selectedAffectation.value.id);
     if (success) {
       showToast('success', 'Succès', successMessage.value);
+      showReviewReturnModal.value = false;
     } else {
       showToast('error', 'Erreur', storeError.value);
     }
   } catch (error) {
     showToast('error', 'Erreur', "Une erreur est survenue lors de la validation du retour.");
+    console.error(error);
+  } finally {
+    submitting.value = false;
+  }
+};
+
+const handleRejectReturn = async () => {
+  if (!rejectForm.value.motif_rejet) {
+    localError.value = 'Le motif de rejet est obligatoire.';
+    return;
+  }
+
+  try {
+    submitting.value = true;
+    const success = await affectationStore.rejectReturn(selectedAffectation.value.id, rejectForm.value);
+    if (success) {
+      showToast('success', 'Succès', successMessage.value);
+      showReviewReturnModal.value = false;
+    } else {
+      showToast('error', 'Erreur', storeError.value);
+    }
+  } catch (error) {
+    showToast('error', 'Erreur', "Une erreur est survenue lors du rejet du retour.");
     console.error(error);
   } finally {
     submitting.value = false;
@@ -390,18 +425,27 @@ const handleValidateReturn = async (aff) => {
               {{ new Date(aff.date_affectation).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) }}
             </td>
             <td class="px-6 py-5">
-              <span 
-                class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight"
-                :class="{
-                    'bg-blue-50 text-blue-600': aff.statut === 'en_cours',
-                    'bg-emerald-50 text-emerald-600': aff.statut === 'confirmee',
-                    'bg-amber-50 text-amber-600': aff.statut === 'retour_en_attente',
-                    'bg-slate-100 text-slate-500': aff.statut === 'retourne',
-                    'bg-purple-50 text-purple-600': aff.statut === 'renouvele'
-                }"
-              >
-                {{ aff.statut === 'en_cours' ? 'À confirmer' : (aff.statut === 'confirmee' ? 'Confirmée' : (aff.statut === 'retour_en_attente' ? 'Retour en attente' : (aff.statut === 'retourne' ? 'Retourné' : 'Renouvelé'))) }}
-              </span>
+              <div class="flex flex-col gap-1">
+                <span 
+                  class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight w-fit"
+                  :class="{
+                      'bg-blue-50 text-blue-600': aff.statut === 'en_cours',
+                      'bg-emerald-50 text-emerald-600': aff.statut === 'confirmee',
+                      'bg-amber-50 text-amber-600': aff.statut === 'retour_en_attente',
+                      'bg-slate-100 text-slate-500': aff.statut === 'retourne',
+                      'bg-purple-50 text-purple-600': aff.statut === 'renouvele'
+                  }"
+                >
+                  {{ aff.statut === 'en_cours' ? 'À confirmer' : (aff.statut === 'confirmee' ? 'Confirmée' : (aff.statut === 'retour_en_attente' ? 'Retour en attente' : (aff.statut === 'retourne' ? 'Retourné' : 'Renouvelé'))) }}
+                </span>
+                <span 
+                  v-if="aff.motif_rejet"
+                  class="px-2 py-1 bg-red-50 text-red-600 rounded-full text-[9px] font-medium w-fit"
+                  title="Motif de rejet : "
+                >
+                  Retour rejeté
+                </span>
+              </div>
             </td>
             <td class="px-8 py-5 text-right">
               <div class="flex items-center justify-end gap-2">
@@ -432,10 +476,10 @@ const handleValidateReturn = async (aff) => {
 
                 <button 
                   v-if="aff.statut === 'retour_en_attente'"
-                  @click="handleValidateReturn(aff)"
+                  @click="openReviewReturnModal(aff)"
                   class="text-xs font-bold text-green-600 hover:text-green-700 bg-green-50 px-4 py-2 rounded-lg transition-colors"
                 >
-                  Valider
+                  Valider/Rejeter
                 </button>
                 
                 <span v-if="aff.statut === 'retourne'" class="text-xs font-bold text-slate-300 px-2 py-2">Clôturé</span>
@@ -854,6 +898,13 @@ const handleValidateReturn = async (aff) => {
           </p>
         </div>
 
+        <div v-if="currentAffectation.motif_rejet" class="space-y-2 p-4 bg-red-50/50 rounded-2xl border border-red-100">
+          <h4 class="text-[10px] font-bold text-red-500 uppercase tracking-widest">Motif de rejet du retour</h4>
+          <p class="text-sm font-medium text-red-700 italic">
+            {{ currentAffectation.motif_rejet }}
+          </p>
+        </div>
+
         <div class="space-y-4">
           <h4 class="text-sm font-bold text-slate-900 flex items-center gap-2">
             <Camera class="w-4 h-4 text-primary-500" />
@@ -919,6 +970,96 @@ const handleValidateReturn = async (aff) => {
           </div>
         </div>
 
+      </div>
+    </SideModal>
+
+    <SideModal 
+      :show="showReviewReturnModal" 
+      title="Examiner le retour d'équipement" 
+      mode="center"
+      @close="showReviewReturnModal = false"
+    >
+      <div v-if="selectedAffectation" class="space-y-6">
+        <div v-if="localError" class="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-start gap-3">
+          <div class="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <X class="w-3 h-3 text-red-600" />
+          </div>
+          <p class="text-sm font-medium text-red-600">{{ localError }}</p>
+        </div>
+
+        <div class="p-5 bg-amber-50 rounded-2xl border border-amber-100 mb-6">
+          <p class="text-[10px] font-bold text-amber-700 uppercase tracking-widest mb-1">Équipement à retourner</p>
+          <p class="text-base font-bold text-slate-900">{{ selectedAffectation.equipement?.modele }} ({{ selectedAffectation.equipement?.reference }})</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Date de retour</p>
+            <p class="text-sm font-bold text-slate-900">
+              {{ selectedAffectation.date_retour ? new Date(selectedAffectation.date_retour).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '—' }}
+            </p>
+          </div>
+          <div class="p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">État constaté</p>
+            <p class="text-sm font-bold text-slate-900">
+              {{ selectedAffectation.etat_retour || '—' }}
+            </p>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Observations de l'agent</label>
+          <div class="p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
+            <p class="text-sm font-medium text-slate-600 italic">
+              {{ selectedAffectation.observations || 'Aucune observation enregistrée.' }}
+            </p>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Photo de retour</label>
+          <div v-if="selectedAffectation.photo_retour" class="w-full rounded-2xl border border-slate-200 overflow-hidden shadow-sm bg-slate-50 group relative">
+            <img 
+              :src="selectedAffectation.photo_retour_url" 
+              alt="Photo de retour" 
+              class="w-full h-52 object-cover"
+            />
+          </div>
+          <div v-else class="p-8 text-center bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
+            <p class="text-sm font-medium text-slate-400 italic">Aucune photo enregistrée</p>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Motif de rejet (si applicable)</label>
+          <textarea 
+            v-model="rejectForm.motif_rejet"
+            rows="3" 
+            placeholder="Expliquer pourquoi le retour est rejeté..."
+            class="w-full p-4 bg-white border border-slate-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-red-500/20 resize-none"
+          ></textarea>
+        </div>
+
+        <div class="pt-4 flex gap-3">
+          <button 
+            type="button"
+            @click="handleValidateReturn"
+            :disabled="submitting"
+            class="flex-1 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-200 flex items-center justify-center gap-2"
+          >
+            <Loader2 v-if="submitting" class="w-4 h-4 animate-spin" />
+            {{ submitting ? 'Validation...' : 'Valider le retour' }}
+          </button>
+          <button 
+            type="button"
+            @click="handleRejectReturn"
+            :disabled="submitting"
+            class="flex-1 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors shadow-lg shadow-red-200 flex items-center justify-center gap-2"
+          >
+            <Loader2 v-if="submitting" class="w-4 h-4 animate-spin" />
+            {{ submitting ? 'Rejet...' : 'Rejeter le retour' }}
+          </button>
+        </div>
       </div>
     </SideModal>
 

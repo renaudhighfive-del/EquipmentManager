@@ -52,6 +52,7 @@ Route::middleware(['auth:sanctum', 'check.active'])->group(function () {
     // Affectations
     Route::post('affectations/{affectation}/request-return', [AffectationController::class, 'requestReturn']);
     Route::patch('affectations/{affectation}/validate-return', [AffectationController::class, 'validateReturn']);
+    Route::patch('affectations/{affectation}/reject-return', [AffectationController::class, 'rejectReturn']);
         // Pour l'agent : affectations à confirmer et confirmation (PLACES AVANT apiResource !)
     Route::get('affectations/a-confirmer', [AffectationController::class, 'getAConfirmer']);
     Route::patch('affectations/{affectation}/confirmer-reception', [AffectationController::class, 'confirmerReception']);

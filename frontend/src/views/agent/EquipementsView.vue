@@ -22,6 +22,7 @@ const isSubmitting = ref(false);
 const incidentType = ref("panne");
 
 const showReturnModal = ref(false);
+const selectedEquipementForReturn = ref(null);
 const selectedAffectationForReturn = ref(null);
 const returnForm = reactive({
   date_retour: new Date().toISOString().split('T')[0],
@@ -132,7 +133,8 @@ const handleDeclareIncident = async () => {
 };
 
 const openReturnModal = (equip) => {
-  selectedAffectationForReturn.value = equip.current_affectation;
+  selectedEquipementForReturn.value = equip;
+  selectedAffectationForReturn.value = equip.latest_affectation;
   returnForm.date_retour = new Date().toISOString().split('T')[0];
   returnForm.etat_retour = 'Bon état';
   returnForm.observations = '';
@@ -276,6 +278,13 @@ const getAffectationStatutLabel = (statut) => {
               <span v-if="equip.latest_affectation?.affecte_par" class="flex items-center gap-1 text-[10px] text-slate-600 font-bold bg-slate-100 px-2 py-0.5 rounded-md">
                 Affecté par {{ equip.latest_affectation.affecte_par.name }}
               </span>
+              <span v-if="equip.latest_affectation?.motif_rejet" class="flex items-center gap-1 text-[10px] text-red-600 font-bold bg-red-50 px-2 py-0.5 rounded-md">
+                Retour rejeté
+              </span>
+            </div>
+            <div v-if="equip.latest_affectation?.motif_rejet" class="mt-2 p-3 bg-red-50 border border-red-100 rounded-xl">
+              <p class="text-xs font-bold text-red-600 mb-1">Motif de rejet :</p>
+              <p class="text-sm text-red-700 italic">{{ equip.latest_affectation.motif_rejet }}</p>
             </div>
           </div>
         </div>
@@ -414,11 +423,11 @@ const getAffectationStatutLabel = (statut) => {
 
   <!-- Modal Demande de Retour -->
   <SideModal :show="showReturnModal" title="Demander le retour d'équipement" @close="showReturnModal = false">
-    <div v-if="selectedAffectationForReturn" class="space-y-6">
+    <div v-if="selectedEquipementForReturn && selectedAffectationForReturn" class="space-y-6">
       <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
         <p class="text-sm text-slate-600 font-medium">
           Équipement concerné :
-          <span class="font-black text-slate-900">{{ selectedAffectationForReturn.equipement?.marque }} {{ selectedAffectationForReturn.equipement?.modele }}</span>
+          <span class="font-black text-slate-900">{{ selectedEquipementForReturn.marque }} {{ selectedEquipementForReturn.modele }} ({{ selectedEquipementForReturn.reference }})</span>
         </p>
       </div>
 
