@@ -49,4 +49,37 @@ class AgentPaginationTest extends TestCase
             ->assertJsonPath('current_page', 1)
             ->assertJsonCount(10, 'agents');
     }
+
+    public function test_agents_index_can_filter_by_statut(): void
+    {
+        $user = User::create([
+            'name' => 'Admin Test',
+            'email' => 'admin2@example.com',
+            'password' => 'password',
+            'role' => 'admin',
+            'is_active' => true,
+        ]);
+
+        Agent::create([
+            'matricule' => 'MAT-2026-00001',
+            'nom' => 'Actif',
+            'prenom' => 'Agent',
+            'email' => 'actif@example.com',
+            'statut' => 'actif',
+        ]);
+
+        Agent::create([
+            'matricule' => 'MAT-2026-00002',
+            'nom' => 'Inactif',
+            'prenom' => 'Agent',
+            'email' => 'inactif@example.com',
+            'statut' => 'inactif',
+        ]);
+
+        $response = $this->actingAs($user, 'sanctum')->getJson('/api/agents?statut=actif&per_page=100');
+
+        $response->assertOk()
+            ->assertJsonCount(1, 'agents')
+            ->assertJsonPath('agents.0.statut', 'actif');
+    }
 }

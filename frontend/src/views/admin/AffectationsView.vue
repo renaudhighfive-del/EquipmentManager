@@ -140,7 +140,7 @@ const fetchInitialData = async () => {
   try {
     const [equipRes, agentRes] = await Promise.all([
       api.get('/equipements'),
-      api.get('/agents?statut=actif')
+      api.get('/agents?statut=actif&per_page=100')
     ]);
     // On accepte uniquement 'neuf' comme état disponible pour une nouvelle affectation
     availableEquipements.value = equipRes.data.filter(e => e.etat === 'neuf');
