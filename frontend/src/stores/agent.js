@@ -7,22 +7,40 @@ export const useAgentStore = defineStore('agent', {
     selectedAgent: null,
     loading: false,
     error: null,
+    pagination: {
+      currentPage: 1,
+      lastPage: 1,
+      perPage: 10,
+      total: 0,
+      hasMorePages: false,
+    },
   }),
 
   getters: {
     agentsSansCompte: (state) => state.agents.filter(a => !a.user_id),
     agentsActifs:     (state) => state.agents.filter(a => a.statut === 'actif'),
     agentsInactifs:   (state) => state.agents.filter(a => a.statut === 'inactif'),
-    totalAgents:      (state) => state.agents.length,
+    totalAgents:      (state) => state.pagination.total || state.agents.length,
   },
 
   actions: {
-    async fetchAgents() {
+    async fetchAgents(page = 1, perPage = 10, search = '') {
       this.loading = true
       this.error = null
       try {
-        const response = await api.get('/agents')
-        this.agents = response.data.agents
+        const params = { page, per_page: perPage }
+        const query = search?.trim()
+        if (query) params.search = query
+
+        const response = await api.get('/agents', { params })
+        this.agents = response.data.agents ?? []
+        this.pagination = {
+          currentPage: response.data.current_page ?? 1,
+          lastPage: response.data.last_page ?? 1,
+          perPage: response.data.per_page ?? perPage,
+          total: response.data.total ?? this.agents.length,
+          hasMorePages: response.data.has_more_pages ?? false,
+        }
       } catch (err) {
         this.error = 'Erreur lors de la récupération des agents'
         console.error(err)

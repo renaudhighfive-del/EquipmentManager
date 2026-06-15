@@ -22,15 +22,31 @@ class AgentController extends Controller
     }
 
     /**
-     * Liste tous les agents.
+     * Liste les agents avec pagination et recherche optionnelle.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $agents = Agent::with(['user', 'affectations.equipement'])->get();
+        $query = Agent::with(['user', 'affectations.equipement']);
+
+        if ($search = $request->string('search')->trim()) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nom', 'like', "%{$search}%")
+                    ->orWhere('prenom', 'like', "%{$search}%")
+                    ->orWhere('matricule', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $perPage = (int) $request->input('per_page', 10);
+        $agents = $query->paginate(max(1, min($perPage, 100)));
 
         return response()->json([
-            'agents' => $agents->map(fn ($a) => $this->withPhotoUrl($a)),
-            'total'  => $agents->count(),
+            'agents' => $agents->getCollection()->map(fn ($agent) => $this->withPhotoUrl($agent)),
+            'total' => $agents->total(),
+            'current_page' => $agents->currentPage(),
+            'last_page' => $agents->lastPage(),
+            'per_page' => $agents->perPage(),
+            'has_more_pages' => $agents->hasMorePages(),
         ]);
     }
 
