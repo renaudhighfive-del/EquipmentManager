@@ -60,6 +60,24 @@ const stats = computed(() => {
     },
   ]
 })
+
+const handleExportPdf = async () => {
+  try {
+    const apiUrl = `${import.meta.env.VITE_API_URL}/dashboard/export-pdf`;
+    
+    // Créer un lien temporaire pour télécharger le PDF
+    const link = document.createElement('a');
+    link.href = apiUrl;
+    link.target = '_blank';
+    link.download = `rapport_dashboard_${Date.now()}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Erreur lors de l\'export PDF:', error);
+    alert('Une erreur est survenue lors de l\'export PDF');
+  }
+};
 </script>
 
 <template>
@@ -69,7 +87,7 @@ const stats = computed(() => {
       :subtitle="`Bienvenue, ${authStore.user?.name}`"
     >
       <template #actions>
-        <button class="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm">
+        <button @click="handleExportPdf" class="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm">
           <Download class="w-4 h-4" />
           Exporter
         </button>
