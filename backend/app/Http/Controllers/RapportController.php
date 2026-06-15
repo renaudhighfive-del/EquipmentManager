@@ -111,11 +111,11 @@ class RapportController extends Controller
         $sinistresEnAttente = PerteCasse::where('statut', 'en_attente_validation')->count();
         $sinistresValides   = PerteCasse::where('statut', 'validee')->count();
 
-        // ── Top agents (matériels affectés) ───────────────────────────────
+        // ── Top agents (toutes les affectations enregistrées) ───────────────────────────────
         $topAgents = Agent::with('user')
             ->having(DB::raw('count_aff'), '>', 0)
             ->select('agents.*', DB::raw(
-                '(SELECT COUNT(*) FROM affectations WHERE affectations.agent_id = agents.id AND affectations.statut = "en_cours") as count_aff'
+                '(SELECT COUNT(*) FROM affectations WHERE affectations.agent_id = agents.id) as count_aff'
             ))
             ->orderByDesc('count_aff')
             ->limit(5)
