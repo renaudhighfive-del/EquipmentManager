@@ -328,6 +328,11 @@ const handleValidateReturn = async (aff) => {
       subtitle="Gestion des remises et retours de matériels"
     >
       <template #actions>
+        <div v-if="affectations.filter(a => a.statut === 'retour_en_attente').length > 0"
+          class="flex items-center gap-2 mr-4 text-sm font-bold text-amber-700 bg-amber-50 px-4 py-2 rounded-xl border border-amber-200">
+          <div class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
+          {{ affectations.filter(a => a.statut === 'retour_en_attente').length }} retour(s) en attente
+        </div>
         <button 
           @click="openCreateModal"
           class="flex items-center gap-2 px-5 py-2.5 bg-primary-600 rounded-xl text-sm font-bold text-white hover:bg-primary-700 transition-all shadow-lg shadow-primary-200"
@@ -363,11 +368,15 @@ const handleValidateReturn = async (aff) => {
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-50">
-          <tr v-for="aff in affectations" :key="aff.id" class="hover:bg-slate-50/50 transition-colors group">
+          <tr v-for="aff in affectations" :key="aff.id" 
+            :class="['hover:bg-slate-50/50 transition-colors group', aff.statut === 'retour_en_attente' ? 'bg-amber-50 hover:bg-amber-100' : '']">
             <td class="px-8 py-5">
-              <div>
-                <p class="text-sm font-bold text-slate-900">{{ aff.equipement?.reference }}</p>
-                <p class="text-xs text-slate-500">{{ aff.equipement?.modele }} {{ aff.equipement?.marque }}</p>
+              <div class="flex items-center gap-2">
+                <div v-if="aff.statut === 'retour_en_attente'" class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
+                <div>
+                  <p class="text-sm font-bold text-slate-900">{{ aff.equipement?.reference }}</p>
+                  <p class="text-xs text-slate-500">{{ aff.equipement?.modele }} {{ aff.equipement?.marque }}</p>
+                </div>
               </div>
             </td>
             <td class="px-6 py-5">
@@ -425,9 +434,10 @@ const handleValidateReturn = async (aff) => {
                 <button 
                   v-if="aff.statut === 'retour_en_attente'"
                   @click="handleValidateReturn(aff)"
-                  class="text-xs font-bold text-green-600 hover:text-green-700 bg-green-50 px-4 py-2 rounded-lg transition-colors"
+                  :disabled="submitting"
+                  class="text-xs font-bold text-primary-600 hover:text-primary-700 bg-primary-50 px-4 py-2 rounded-lg transition-colors"
                 >
-                  Valider
+                  Retour
                 </button>
                 
                 <span v-if="aff.statut === 'retourne'" class="text-xs font-bold text-slate-300 px-2 py-2">Clôturé</span>

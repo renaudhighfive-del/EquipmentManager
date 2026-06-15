@@ -47,6 +47,7 @@ const menusByRole = {
   ],
   gestionnaire: [
     { label: 'Tableau de bord', icon: LayoutDashboard, path: '/gestionnaire/dashboard' },
+    // Vues partagées avec admin (réutilisation directe)
     { label: 'Agents',          icon: Users,           path: '/gestionnaire/agents' },
     { label: 'Équipements',     icon: Package,         path: '/gestionnaire/equipements' },
     { label: 'Affectations',    icon: ArrowLeftRight,  path: '/gestionnaire/affectations' },
@@ -59,7 +60,7 @@ const menusByRole = {
   ],
   agent: [
     { label: 'Mon espace',       icon: LayoutDashboard, path: '/agent/dashboard' },
-    { label: 'Mes équipements',  icon: Smartphone,      path: '/agent/equipements' },
+    { label: 'Mes équipements',  icon: Package,         path: '/agent/equipements' },
     { label: 'Mes Incidents',    icon: AlertTriangle,   path: '/agent/incidents' },
     { label: 'Mon profil',       icon: CircleUser,      path: '/agent/profile' },
     { label: 'Mes mouvements',   icon: Activity,        path: '/agent/mouvements' },

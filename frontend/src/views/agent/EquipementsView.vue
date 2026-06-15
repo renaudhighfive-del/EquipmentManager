@@ -248,6 +248,15 @@ const getEtatLabel = (etat) => {
                 <Calendar class="w-3 h-3" />
                 Depuis le {{ formatDate(equip.current_affectation.date_affectation) }}
               </span>
+              <span v-if="equip.current_affectation" 
+                class="flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-md"
+                :class="{
+                    'bg-amber-50 text-amber-600': equip.current_affectation.statut === 'retour_en_attente',
+                    'bg-emerald-50 text-emerald-600': equip.current_affectation.statut === 'confirmee'
+                }"
+              >
+                {{ equip.current_affectation.statut === 'confirmee' ? 'Confirmé' : 'Retour en attente' }}
+              </span>
             </div>
           </div>
         </div>
@@ -258,8 +267,15 @@ const getEtatLabel = (etat) => {
           <div class="flex items-center gap-2">
             <button v-if="equip.current_affectation && equip.current_affectation.statut === 'confirmee'"
               @click.stop="openReturnModal(equip)"
-              class="p-2.5 text-primary-500 hover:bg-primary-50 rounded-xl transition-all" title="Demander le retour">
+              class="p-2.5 text-primary-500 hover:bg-primary-50 rounded-xl transition-all flex items-center gap-1 text-xs font-bold" title="Demander le retour">
+              <RotateCcw class="w-5 h-5" />
+              Retour
+            </button>
+            <button v-if="equip.current_affectation && equip.current_affectation.statut === 'retour_en_attente'"
+              disabled
+              class="p-2.5 text-amber-500 bg-amber-50 rounded-xl transition-all flex items-center gap-1 text-xs font-bold" title="Retour en attente de validation">
               <CheckCircle class="w-5 h-5" />
+              En attente
             </button>
             <button @click="openIncidentModal(equip)"
               class="p-2.5 text-rose-500 hover:bg-rose-50 rounded-xl transition-all" title="Signaler un incident">
