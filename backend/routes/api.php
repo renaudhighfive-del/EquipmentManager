@@ -85,6 +85,7 @@ Route::middleware(['auth:sanctum', 'check.active'])->group(function () {
     Route::patch('sinistres/{sinistre}/rejeter', [PerteCasseController::class, 'rejeter']);
 
     // Agent Management
+    Route::get('agents/export/excel', [AgentController::class, 'export']);
     Route::apiResource('agents', AgentController::class);
     Route::patch('agents/{agent}/desactiver', [AgentController::class, 'desactiver']);
     Route::patch('agents/{agent}/reactiver',  [AgentController::class, 'reactiver']);

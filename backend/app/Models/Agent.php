@@ -24,7 +24,15 @@ class Agent extends Model
         'photo',
     ];
 
-    protected $appends = ['is_nouveau', 'nb_affectes', 'nb_perdus'];
+    protected $appends = ['is_nouveau', 'nb_affectes', 'nb_perdus', 'photo_url'];
+
+    public function getPhotoUrlAttribute(): ?string
+    {
+        if (!$this->photo) {
+            return null;
+        }
+        return rtrim(config('app.url'), '/') . '/storage/' . ltrim($this->photo, '/');
+    }
 
     public function user()
     {
