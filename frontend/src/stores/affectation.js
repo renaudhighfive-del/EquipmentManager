@@ -213,6 +213,24 @@ export const useAffectationStore = defineStore('affectation', () => {
   };
 
 
+ 
+
+  const exportAffectationsToExcel = async () => {
+    try {
+      // 1. On fait l'appel HTTP via l'instance 'api'
+      const response = await api.get('/affectations/export', {
+        responseType: 'blob' // Indispensable pour les fichiers binaires
+      });
+      
+      // 2. On retourne directement les données du fichier pour la vue
+      return response.data;
+    } catch (error) {
+      console.error("Erreur lors de l'appel API Export:", error);
+      throw error; // On propage l'erreur pour que la vue puisse l'attraper
+    }
+  }
+
+
 
   return {
     affectations,
@@ -234,6 +252,8 @@ export const useAffectationStore = defineStore('affectation', () => {
     requestReturnAffectation,
     validateReturn,
 
-    pagination
+    pagination, 
+
+    exportAffectationsToExcel
   }
 })

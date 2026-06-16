@@ -48,8 +48,10 @@ Route::middleware(['auth:sanctum', 'check.active'])->group(function () {
     // Dashboard
     Route::get('dashboard', [DashboardController::class, 'index']);
     Route::get('dashboard/export-pdf', [DashboardController::class, 'exportPdf']);
-
+    
     // Affectations
+    
+    Route::get('/affectations/export', [AffectationController::class, 'export']);
     Route::post('affectations/{affectation}/request-return', [AffectationController::class, 'requestReturn']);
     Route::patch('affectations/{affectation}/validate-return', [AffectationController::class, 'validateReturn']);
         // Pour l'agent : affectations à confirmer et confirmation (PLACES AVANT apiResource !)

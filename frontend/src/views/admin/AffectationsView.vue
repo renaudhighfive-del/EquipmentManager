@@ -15,14 +15,18 @@ import {
   Filter,
   Loader2,
   X,
-  Pencil
+  Maximize2,
+  Pencil,
+  Download
 } from 'lucide-vue-next';
+
+import Button from 'primevue/button';
 
 // import { Paginator } from 'primevue/paginator'
 import Paginator from 'primevue/paginator';
 
 const affectationStore = useAffectationStore();
-const { affectations, loading, error: storeError ,currentAffectation, successMessage,pagination } = storeToRefs(affectationStore);
+const { affectations, loading, error: storeError ,currentAffectation, successMessage,pagination , exportAffectationsToExcel} = storeToRefs(affectationStore);
 const toast = useToast();
 
 //gestion de la pagination
@@ -31,6 +35,16 @@ const onPageChange = (event) => {
   currentPage.value = event.page + 1 
   affectationStore.fetchAffectations(currentPage.value)
 }
+
+//Pour le zoom de l'image 
+const showZoomModal= ref(false);
+const zoomImage=ref('');
+
+const openZoom = (url) => {
+  zoomImage.value = url;
+  showZoomModal.value = true;
+  // console.log('👉 Modal ouvert ?', showZoomModal.value);
+};
 
 const showReturnModal = ref(false);
 const showCreateModal = ref(false);
@@ -328,6 +342,32 @@ const handleValidateReturn = async (aff) => {
     submitting.value = false;
   }
 };
+
+
+//Gestion de la logique de l'export Excel via le Store
+const exportToExcel = async () => {
+  try {
+    showToast('info', 'Export', 'Génération du fichier Excel en cours...');
+
+    // 1. On appelle l'action du store
+    const data = await affectationStore.exportAffectationsToExcel();
+
+    // 2. On crée le lien de téléchargement avec le résultat
+    const url = window.URL.createObjectURL(new Blob([data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `export_affectations_${Date.now()}.xlsx`); 
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    showToast('success', 'Succès', 'Le fichier Excel a été téléchargé.');
+  } catch (error) {
+    showToast('error', 'Erreur', 'Impossible de générer le fichier Excel.');
+  }
+};
 </script>
 
 <template>
@@ -337,6 +377,13 @@ const handleValidateReturn = async (aff) => {
       subtitle="Gestion des remises et retours de matériels"
     >
       <template #actions>
+        <!-- gestion de l'export pdf -->
+        <Button 
+  label="Exporter en Excel" 
+  icon="pi pi-file-excel" 
+  class="p-button-success" 
+  @click="exportToExcel" 
+/>
         <div v-if="affectations.filter(a => a.statut === 'retour_en_attente').length > 0"
           class="flex items-center gap-2 mr-4 text-sm font-bold text-amber-700 bg-amber-50 px-4 py-2 rounded-xl border border-amber-200">
           <div class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
@@ -895,14 +942,13 @@ const handleValidateReturn = async (aff) => {
           <div v-if="!currentAffectation.photo_remise" class="p-8 text-center bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
             <p class="text-sm font-medium text-slate-400 italic">Aucune photo enregistrée</p>
           </div>
+          <div v-else class="w-full rounded-2xl border border-slate-200 overflow-hidden shadow-sm bg-slate-50 group relative cursor-pointer" @click="openZoom(currentAffectation.photo_remise_url)">
+  <img :src="currentAffectation.photo_remise_url" alt="Photo de remise" class="w-full h-52 object-cover">
+  <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+    <Maximize2 class="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-all duration-300" />
+  </div>
+</div>
           
-          <div v-else class="w-full rounded-2xl border border-slate-200 overflow-hidden shadow-sm bg-slate-50 group relative">
-            <img 
-              :src="currentAffectation.photo_remise_url" 
-              alt="Photo de remise" 
-              class="w-full h-52 object-cover"
-            />
-          </div>
         </div>
 
         <div v-if="currentAffectation.statut === 'retourne'" class="space-y-4">
@@ -915,13 +961,12 @@ const handleValidateReturn = async (aff) => {
             <p class="text-sm font-medium text-slate-400 italic">Aucune photo enregistrée</p>
           </div>
           
-          <div v-else class="w-full rounded-2xl border border-slate-200 overflow-hidden shadow-sm bg-slate-50 group relative">
-            <img 
-              :src="currentAffectation.photo_retour_url" 
-              alt="Photo de retour" 
-              class="w-full h-52 object-cover"
-            />
-          </div>
+          <div v-else class="w-full rounded-2xl border border-slate-200 overflow-hidden shadow-sm bg-slate-50 group relative cursor-pointer" @click="openZoom(currentAffectation.photo_retour_url)">
+  <img :src="currentAffectation.photo_retour_url" alt="Photo de retour" class="w-full h-52 object-cover">
+  <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+    <Maximize2 class="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-all duration-300" />
+  </div>
+</div>
         </div>
 
         <div class="space-y-4">
@@ -953,6 +998,15 @@ const handleValidateReturn = async (aff) => {
 
       </div>
     </SideModal>
+
+
+    <!-- Modal Zoom Image -->
+<div v-if="showZoomModal" class="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 animate-in fade-in duration-300">
+  <button @click="showZoomModal = false" class="absolute top-6 right-6 text-white hover:text-primary-400 transition-colors">
+    <X class="w-8 h-8" />
+  </button>
+  <img :src="zoomImage" class="max-w-full max-h-full object-contain rounded-2xl shadow-2xl">
+</div>
 
   </div>
 </template>

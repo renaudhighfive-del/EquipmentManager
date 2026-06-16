@@ -6,6 +6,14 @@ use App\Models\Affectation;
 use App\Models\Equipement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
+
+use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Concerns\FromQuery;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithMapping;
+
 
 class AffectationController extends Controller
 {
@@ -18,12 +26,12 @@ class AffectationController extends Controller
         'status' => 'success',
         'data' => $affectations->items(),
         'pagination' => [
-        'current_page' => $affectations->currentPage(),
-        'per_page' => $affectations->perPage(),
-        'total' => $affectations->total(),
-        'last_page' => $affectations->lastPage(),
-        'from' => $affectations->firstItem(),
-        'to' => $affectations->lastItem(),
+        'current_page' => $affectations->currentPage(), //la page actuellement afficher (le numero de la page)
+        'per_page' => $affectations->perPage(), //Nombre d'element par page 
+        'total' => $affectations->total(),// Nombre total d'element récuperer
+        'last_page' => $affectations->lastPage(),//Numero de la derniere page 
+        'from' => $affectations->firstItem(),//Numero du premier élement afficher sur la page 
+        'to' => $affectations->lastItem(),// Numero du dernier élement afficher su la page 
                         ]
         ]);
     }
@@ -291,4 +299,85 @@ class AffectationController extends Controller
             ], 500);
         }
     }
+
+    //Export pdf
+    public function exportPdf(){
+        try {
+            $user=Auth::user();//recuperation de l'utilisateur connecter 
+            $stats=$user->role !== 'agent';
+            if($stats) {
+
+                $this->affectationsExport($user);
+
+                //Générer le PDF 
+                $pdf = pdf::loadView('exports.affectation' , [
+                    'stats' =>$stats,
+                    'user' => $user,
+                    'date' => Carbon::now()->format('d/m/y H:i')
+                ]);
+
+                //Télécharger le PDF 
+                return $pdf ->download('rapport_affectation_' . Carbon::now()->format('d_m_Y_H_i') . '.pdf');
+            }
+
+        } catch (\Exception $e) {
+             return response()->json([
+                'status' => 'error',
+                'message' => 'Erreur lors de l\'export PDF : ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function affectationsExport($user){
+            if($user->role!=='agent'){
+
+            }
+    }
+
+
+        //Export pour export excel
+    public function export(Request $request)
+{
+    // 1. Préparation de la requête avec les relations (charge les données liées pour éviter le problème N+1)
+
+    $query = Affectation::with([ 'agent', 'equipement']);
+
+    // 2. Génération et téléchargement instantané du fichier Excel via une classe anonyme
+    return Excel::download(new class($query) implements FromQuery, WithHeadings, WithMapping {
+        
+        protected $query;
+
+        // Le constructeur reçoit la requête SQL préparée
+        public function __construct($query) {
+            $this->query = $query;
+        }
+
+        // On fournit la requête au moteur de Laravel Excel
+        public function query() {
+            return $this->query;
+        }
+
+        // Définition des titres des colonnes de la première ligne du fichier Excel
+        public function headings(): array {
+            return [
+                'ID Affectation', 
+                'Équipement / Matériel', 
+                'Agent Bénéficiaire', 
+                // 'Date d\'Affectation', 
+                'Observations'
+            ];
+        }
+
+        // Association des données de chaque ligne de ta base de données aux colonnes Excel
+        public function map($affectation): array {
+            return [
+                $affectation->id,
+                $affectation->equipement->agent ?? 'N/A', 
+                $affectation->agent->nom ?? 'N/A',            // Remplace par le nom exact de ta colonne/relation
+                // $affectation->date_affectation,
+                $affectation->observations ?? 'Aucune observation'
+            ];
+        }
+    }, 'export_affectations_' . time() . '.xlsx');
+}
 }
