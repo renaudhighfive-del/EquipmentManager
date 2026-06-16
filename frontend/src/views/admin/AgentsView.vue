@@ -6,10 +6,11 @@ import { useAgentStore } from '../../stores/agent'
 import { useAuthStore } from '../../stores/auth'
 import {
   Search, Plus, Edit, UserX, UserCheck, Mail, Phone,
-  MapPin, Briefcase, Smartphone, ChevronRight, Loader2,
-  Camera, AlertCircle, CheckCircle2, Package, ChevronLeft,
-  ChevronRight as ChevronRightIcon
+  MapPin, Briefcase, Smartphone, Loader2,
+  Camera, AlertCircle, CheckCircle2, Package, Download,
+  ChevronLeft, ChevronRight as ChevronRightIcon
 } from 'lucide-vue-next'
+import api from '../../services/axios'
 
 const agentStore = useAgentStore()
 const authStore  = useAuthStore()
@@ -82,18 +83,20 @@ const openCreate = () => {
   showForm.value     = true
 }
 
-const openEdit = (agent) => {
-  editingAgent.value = agent
+const openEdit = async (agent) => {
+  await agentStore.fetchAgent(agent.id)
+  const fullAgent = agentStore.selectedAgent
+  editingAgent.value = fullAgent
   formData.value = {
-    nom:       agent.nom,
-    prenom:    agent.prenom,
-    telephone: agent.telephone || '',
-    email:     agent.email || '',
-    direction: agent.direction || '',
-    service:   agent.service || '',
-    poste:     agent.poste || '',
+    nom:       fullAgent.nom,
+    prenom:    fullAgent.prenom,
+    telephone: fullAgent.telephone || '',
+    email:     fullAgent.email || '',
+    direction: fullAgent.direction || '',
+    service:   fullAgent.service || '',
+    poste:     fullAgent.poste || '',
   }
-  photoPreview.value = agent.photo_url ?? null
+  photoPreview.value = fullAgent.photo_url ?? null
   photoFile.value    = null
   formError.value    = ''
   formSuccess.value  = ''
@@ -138,7 +141,38 @@ const isAdmin   = computed(() => authStore.user?.role === 'admin')
 const avatarUrl = (agent) => {
   if (!agent.photo_url) return null
   if (agent.photo_url.startsWith('http')) return agent.photo_url
+  // Construire l'URL complète à partir de l'API base
   return import.meta.env.VITE_API_URL.replace('/api', '') + agent.photo_url
+}
+
+const exportAgents = async () => {
+  try {
+    const response = await api.get('/agents/export/excel', {
+      responseType: 'blob', // Important pour les fichiers
+    })
+
+    // Récupérer le nom du fichier depuis les en-têtes, ou utiliser un nom par défaut
+    const contentDisposition = response.headers['content-disposition']
+    let filename = 'agents.xlsx'
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/)
+      if (filenameMatch && filenameMatch[1]) {
+        filename = filenameMatch[1]
+      }
+    }
+
+    // Créer un lien de téléchargement
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', filename)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+  } catch (error) {
+    console.error('Erreur lors de l\'export :', error)
+  }
 }
 
 const goToPage = async (page) => {
@@ -157,16 +191,25 @@ onMounted(() => agentStore.fetchAgents(1, perPage.value))
   <div class="space-y-6 animate-in fade-in duration-500">
 
     <!-- Header -->
-    <PageHeader title="Agents" :subtitle="`${agentStore.pagination.total || filteredAgents.length} agent(s) au total`">
+    <PageHeader title="Agents" :subtitle="`${filteredAgents.length} agent(s) affiché(s)`">
       <template #actions>
-        <button
-          v-if="isAdmin"
-          @click="openCreate"
-          class="flex items-center gap-2 px-4 py-2.5 bg-primary-600 rounded-xl text-sm font-bold text-white hover:bg-primary-700 transition-all shadow-lg shadow-primary-200"
-        >
-          <Plus class="w-4 h-4" />
-          Nouvel agent
-        </button>
+        <div class="flex items-center gap-3">
+          <button
+            @click="exportAgents"
+            class="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 rounded-xl text-sm font-bold text-white hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200"
+          >
+            <Download class="w-4 h-4" />
+            Exporter Excel
+          </button>
+          <button
+            v-if="isAdmin"
+            @click="openCreate"
+            class="flex items-center gap-2 px-4 py-2.5 bg-primary-600 rounded-xl text-sm font-bold text-white hover:bg-primary-700 transition-all shadow-lg shadow-primary-200"
+          >
+            <Plus class="w-4 h-4" />
+            Nouvel agent
+          </button>
+        </div>
       </template>
     </PageHeader>
 
@@ -501,7 +544,7 @@ onMounted(() => agentStore.fetchAgents(1, perPage.value))
           </div>
           <div class="space-y-1.5">
             <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Téléphone</label>
-            <input v-model="formData.telephone" type="number" placeholder="+33 6 12 34 56 78"
+            <input v-model="formData.telephone" type="tel" placeholder="+33 6 12 34 56 78"
               class="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 transition-all">
           </div>
           <div class="space-y-1.5">
