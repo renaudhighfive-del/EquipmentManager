@@ -54,6 +54,7 @@ Route::middleware(['auth:sanctum', 'check.active'])->group(function () {
     Route::get('/affectations/export', [AffectationController::class, 'export']);
     Route::post('affectations/{affectation}/request-return', [AffectationController::class, 'requestReturn']);
     Route::patch('affectations/{affectation}/validate-return', [AffectationController::class, 'validateReturn']);
+    Route::patch('affectations/{affectation}/reject-return', [AffectationController::class, 'rejectReturn']);
         // Pour l'agent : affectations à confirmer et confirmation (PLACES AVANT apiResource !)
     Route::get('affectations/a-confirmer', [AffectationController::class, 'getAConfirmer']);
     Route::patch('affectations/{affectation}/confirmer-reception', [AffectationController::class, 'confirmerReception']);
@@ -86,6 +87,7 @@ Route::middleware(['auth:sanctum', 'check.active'])->group(function () {
     Route::patch('sinistres/{sinistre}/rejeter', [PerteCasseController::class, 'rejeter']);
 
     // Agent Management
+    Route::get('agents/export/excel', [AgentController::class, 'export']);
     Route::apiResource('agents', AgentController::class);
     Route::patch('agents/{agent}/desactiver', [AgentController::class, 'desactiver']);
     Route::patch('agents/{agent}/reactiver',  [AgentController::class, 'reactiver']);

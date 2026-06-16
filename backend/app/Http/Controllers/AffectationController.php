@@ -380,4 +380,38 @@ class AffectationController extends Controller
         }
     }, 'export_affectations_' . time() . '.xlsx');
 }
+    // Rejeter le retour par Admin/Gestionnaire
+    public function rejectReturn(Request $request, Affectation $affectation)
+    {
+        try {
+            // Vérifier que le statut est bien "retour_en_attente"
+            if ($affectation->statut !== 'retour_en_attente') {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Cette affectation ne peut pas être rejetée'
+                ], 422);
+            }
+
+            $validated = $request->validate([
+                'motif_rejet' => 'required|string'
+            ]);
+
+            // Remettre le statut à confirmee et enregistrer le motif
+            $affectation->update([
+                'statut' => 'confirmee',
+                'motif_rejet' => $validated['motif_rejet']
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Retour rejeté avec succès',
+                'data' => $affectation->load(['equipement', 'agent', 'affectePar'])
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Erreur lors du rejet du retour : ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

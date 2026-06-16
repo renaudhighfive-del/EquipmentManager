@@ -2,25 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\AgentsExport;
 use App\Models\Agent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AgentController extends Controller
 {
-    /**
-     * Ajoute photo_url à un agent.
-     */
-    private function withPhotoUrl(Agent $agent): array
-    {
-        $arr = $agent->toArray();
-        $arr['photo_url'] = $agent->photo
-            ? Storage::url($agent->photo)
-            : null;
-        return $arr;
-    }
-
     /**
      * Liste les agents avec pagination et recherche optionnelle.
      */
@@ -37,15 +27,19 @@ class AgentController extends Controller
             });
         }
 
+        if ($request->filled('statut')) {
+            $query->where('statut', $request->input('statut'));
+        }
+
         $perPage = (int) $request->input('per_page', 10);
         $agents = $query->paginate(max(1, min($perPage, 100)));
 
         return response()->json([
-            'agents' => $agents->getCollection()->map(fn ($agent) => $this->withPhotoUrl($agent)),
+            'agents' => $agents->getCollection(),
             'total' => $agents->total(),
             'current_page' => $agents->currentPage(),
             'last_page' => $agents->lastPage(),
-            'per_page' => $agents->perPage(),
+            'per_page' => $agents->perPage(),   
             'has_more_pages' => $agents->hasMorePages(),
         ]);
     }
@@ -101,14 +95,14 @@ class AgentController extends Controller
 
         return response()->json([
             'message' => 'Agent créé avec succès',
-            'agent'   => $this->withPhotoUrl($agent->load(['user', 'affectations'])),
+            'agent'   => $agent->load(['user', 'affectations']),
         ], 201);
     }
 
     public function show(Agent $agent)
     {
         return response()->json([
-            'agent' => $this->withPhotoUrl($agent->load(['user', 'affectations.equipement'])),
+            'agent' => $agent->load(['user', 'affectations.equipement']),
         ]);
     }
 
@@ -178,7 +172,7 @@ class AgentController extends Controller
 
         return response()->json([
             'message' => 'Agent mis à jour',
-            'agent'   => $this->withPhotoUrl($agent->load(['user', 'affectations'])),
+            'agent'   => $agent->load(['user', 'affectations']),
         ]);
     }
 
@@ -191,7 +185,7 @@ class AgentController extends Controller
             $agent->user->update(['is_active' => false]);
         }
 
-        return response()->json(['message' => 'Agent désactivé', 'agent' => $this->withPhotoUrl($agent)]);
+        return response()->json(['message' => 'Agent désactivé', 'agent' => $agent->load('user')]);
     }
 
     public function reactiver(Agent $agent)
@@ -202,6 +196,14 @@ class AgentController extends Controller
             $agent->user->update(['is_active' => true]);
         }
 
-        return response()->json(['message' => 'Agent réactivé', 'agent' => $this->withPhotoUrl($agent)]);
+        return response()->json(['message' => 'Agent réactivé', 'agent' => $agent->load('user')]);
+    }
+
+    /**
+     * Exporte la liste des agents en Excel.
+     */
+    public function export()
+    {
+        return Excel::download(new AgentsExport, 'agents_' . now()->format('Ymd_His') . '.xlsx');
     }
 }

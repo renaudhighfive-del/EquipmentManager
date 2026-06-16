@@ -212,6 +212,28 @@ export const useAffectationStore = defineStore('affectation', () => {
     }
   };
 
+  // Rejeter le retour par Admin/Gestionnaire
+  const rejectReturn = async (id, rejectData) => {
+    loading.value = true;
+    error.value = null;
+    successMessage.value = null;
+    try {
+      const response = await api.patch(`/affectations/${id}/reject-return`, rejectData);
+
+      const index = affectations.value.findIndex(a => a.id === id);
+      if (index !== -1) {
+        affectations.value[index] = response.data.data;
+      }
+
+      successMessage.value = response.data.message;
+      return true;
+    } catch (err) {
+      error.value = err.response?.data?.message || 'Erreur lors du rejet du retour';
+      return false;
+    } finally {
+      loading.value = false;
+    }
+  };
 
  
 
@@ -254,6 +276,8 @@ export const useAffectationStore = defineStore('affectation', () => {
 
     pagination, 
 
-    exportAffectationsToExcel
+    exportAffectationsToExcel,
+
+    rejectReturn,
   }
 })
