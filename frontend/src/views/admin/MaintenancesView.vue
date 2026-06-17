@@ -21,15 +21,17 @@ import {
   History
 } from 'lucide-vue-next';
 
-const maintenanceStore = useMaintenanceStore();
-const panneStore = usePanneStore();
-const toast = useToast();
+// Stores et helpers
+const maintenanceStore = useMaintenanceStore(); // store des maintenances et actions backend
+const panneStore = usePanneStore(); // store des pannes à traiter
+const toast = useToast(); // notifications utilisateur PrimeVue
 
-const showModal = ref(false);
-const showClotureModal = ref(false);
-const isSubmitting = ref(false);
-const selectedMaintenance = ref(null);
-const clotureAction = ref('retour'); // 'retour' or 'perte'
+// États d'affichage
+const showModal = ref(false); // ouverture du modal de création de maintenance
+const showClotureModal = ref(false); // ouverture du modal de clôture de maintenance
+const isSubmitting = ref(false); // état de soumission des formulaires
+const selectedMaintenance = ref(null); // maintenance sélectionnée pour clôture
+const clotureAction = ref('retour'); // choix entre remise en service ou perte irrécupérable
 
 const form = reactive({
   panne_id: '',
@@ -49,16 +51,21 @@ const clotureForm = reactive({
 const photos = ref([])
 const photoPreviews = ref([])
 
+// Chargement initial : récupère les maintenances et les pannes disponibles
+// Appelé automatiquement lorsque le composant est monté
 onMounted(() => {
   maintenanceStore.fetchMaintenances();
   panneStore.fetchPannes();
 });
 
-// Récupérer uniquement les pannes validées (statut 'en_cours') qui ne sont pas déjà en maintenance
+// Liste calculée des pannes valides pour planifier une maintenance
+// Utilisée dans le select du modal de création de maintenance
 const pannesValidées = computed(() => {
   return panneStore.pannes.filter(p => p.statut === 'en_cours' || p.statut === 'declaree');
 });
 
+// Ouvre le modal de clôture pour une maintenance donnée
+// Appelé par le bouton "Clôturer l'intervention" dans la liste des maintenances
 const openClotureModal = (maint) => {
   selectedMaintenance.value = maint;
   clotureAction.value = 'retour';
@@ -71,6 +78,8 @@ const openClotureModal = (maint) => {
   showClotureModal.value = true;
 };
 
+// Ajoute des photos justificatives dans le formulaire de clôture
+// Appelé par l'input file du modal de clôture
 const onFileChange = (e) => {
   const files = Array.from(e.target.files)
   files.forEach(file => {
@@ -83,11 +92,15 @@ const onFileChange = (e) => {
   })
 }
 
+// Supprime une photo ajoutée du formulaire de clôture
+// Appelé par le petit bouton X sur chaque aperçu
 const removePhoto = (index) => {
   photos.value.splice(index, 1)
   photoPreviews.value.splice(index, 1)
 }
 
+// Réinitialise le formulaire de création de maintenance
+// Appelé après une création réussie et lors de la fermeture du modal
 const resetForm = () => {
   Object.assign(form, {
     panne_id: '',
@@ -98,6 +111,8 @@ const resetForm = () => {
   });
 };
 
+// Envoie le formulaire de planification de maintenance au backend
+// Appelé par le bouton "Lancer la maintenance" dans le modal de création
 const handleSubmit = async () => {
   if (!form.panne_id || !form.technicien || !form.date_debut) {
     toast.add({ severity: 'warn', summary: 'Attention', detail: 'Veuillez remplir les champs obligatoires', life: 3000 });
@@ -120,6 +135,8 @@ const handleSubmit = async () => {
   }
 };
 
+// Envoie les données de clôture de maintenance ou de sinistre au backend
+// Appelé par le bouton "Confirmer la clôture" dans le modal de clôture
 const handleClotureAction = async () => {
   if (!clotureForm.actions_effectuees) {
     toast.add({ severity: 'warn', summary: 'Attention', detail: 'Veuillez renseigner le rapport d\'intervention', life: 3000 });
@@ -162,6 +179,8 @@ const handleClotureAction = async () => {
   }
 };
 
+// Formate une date en français pour l'affichage dans le template
+// Utilisé pour les dates de début et de fin de maintenance
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
   return new Date(dateString).toLocaleDateString('fr-FR', {
@@ -171,6 +190,8 @@ const formatDate = (dateString) => {
   });
 };
 
+// Retourne les classes CSS en fonction du statut de panne
+// Utilisé dans le badge de statut de chaque carte de maintenance
 const getStatutClass = (statut) => {
   switch (statut) {
     case 'en_maintenance': return 'bg-amber-50 text-amber-600';
@@ -187,6 +208,7 @@ const getStatutClass = (statut) => {
       subtitle="Historique et planification des entretiens"
     >
       <template #actions>
+        <!-- Ouvre le modal de création de nouvelle maintenance -->
         <button 
           @click="showModal = true"
           class="flex items-center gap-2 px-5 py-2.5 bg-primary-600 rounded-xl text-sm font-bold text-white hover:bg-primary-700 transition-all shadow-lg shadow-primary-200"
@@ -197,16 +219,19 @@ const getStatutClass = (statut) => {
       </template>
     </PageHeader>
 
+    <!-- Affichage du loader pendant le chargement initial des maintenances -->
     <div v-if="maintenanceStore.loading && maintenanceStore.maintenances.length === 0" class="grid grid-cols-1 xl:grid-cols-2 gap-6">
       <div v-for="i in 2" :key="i" class="h-64 bg-slate-100 animate-pulse rounded-3xl"></div>
     </div>
 
+    <!-- Message vide si aucune maintenance n'est trouvée après chargement -->
     <div v-else-if="maintenanceStore.maintenances.length === 0" class="bg-white p-16 rounded-[2rem] border border-slate-200 shadow-sm text-center">
       <Wrench class="w-16 h-16 text-slate-200 mx-auto mb-4" />
       <h3 class="text-xl font-black text-slate-900 mb-2">Aucune maintenance</h3>
       <p class="text-slate-500 font-medium">Les interventions de maintenance apparaîtront ici.</p>
     </div>
 
+    <!-- Liste des maintenances existantes, affichées à partir de maintenanceStore.maintenances -->
     <div v-else class="grid grid-cols-1 xl:grid-cols-2 gap-6">
       <div 
         v-for="maint in maintenanceStore.maintenances" 
@@ -253,15 +278,7 @@ const getStatutClass = (statut) => {
             <p class="text-sm text-slate-600 font-medium line-clamp-2">{{ maint.panne.description }}</p>
           </div>
 
-          <!-- Actions -->
-          <div v-if="!maint.date_fin" class="pt-2">
-            <button 
-              @click="openClotureModal(maint)"
-              class="w-full py-3 bg-emerald-600 text-white text-xs font-black uppercase rounded-xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 flex items-center justify-center gap-2"
-            >
-              <CheckCircle2 class="w-4 h-4" />
-              Clôturer l'intervention
-            </button>
+            <!-- Bouton d'ouverture du modal de clôture s'il n'y a pas encore de date de fin -->
           </div>
 
           <div v-if="maint.date_fin" class="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 space-y-2">
@@ -289,7 +306,7 @@ const getStatutClass = (statut) => {
       </div>
     </div>
 
-    <!-- Modal Nouvelle Maintenance -->
+    <!-- Modal de création d'une nouvelle maintenance -->
     <SideModal :show="showModal" title="Nouvelle maintenance" @close="showModal = false; resetForm()">
       <div class="space-y-6">
         <div class="p-4 bg-primary-50 border border-primary-100 rounded-2xl">
@@ -356,7 +373,7 @@ const getStatutClass = (statut) => {
       </div>
     </SideModal>
 
-    <!-- Modal Clôture de Maintenance (Fusionné) -->
+    <!-- Modal de clôture de maintenance : permet soit de marquer comme réparé, soit de déclarer perte -->
     <SideModal :show="showClotureModal" title="Clôturer la maintenance" @close="showClotureModal = false">
       <div v-if="selectedMaintenance" class="space-y-6">
         <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl">

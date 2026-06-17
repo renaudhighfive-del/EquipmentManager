@@ -6,14 +6,19 @@ import { useConfirm } from 'primevue/useconfirm';
 import PageHeader from '../../components/layout/PageHeader.vue';
 import { AlertTriangle, CheckCircle2, XCircle, Clock, User, Calendar, FileText } from 'lucide-vue-next';
 
+// Store des sinistres pour lecture et actions backend
 const sinistreStore = useSinistreStore();
-const toast = useToast();
-const confirm = useConfirm();
+const toast = useToast(); // notifications utilisateur
+const confirm = useConfirm(); // confirmations de validation/rejet
 
+// Charge la liste des sinistres lors du montage du composant
+// Appelé automatiquement dans onMounted
 onMounted(() => {
   sinistreStore.fetchSinistres();
 });
 
+// Retourne le style du badge de statut d'un sinistre
+// Utilisé dans l'affichage des tags de chaque carte
 const getStatusStyle = (status) => {
   switch (status) {
     case 'en_attente_validation':
@@ -29,6 +34,8 @@ const getStatusStyle = (status) => {
   }
 };
 
+// Retourne la couleur de bordure du sinistre selon le statut
+// Utilisé pour souligner visuellement la carte
 const getBorderColor = (status) => {
   switch (status) {
     case 'en_attente_validation': return 'border-l-orange-400';
@@ -39,6 +46,8 @@ const getBorderColor = (status) => {
   }
 };
 
+// Traduit le statut brut en libellé lisible
+// Utilisé dans les tags de statut et le rendu principal
 const getStatusLabel = (status) => {
   const labels = {
     en_attente_validation: 'En attente',
@@ -49,6 +58,8 @@ const getStatusLabel = (status) => {
   return labels[status] || status;
 };
 
+// Confirme et valide une déclaration de sinistre
+// Appelé par le bouton Valider sur les sinistres en attente
 const handleValider = (id) => {
   confirm.require({
     message: 'Voulez-vous valider cette déclaration de sinistre ?',
@@ -66,6 +77,8 @@ const handleValider = (id) => {
   });
 };
 
+// Confirme et rejette une déclaration de sinistre
+// Appelé par le bouton Rejeter sur les sinistres en attente
 const handleRejeter = (id) => {
   confirm.require({
     message: 'Voulez-vous rejeter cette déclaration de sinistre ?',
@@ -83,6 +96,8 @@ const handleRejeter = (id) => {
   });
 };
 
+// Formate les dates pour l'affichage dans le template
+// Utilisé pour la date de déclaration et la date de validation
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
   return new Date(dateString).toLocaleDateString('fr-FR', {
@@ -92,6 +107,8 @@ const formatDate = (dateString) => {
   });
 };
 
+// Retourne le libellé lisible du type de sinistre
+// Utilisé dans le badge de type de chaque carte
 const getTypeLabel = (type) => {
   const labels = {
     perte: 'Perte',

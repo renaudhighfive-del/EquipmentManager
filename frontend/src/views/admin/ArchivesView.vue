@@ -16,14 +16,18 @@ import {
   Hash
 } from 'lucide-vue-next';
 
-const equipementStore = useEquipementStore();
-const toast = useToast();
-const confirm = useConfirm();
+// Store and UI helpers
+const equipementStore = useEquipementStore(); // store des équipements, contient fetchArchives/unarchiveEquipement
+const toast = useToast(); // notifications utilisateur PrimeVue
+const confirm = useConfirm(); // boîte de confirmation PrimeVue
 
-const archives = ref([]);
-const loading = ref(false);
-const searchQuery = ref('');
+// Local component state
+const archives = ref([]); // liste des équipements archivés affichés
+const loading = ref(false); // état de chargement pour l'UI
+const searchQuery = ref(''); // texte de recherche de l'utilisateur
 
+// Charge les archives depuis le backend lors de l'ouverture de la page
+// Appelé par onMounted(fetchArchives)
 const fetchArchives = async () => {
   loading.value = true;
   try {
@@ -35,8 +39,11 @@ const fetchArchives = async () => {
   }
 };
 
+// Exécute fetchArchives au montage du composant
 onMounted(fetchArchives);
 
+// Filtre localement les archives selon la recherche
+// Utilisé dans le template pour afficher uniquement les résultats correspondants
 const filteredArchives = computed(() => {
   if (!searchQuery.value) return archives.value;
   const q = searchQuery.value.toLowerCase();
@@ -48,6 +55,8 @@ const filteredArchives = computed(() => {
   );
 });
 
+// Désarchive un équipement après confirmation utilisateur
+// Appelé par le bouton de restauration dans chaque carte d'archive
 const handleUnarchive = (equip) => {
   confirm.require({
     message: `Voulez-vous vraiment restaurer l'équipement ${equip.marque} ${equip.modele} ?`,
@@ -58,7 +67,7 @@ const handleUnarchive = (equip) => {
       try {
         await equipementStore.unarchiveEquipement(equip.id);
         toast.add({ severity: 'success', summary: 'Succès', detail: 'Équipement restauré avec succès', life: 3000 });
-        // Retirer de la liste locale
+        // Retirer l'élément restauré de la liste affichée
         archives.value = archives.value.filter(a => a.id !== equip.id);
       } catch (error) {
         toast.add({ severity: 'error', summary: 'Erreur', detail: 'Échec de la restauration', life: 3000 });
@@ -67,6 +76,8 @@ const handleUnarchive = (equip) => {
   });
 };
 
+// Formate une date en français lisible pour l'affichage
+// Appelé dans le template pour la date d'archivage
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
   return new Date(dateString).toLocaleDateString('fr-FR', {
@@ -82,6 +93,7 @@ const formatDate = (dateString) => {
     <PageHeader title="Archives" subtitle="Consultez et restaurez les équipements archivés" />
 
     <!-- Filters -->
+    <!-- Recherche locale : met à jour searchQuery et filtre les archives via filteredArchives -->
     <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
       <div class="relative flex-1 max-w-md">
         <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -109,6 +121,7 @@ const formatDate = (dateString) => {
       <p class="text-slate-500 font-medium">Les équipements archivés apparaîtront ici.</p>
     </div>
 
+    <!-- Affiche les archives filtrées par recherche locale -->
     <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
       <div 
         v-for="equip in filteredArchives" 
@@ -134,6 +147,7 @@ const formatDate = (dateString) => {
         </div>
 
         <!-- Info Grid -->
+        <!-- Affiche catégorie et numéro de série de l'archive -->
         <div class="p-6 bg-slate-50/50 space-y-4">
           <div class="grid grid-cols-2 gap-4">
             <div class="space-y-1">

@@ -62,18 +62,28 @@ Route::middleware(['auth:sanctum', 'check.active'])->group(function () {
     // Pannes
     Route::apiResource('pannes', PanneController::class);
 
-    // Equipments
+    // Equipements
+    // GET /equipements/archives -> EquipementController@fetchArchives
+    // PATCH /equipements/{equipement}/archive -> EquipementController@archive
+    // PATCH /equipements/{equipement}/unarchive -> EquipementController@unarchive
+    // apiResource fournit les routes index, store, show, update, destroy sur EquipementController
     Route::get('equipements/archives', [EquipementController::class, 'fetchArchives']);
     Route::patch('equipements/{equipement}/archive', [EquipementController::class, 'archive']);
     Route::patch('equipements/{equipement}/unarchive', [EquipementController::class, 'unarchive']);
     Route::apiResource('equipements', EquipementController::class);
 
     // Pannes
+    // PATCH /pannes/{panne}/valider -> PanneController@valider
+    // PATCH /pannes/{panne}/rejeter -> PanneController@rejeter
+    // apiResource fournit index, store, show, update, destroy sur PanneController
     Route::patch('pannes/{panne}/valider', [PanneController::class, 'valider']);
     Route::patch('pannes/{panne}/rejeter', [PanneController::class, 'rejeter']);
     Route::apiResource('pannes', PanneController::class);
 
     // Maintenances
+    // PATCH /maintenances/{maintenance}/cloturer -> MaintenanceController@cloturer
+    // PATCH /maintenances/{maintenance}/declarer-perte -> MaintenanceController@declarerPerte
+    // apiResource fournit index, store, show, update, destroy sur MaintenanceController
     Route::patch('maintenances/{maintenance}/cloturer', [MaintenanceController::class, 'cloturer']);
     Route::patch('maintenances/{maintenance}/declarer-perte', [MaintenanceController::class, 'declarerPerte']);
     Route::apiResource('maintenances', MaintenanceController::class);

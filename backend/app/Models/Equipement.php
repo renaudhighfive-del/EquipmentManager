@@ -81,7 +81,9 @@ class Equipement extends Model
 
     public function images()
     {
-        return $this->hasMany(EquipementImage::class);
+        // Retourne les images les plus récentes en premier pour afficher
+        // la dernière photo de retour comme image principale dans la liste.
+        return $this->hasMany(EquipementImage::class)->latest();
     }
 
     /**

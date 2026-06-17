@@ -6,14 +6,14 @@ import api from '../services/axios'
 // Définition globale du store Pinia nommé 'maintenance'
 export const useMaintenanceStore = defineStore('maintenance', {
   
-  // 📦 ÉTAT (STATE) : Stockage local et réactif des données de maintenance
+  //  ÉTAT (STATE) : Stockage local et réactif des données de maintenance
   state: () => ({
     maintenances: [], // Tableau principal contenant la liste des fiches de maintenance en cours ou terminées
     loading: false,   // Indicateur global pour afficher un spinner ou un squelette de chargement à l'écran
     error: null,      // Stockage des messages d'erreur à afficher en cas de défaillance des requêtes
   }),
 
-  // ⚡ ACTIONS : Méthodes de traitement asynchrones (requêtes API + mise à jour du state)
+  //  ACTIONS : Méthodes de traitement asynchrones (requêtes API + mise à jour du state)
   actions: {
     
     /**

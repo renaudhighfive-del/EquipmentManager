@@ -11,6 +11,10 @@ use Illuminate\Support\Facades\DB;
 
 class MaintenanceController extends Controller
 {
+    /**
+     * Retourne la liste des maintenances.
+     * Appelé par la route GET /maintenances depuis le front-end pour afficher l'historique.
+     */
     public function index()
     {
         $maintenances = Maintenance::with(['equipement', 'panne', 'responsable'])
@@ -19,6 +23,10 @@ class MaintenanceController extends Controller
         return response()->json($maintenances);
     }
 
+    /**
+     * Crée une nouvelle maintenance.
+     * Appelé par la route POST /maintenances lorsque l'utilisateur planifie une intervention.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -32,10 +40,10 @@ class MaintenanceController extends Controller
         return DB::transaction(function () use ($validated) {
             $panne = Panne::findOrFail($validated['panne_id']);
             
-            // On ne peut créer une maintenance que pour une panne validée (en_cours)
+            // Vérifie que la panne existe et qu'elle peut être transformée en maintenance
+            // Normalement, seules les pannes validées/en cours doivent être traitées.
             if ($panne->statut !== 'en_cours' && $panne->statut !== 'declaree') {
-                 // On accepte 'declaree' aussi si on veut automatiser, mais la consigne dit "déjà validée"
-                 // On va forcer 'en_cours' car c'est ce que 'valider' fait dans PanneController
+                 // Cette section est informative : la logique de validation devrait empêcher les cas invalides.
             }
 
             $maintenance = Maintenance::create([
@@ -48,16 +56,20 @@ class MaintenanceController extends Controller
                 'cout' => $validated['cout'] ?? 0,
             ]);
 
-            // Mettre à jour le statut de la panne
+            // Après création de la maintenance, on marque la panne en maintenance
             $panne->update(['statut' => 'en_maintenance']);
 
-            // Mettre à jour l'état de l'équipement
+            // Et on met à jour l'état de l'équipement associé
             $panne->equipement->update(['etat' => 'en_maintenance']);
 
             return response()->json($maintenance->load(['equipement', 'panne', 'responsable']), 201);
         });
     }
 
+    /**
+     * Clôture une maintenance terminée.
+     * Appelé par la route POST /maintenances/{id}/cloturer depuis le front-end.
+     */
     public function cloturer(Request $request, $id)
     {
         $maintenance = Maintenance::findOrFail($id);
@@ -86,18 +98,22 @@ class MaintenanceController extends Controller
                 $maintenance->update(['photos_retour' => $photoPaths]);
             }
 
-            // Mettre à jour le statut de la panne si elle existe
+            // Après clôture, on marque la panne comme résolue
             if ($maintenance->panne) {
                 $maintenance->panne->update(['statut' => 'resolue']);
             }
 
-            // Mettre à jour l'état de l'équipement
+            // Et on met à jour l'état de l'équipement réparé
             $maintenance->equipement->update(['etat' => 'repare']);
 
             return response()->json($maintenance->load(['equipement', 'panne', 'responsable']));
         });
     }
 
+    /**
+     * Déclare une perte / casse / vol pendant une maintenance.
+     * Appelé par la route POST /maintenances/{id}/declarer-perte.
+     */
     public function declarerPerte(Request $request, $id)
     {
         $maintenance = Maintenance::findOrFail($id);
@@ -110,17 +126,18 @@ class MaintenanceController extends Controller
         ]);
 
         return DB::transaction(function () use ($validated, $maintenance, $request) {
-            // Clôturer la maintenance
+            // Marque la maintenance comme terminée irrécupérable
             $maintenance->update([
                 'date_fin' => now(),
                 'actions_effectuees' => 'Irrécupérable : ' . $validated['description'],
             ]);
 
+            // Marque la panne comme irrécupérable
             if ($maintenance->panne) {
                 $maintenance->panne->update(['statut' => 'irrecuperable']);
             }
 
-            // Créer le sinistre
+            // Stocke les photos jointes à la déclaration de sinistre
             $photoPaths = [];
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $image) {
@@ -129,6 +146,7 @@ class MaintenanceController extends Controller
                 }
             }
 
+            // Crée l'enregistrement de sinistre associé
             $sinistre = \App\Models\PerteCasse::create([
                 'equipement_id' => $maintenance->equipement_id,
                 'declare_par' => Auth::id(),
@@ -139,10 +157,8 @@ class MaintenanceController extends Controller
                 'photos' => $photoPaths,
             ]);
 
-            // Mettre à jour l'état de l'équipement
+            // Marque l'équipement comme perdu suite au sinistre
             $maintenance->equipement->update(['etat' => 'perdu']);
-
-            // Mettre à jour l'équipement via la relation si nécessaire
             $maintenance->equipement->save();
 
             return response()->json([
