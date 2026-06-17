@@ -9,7 +9,7 @@ import {
   UserPlus, Search, Power, PowerOff, Edit3, Loader2,
   ChevronDown, UserCheck, AlertCircle, CheckCircle2,
   Eye, Mail, Shield, Calendar, Smartphone, Package,
-  ArrowLeftRight, Clock, Hash, Tag, X
+  ArrowLeftRight, Clock, Hash, Tag, X, Download
 } from 'lucide-vue-next'
 
 import { useAuthStore } from '../../stores/auth'
@@ -192,6 +192,35 @@ const toggleStatus = async (user) => {
   }
 }
 
+// ── Export users ──────────────────────────────────────────────────────────
+const exportUsers = async () => {
+  try {
+    const response = await api.get('/users/export/excel', {
+      responseType: 'blob',
+    })
+
+    const contentDisposition = response.headers['content-disposition']
+    let filename = 'utilisateurs.xlsx'
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/)
+      if (filenameMatch && filenameMatch[1]) {
+        filename = filenameMatch[1]
+      }
+    }
+
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', filename)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+  } catch (error) {
+    console.error('Erreur lors de l\'export:', error)
+  }
+}
+
 // ── Helpers visuels ────────────────────────────────────────────────────────
 const roleBadge = (role) => ({
   admin:        'bg-rose-50 text-rose-600 border-rose-100',
@@ -242,13 +271,22 @@ const etatBadge = (etat) => ({
     <!-- Header -->
     <PageHeader title="Administration" subtitle="Gestion des accès et comptes utilisateurs">
       <template #actions>
-        <button
-          @click="openCreate"
-          class="flex items-center gap-2 px-5 py-2.5 bg-primary-600 rounded-xl text-sm font-bold text-white hover:bg-primary-700 transition-all shadow-lg shadow-primary-200"
-        >
-          <UserPlus class="w-4 h-4" />
-          Nouvel utilisateur
-        </button>
+        <div class="flex items-center gap-3">
+          <button
+            @click="exportUsers"
+            class="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 rounded-xl text-sm font-bold text-white hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200"
+          >
+            <Download class="w-4 h-4" />
+            Exporter Excel
+          </button>
+          <button
+            @click="openCreate"
+            class="flex items-center gap-2 px-5 py-2.5 bg-primary-600 rounded-xl text-sm font-bold text-white hover:bg-primary-700 transition-all shadow-lg shadow-primary-200"
+          >
+            <UserPlus class="w-4 h-4" />
+            Nouvel utilisateur
+          </button>
+        </div>
       </template>
     </PageHeader>
 

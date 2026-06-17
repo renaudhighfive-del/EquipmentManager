@@ -41,6 +41,7 @@ Route::middleware(['auth:sanctum', 'check.active'])->group(function () {
     // Gestion utilisateurs (Admin)
     Route::apiResource('users', UserController::class);
     Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus']);
+    Route::get('users/export/excel', [UserController::class, 'export']);
 
     // Catégories
     Route::apiResource('categories', CategorieController::class);

@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\UsersExport;
 use App\Models\Agent;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
 
 class UserController extends Controller
 {
@@ -126,6 +128,14 @@ class UserController extends Controller
             'message' => $user->is_active ? 'Compte activé' : 'Compte désactivé',
             'data'    => $this->withAvatarUrl($user),
         ]);
+    }
+
+    /**
+     * Exporte la liste des utilisateurs en Excel.
+     */
+    public function export()
+    {
+        return Excel::download(new UsersExport(), 'utilisateurs_' . now()->format('Ymd_His') . '.xlsx');
     }
 
     /**
