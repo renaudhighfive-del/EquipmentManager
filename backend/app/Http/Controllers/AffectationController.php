@@ -273,7 +273,7 @@ class AffectationController extends Controller
         }
     }
 
-    // Valider le retour par Admin/Gestionnaire
+    // Valider le retour par Admin/Gestionnaire et ajouter la photo en tant que nouvelle image de l'équipement
     public function validateReturn(Affectation $affectation)
     {
         try {
@@ -283,6 +283,13 @@ class AffectationController extends Controller
                     'status' => 'error',
                     'message' => 'Cette affectation ne peut pas être validée'
                 ], 422);
+            }
+
+            // Si une photo de retour existe, l'ajouter comme nouvelle image de l'équipement
+            if ($affectation->photo_retour) {
+                $affectation->equipement->images()->create([
+                    'path' => $affectation->photo_retour
+                ]);
             }
 
             $affectation->update(['statut' => 'retourne']);

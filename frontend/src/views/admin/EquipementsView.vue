@@ -15,6 +15,7 @@ import {
   Package, 
   MapPin, 
   Calendar, 
+  Clock,
   User, 
   Activity,
   ChevronRight,
@@ -36,27 +37,36 @@ import {
   Save
 } from 'lucide-vue-next';
 
-const equipementStore = useEquipementStore();
-const authStore = useAuthStore();
-const toast = useToast();
-const confirm = useConfirm();
+// Stores and helpers
+const equipementStore = useEquipementStore(); // données des équipements et actions CRUD
+const authStore = useAuthStore(); // informations sur l'utilisateur connecté
+const toast = useToast(); // notifications à l'utilisateur
+const confirm = useConfirm(); // boite de confirmation pour suppressions / actions sensibles
 
-const showFiche = ref(false);
-const showAddModal = ref(false);
-const showEditModal = ref(false);
-const showZoomModal = ref(false);
-const showCategoriesModal = ref(false);
+// Visibilités des modaux
+const showFiche = ref(false); // affiche la fiche détail d'un équipement
+const showAddModal = ref(false); // affiche le modal d'ajout
+const showEditModal = ref(false); // affiche le modal de modification
+const showZoomModal = ref(false); // affiche le zoom d'image
+const showCategoriesModal = ref(false); // affiche le modal de gestion des catégories
 
-const selectedEquipement = ref(null);
-const zoomImage = ref('');
-const categories = ref([]);
-const isSubmitting = ref(false);
+// Sélection et données locales
+const selectedEquipement = ref(null); // équipement sélectionné pour la fiche détaillée
+const zoomImage = ref(''); // url de l'image à zoomer
+const returnedBy = ref(null); // nom de la personne qui a validé le retour
+const returnedAt = ref(null); // date/heure du retour validé
+const detailLoading = ref(false);
+const categories = ref([]); // liste des catégories récupérées du backend
+const isSubmitting = ref(false); // état de soumission de formulaire
 
 // Filtres
-const searchQuery = ref('');
-const selectedCategory = ref('');
-const selectedStatus = ref('');
+const searchQuery = ref(''); // texte de recherche libre
+const selectedCategory = ref(''); // filtre par catégorie
+const selectedStatus = ref(''); // filtre par état
 
+
+// Liste d'équipements filtrée dynamiquement selon la recherche, la catégorie et l'état
+// Appelée automatiquement dans le template pour afficher seulement les éléments correspondants
 const filteredEquipements = computed(() => {
   return equipementStore.equipements.filter(equip => {
     const matchesSearch = !searchQuery.value || 
@@ -101,6 +111,8 @@ const form = reactive({
 const photos = ref([]);
 const photoPreviews = ref([]);
 
+// Gestion du chargement des photos dans le formulaire d'ajout/modification
+// Appelé par l'input file du modal Add/Edit
 const onFileChange = (e) => {
   const files = Array.from(e.target.files);
   files.forEach(file => {
@@ -113,11 +125,15 @@ const onFileChange = (e) => {
   });
 };
 
+// Supprime une image sélectionnée avant l'envoi
+// Utilisé par le bouton de suppression sur chaque aperçu de photo
 const removePhoto = (index) => {
   photos.value.splice(index, 1);
   photoPreviews.value.splice(index, 1);
 };
 
+// Réinitialise le formulaire et les listes d'images
+// Utilisé après création/modification d'un équipement et lors de la fermeture du modal
 const resetForm = () => {
   Object.assign(form, {
     id: null,
@@ -139,6 +155,8 @@ const resetForm = () => {
   photoPreviews.value = [];
 };
 
+// Charge les catégories depuis le backend au chargement du composant
+// Appelée dans onMounted() et après une création / modification / suppression de catégorie
 const fetchCategories = async () => {
   try {
     const response = await api.get('/categories');
@@ -149,6 +167,8 @@ const fetchCategories = async () => {
   }
 };
 
+// Enregistre une nouvelle catégorie ou met à jour une catégorie existante
+// Appelée par le bouton de validation du formulaire catégorie
 const saveCategory = async () => {
   if (!categoryForm.nom) return;
   try {
@@ -172,6 +192,8 @@ const saveCategory = async () => {
   }
 };
 
+// Remplit le formulaire de catégorie pour modification
+// Appelé lorsqu'on clique sur le bouton d'édition d'une catégorie
 const editCategory = (cat) => {
   categoryForm.id = cat.id;
   categoryForm.nom = cat.nom;
@@ -179,6 +201,8 @@ const editCategory = (cat) => {
   categoryForm.isEditing = true;
 };
 
+// Supprime une catégorie après confirmation utilisateur
+// Appelé depuis le bouton de suppression sur chaque catégorie
 const deleteCategory = async (id) => {
   confirm.require({
     message: 'Êtes-vous sûr de vouloir supprimer cette catégorie ?',
@@ -196,6 +220,8 @@ const deleteCategory = async (id) => {
   });
 };
 
+// Remet le formulaire de catégorie à zéro
+// Appelé après enregistrement ou annulation d'édition
 const resetCategoryForm = () => {
   categoryForm.id = null;
   categoryForm.nom = '';
@@ -203,17 +229,22 @@ const resetCategoryForm = () => {
   categoryForm.isEditing = false;
 };
 
+// Surveille les erreurs du store et affiche une notification lorsqu'une erreur apparait
+// Le store equipementStore peut définir equipementStore.error lors d'un échec réseau
 watch(() => equipementStore.error, (newError) => {
   if (newError) {
     toast.add({ severity: 'error', summary: 'Erreur', detail: newError, life: 5000 });
   }
 });
 
+// Chargement initial du composant : récupération des équipements et des catégories
 onMounted(() => {
   equipementStore.fetchEquipements();
   fetchCategories();
 });
 
+// Envoie le formulaire de création ou de modification d'équipement
+// Appelé par le submit du form dans le modal Add/Edit
 const handleSubmit = async (isEdit = false) => {
   isSubmitting.value = true;
   try {
@@ -246,6 +277,8 @@ const handleSubmit = async (isEdit = false) => {
   }
 };
 
+// Prépare le formulaire de modification avec les données de l'équipement sélectionné
+// Appelé par le bouton "Modifier" dans la fiche d'équipement
 const startEdit = (equip) => {
   Object.assign(form, {
     id: equip.id,
@@ -267,6 +300,8 @@ const startEdit = (equip) => {
   showFiche.value = false;
 };
 
+// Archive un équipement après confirmation. Le state vient du store equipementStore.
+// Appelé par le bouton "Archiver" dans la fiche d'équipement
 const handleArchive = async (id) => {
   confirm.require({
     message: 'Êtes-vous sûr de vouloir archiver cet équipement ?',
@@ -285,11 +320,15 @@ const handleArchive = async (id) => {
   });
 };
 
+// Ouvre le modal de zoom d'image avec l'URL donnée
+// Appelé par le bouton de zoom sur chaque image dans la galerie
 const openZoom = (url) => {
   zoomImage.value = url;
   showZoomModal.value = true;
 };
 
+// Retourne les classes CSS de badge de statut pour le rendering des cartes
+// Utilisé dans le template sur les équipements affichés et la fiche détail
 const getStatusClass = (status) => {
   switch (status) {
     case 'neuf': return 'bg-blue-50 text-blue-600 border-blue-100';
@@ -303,6 +342,8 @@ const getStatusClass = (status) => {
   }
 };
 
+// Retourne le libellé lisible d'un statut d'équipement
+// Appelé dans le template pour afficher une étiquette claire
 const getStatusLabel = (status) => {
   const labels = {
     neuf: 'Neuf',
@@ -317,6 +358,8 @@ const getStatusLabel = (status) => {
   return labels[status] || status;
 };
 
+// Formate une date en français lisible par l'utilisateur
+// Utilisé pour l'affichage des dates dans les cartes et la fiche
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
   return new Date(dateString).toLocaleDateString('fr-FR', {
@@ -326,10 +369,50 @@ const formatDate = (dateString) => {
   });
 };
 
-const openFiche = (equip) => {
-  selectedEquipement.value = equip;
-  showFiche.value = true;
+// Affiche la fiche détaillée de l'équipement sélectionné
+// Appelé lors du clic sur une carte d'équipement
+const openFiche = async (equip) => {
+  detailLoading.value = true;
+  returnedBy.value = null;
+  returnedAt.value = null;
+  try {
+    // Récupère le détail complet de l'équipement (images, affectations...)
+    const data = await equipementStore.fetchEquipement(equip.id);
+    selectedEquipement.value = data;
+
+    // Cherche une affectation marquée 'retourne' (priorité aux affectations complètes)
+    const retourAff = (data.affectations || []).find(a => a.statut === 'retourne') || (data.latest_affectation && data.latest_affectation.statut === 'retourne' ? data.latest_affectation : null);
+
+    if (retourAff) {
+      // Récupère le détail de l'affectation pour obtenir les mouvements (qui contiennent l'utilisateur validant)
+      const resp = await api.get(`/affectations/${retourAff.id}`);
+      const affDetail = resp.data;
+      const mv = (affDetail.mouvements || []).find(m => m.type_mouvement === 'retour_valide');
+      returnedBy.value = mv?.user?.name || (retourAff.agent ? `${retourAff.agent.prenom || ''} ${retourAff.agent.nom || ''}`.trim() : null);
+      returnedAt.value = mv?.created_at || retourAff.date_retour || null;
+    }
+
+    showFiche.value = true;
+  } catch (error) {
+    console.error('Erreur openFiche:', error);
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger le détail de l\'équipement' });
+  } finally {
+    detailLoading.value = false;
+  }
 };
+
+const formatDateTime = (dateString) => {
+  if (!dateString) return 'N/A';
+  return new Date(dateString).toLocaleString('fr-FR', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+
 </script>
 
 <template>
@@ -419,6 +502,12 @@ const openFiche = (equip) => {
             <div class="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center">
               <Package class="w-4 h-4 text-slate-400" />
             </div>
+          </div>
+          <div class="flex items-center justify-between gap-3 mb-4">
+            <button @click.stop="openFiche(equip)" class="text-xs font-bold text-primary-600 hover:text-primary-700 bg-primary-50 px-3 py-2 rounded-lg transition-colors">
+              Voir détail
+            </button>
+            <span class="text-[10px] uppercase tracking-[0.24em] font-semibold text-slate-400">Photo la plus récente</span>
           </div>
 
           <div class="grid grid-cols-2 gap-y-4">
@@ -529,6 +618,9 @@ const openFiche = (equip) => {
           <div class="grid grid-cols-2 gap-3">
             <div v-for="(img, idx) in selectedEquipement.images" :key="idx" class="relative group aspect-video rounded-2xl overflow-hidden bg-slate-100 border border-slate-200">
               <img :src="`http://localhost:8000/storage/${img.path}`" class="w-full h-full object-cover">
+              <div class="absolute left-3 top-3 px-2 py-1 rounded-full bg-black/60 text-white text-[10px] font-bold uppercase tracking-wider">
+                {{ idx === 0 ? 'Dernière validation' : formatDateTime(img.created_at) }}
+              </div>
               <button @click="openZoom(`http://localhost:8000/storage/${img.path}`)" class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
                 <Maximize2 class="w-6 h-6" />
               </button>
@@ -543,6 +635,11 @@ const openFiche = (equip) => {
         <div>
           <h3 class="text-2xl font-bold text-slate-900">{{ selectedEquipement.marque }} {{ selectedEquipement.modele }}</h3>
           <p class="text-sm font-mono font-medium text-slate-400 uppercase tracking-tight">{{ selectedEquipement.reference }} • {{ selectedEquipement.numero_serie }}</p>
+
+          <div class="mt-3 flex items-center gap-6">
+            <p class="text-sm text-slate-600">Affecté à: <span class="font-bold text-slate-900">{{ selectedEquipement.current_affectation && selectedEquipement.current_affectation.agent ? (selectedEquipement.current_affectation.agent.prenom + ' ' + selectedEquipement.current_affectation.agent.nom) : '—' }}</span></p>
+            <p v-if="returnedBy" class="text-sm text-slate-600">Retourné par: <span class="font-bold text-slate-900">{{ returnedBy }}</span> <span class="text-xs text-slate-400">{{ returnedAt ? ('le ' + formatDateTime(returnedAt)) : '' }}</span></p>
+          </div>
         </div>
 
         <!-- Details Grid -->

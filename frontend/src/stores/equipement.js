@@ -6,14 +6,14 @@ import api from '../services/axios'
 // Définition globale du store Pinia nommé 'equipement'
 export const useEquipementStore = defineStore('equipement', {
   
-  // 📦 ÉTAT (STATE) : La source unique de vérité pour les données des équipements
+  //  ÉTAT (STATE) : La source unique de vérité pour les données des équipements
   state: () => ({
     equipements: [], // Liste principale des équipements actifs affichés dans l'application
     loading: false,  // Indicateur visuel de chargement pour les requêtes asynchrones
     error: null,     // Stockage des messages d'erreur destinés à l'interface utilisateur
   }),
 
-  // ⚡ ACTIONS : Fonctions asynchrones pour interagir avec l'API Laravel et mettre à jour le state
+  //  ACTIONS : Fonctions asynchrones pour interagir avec l'API Laravel et mettre à jour le state
   actions: {
     
     /**

@@ -6,7 +6,7 @@ import api from '../services/axios'
 // Définition globale du store Pinia nommé 'panne'
 export const usePanneStore = defineStore('panne', {
   
-  // 📦 ÉTAT (STATE) : Données réactives centralisées pour la gestion des pannes
+  //  ÉTAT (STATE) : Données réactives centralisées pour la gestion des pannes
   state: () => ({
     pannes: [],            // Liste principale contenant toutes les pannes déclarées et suivies
     loading: false,        // Indicateur d'exécution d'une requête asynchrone (pour l'affichage des spinners)

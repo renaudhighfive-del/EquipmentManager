@@ -13,7 +13,7 @@ export const useSinistreStore = defineStore('sinistre', {
     error: null,    // Conteneur de chaîne pour afficher les éventuels messages d'erreur à l'utilisateur
   }),
 
-  // ⚡ ACTIONS : Fonctions de traitement asynchrones (requêtes API + gestion de l'état synchrone)
+  //  ACTIONS : Fonctions de traitement asynchrones (requêtes API + gestion de l'état synchrone)
   actions: {
     
     /**

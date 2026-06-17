@@ -11,24 +11,26 @@ class EquipementController extends Controller
     /**
      * list d'équipment
      */
+    /**
+     * Retourne la liste des équipements non archivés.
+     * Appelé par la route GET /equipements ou par le store front-end qui charge la liste des équipements.
+     */
     public function index()
     {
-        //Récupère l'instance de l'utilisateur actuellement connecté et on Prépare une requête pour récupérer les équipements non archivés
-        // 'with(...)' permet d'inclure directement les relations (Eager Loading) pour éviter les requêtes à répétition
+        // Récupère l'utilisateur connecté pour appliquer des restrictions selon son rôle
+        // 'with(...)' permet d'inclure les relations nécessaires en une seule requête
         $user = Auth::user();
         $query = Equipement::with(['images', 'categorie', 'currentAffectation.agent', 'pendingAffectation.agent', 'latestAffectation.agent', 'latestAffectation.affectePar'])
             ->where('is_archived', false);
-    //Restriction de sécurité : Si l'utilisateur connecté est un simple 'agent', L'agent ne doit pas voir les équipements marqués comme "perdu"
+
+        // Si l'utilisateur est un agent, limiter l'affichage aux équipements qui lui sont affectés,
+        // et lui cacher les équipements marqués comme 'perdu'
         if ($user->role === 'agent') {
             if (!$user->agent) {
                 return response()->json([]);
             }
             $query->where('etat', '!=', 'perdu')
-
-
-            //// Et on filtre pour qu'il ne voit QUE les équipements qui lui sont affectés (peu importe le statut de l'affectation)
                 ->whereHas('latestAffectation', function ($q) use ($user) {
-
                     $q->where('agent_id', $user->agent->id);
                 });
         }
@@ -38,6 +40,10 @@ class EquipementController extends Controller
 
     /**
      * create de nouvel équipment
+     */
+    /**
+     * Créé un nouvel équipement.
+     * Appelé par la route POST /equipements depuis le front-end lors de la création d'un équipement.
      */
     public function store(Request $request)
     {
@@ -74,15 +80,19 @@ class EquipementController extends Controller
     /**
      * detail d'équipment
      */
+    /**
+     * Retourne les détails d'un équipement.
+     * Appelé par la route GET /equipements/{equipement} via route model binding.
+     */
     public function show(Equipement $equipement)
     {
-        // Grâce au Route Model Binding, Laravel trouve automatiquement l'équipement via l'ID de l'URL.
-        // On charge ses images, sa catégorie, et tout son historique d'affectations avec les agents.
+        // On charge les relations nécessaires pour afficher les détails et l'historique
         return response()->json($equipement->load(['images', 'categorie', 'affectations.agent']));
     }
 
     /**
-     * Modification/Mise à jour d'un équipement existant
+     * Met à jour un équipement existant.
+     * Appelé par la route PUT/PATCH /equipements/{equipement} depuis le front-end.
      */
     public function update(Request $request, Equipement $equipement)
     {
@@ -117,6 +127,10 @@ class EquipementController extends Controller
         return response()->json($equipement->load(['images', 'categorie']));
     }
 
+    /**
+     * Archive un équipement.
+     * Appelé par la route POST /equipements/{equipement}/archive ou depuis le front-end lorsque l'utilisateur archivate.
+     */
     public function archive(Equipement $equipement)
     {
         // Vérifier s'il y a une affectation en cours ou confirmée (active)
@@ -134,12 +148,20 @@ class EquipementController extends Controller
         return response()->json(['message' => 'Equipement archivé']);
     }
 
+    /**
+     * Désarchive un équipement.
+     * Appelé par la route POST /equipements/{equipement}/unarchive ou depuis le front-end.
+     */
     public function unarchive(Equipement $equipement)
     {
         $equipement->update(['is_archived' => false]);
         return response()->json($equipement->load('categorie'));
     }
 
+    /**
+     * Retourne la liste des équipements archivés.
+     * Appelé par la route GET /equipements/archives ou équivalent côté API.
+     */
     public function fetchArchives()
     {
         $archives = Equipement::with('categorie')
@@ -150,7 +172,8 @@ class EquipementController extends Controller
     }
 
     /**
-     * supression d'équiment
+     * Supprime un équipement définitivement.
+     * Appelé par la route DELETE /equipements/{equipement}.
      */
     public function destroy(Equipement $equipement)
     {

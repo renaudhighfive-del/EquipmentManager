@@ -7,22 +7,30 @@ import { usePanneStore } from '../../stores/panne'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 
+// Store des pannes pour lecture et actions backend
 const panneStore = usePanneStore()
-const toast = useToast()
-const confirm = useConfirm()
+const toast = useToast() // notifications utilisateur
+const confirm = useConfirm() // confirmation des actions sensibles
 
+// États d'affichage du détail de panne
 const showDetailModal = ref(false)
 const selectedPanne = ref(null)
 
+// Charge la liste des pannes dès que la page est affichée
+// Appelé automatiquement dans onMounted
 onMounted(() => {
   panneStore.fetchPannes()
 })
 
+// Ouvre le modal de détail pour une panne sélectionnée
+// Appelé depuis le clic sur une carte de panne dans la liste
 const openDetail = (panne) => {
   selectedPanne.value = panne
   showDetailModal.value = true
 }
 
+// Renvoie les classes de style selon la gravité de la panne
+// Utilisé pour la couleur du badge et du bloc de chaque carte
 const getGraviteClass = (gravite) => {
   switch (gravite) {
     case 'faible': return 'bg-blue-50 text-blue-600'
@@ -32,6 +40,8 @@ const getGraviteClass = (gravite) => {
   }
 }
 
+// Traduit le statut technique en libellé lisible
+// Utilisé dans l'aperçu et la fiche détail
 const getStatutLabel = (statut) => {
   const labels = {
     declaree: 'Déclarée',
@@ -43,6 +53,8 @@ const getStatutLabel = (statut) => {
   return labels[statut] || statut
 }
 
+// Retourne la couleur de bordure selon le statut
+// Appliqué sur chaque carte de panne de la liste
 const getStatutColorClass = (statut) => {
   switch (statut) {
     case 'declaree': return 'border-l-amber-400';
@@ -54,6 +66,7 @@ const getStatutColorClass = (statut) => {
   }
 }
 
+// Retourne la classe du badge de statut dans le détail
 const getStatutBadgeClass = (statut) => {
   switch (statut) {
     case 'declaree': return 'bg-amber-50 text-amber-600';
@@ -65,6 +78,8 @@ const getStatutBadgeClass = (statut) => {
   }
 }
 
+// Confirme et valide une panne signalée
+// Appelé par le bouton Valider dans la liste ou le modal détail
 const handleValider = (id) => {
   confirm.require({
     message: 'Voulez-vous valider cette panne ? Elle sera stockée et pourra être sélectionnée pour une maintenance.',
@@ -83,6 +98,8 @@ const handleValider = (id) => {
   })
 }
 
+// Confirme et rejette une panne signalée
+// Appelé par le bouton Rejeter dans la liste ou le modal détail
 const handleRejeter = (id) => {
   confirm.require({
     message: 'Voulez-vous rejeter ce signalement de panne ?',
@@ -101,6 +118,8 @@ const handleRejeter = (id) => {
   })
 }
 
+// Formate les dates pour affichage lisible en français
+// Utilisé dans la liste et la fiche de panne
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A'
   return new Date(dateString).toLocaleDateString('fr-FR', {
