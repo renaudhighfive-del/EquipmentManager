@@ -482,5 +482,5 @@ const getStatutClass = (statut) => {
         </button>
       </div>
     </SideModal>
-  </div>
+  
 </template>
