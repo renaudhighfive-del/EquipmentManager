@@ -22,7 +22,8 @@ return new class extends Migration
             $table->string('etat_retour', 100)->nullable();
             $table->string('photo_retour', 500)->nullable();
             $table->text('observations')->nullable();
-            $table->enum('statut', ['en_cours','confirmee', 'valider' , 'retourne', 'renouvele'])->default('en_cours');
+            $table->enum('statut', ['en_cours', 'confirmee', 'retour_en_attente', 'retourne', 'renouvele'])->default('en_cours');
+            $table->text('motif_rejet')->nullable();
             $table->timestamps();
         });
     }

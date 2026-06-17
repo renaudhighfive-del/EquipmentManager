@@ -76,9 +76,4 @@ class User extends Authenticatable
     {
         return $this->hasOne(Agent::class);
     }
-
-    public function categorie()
-    {
-        return $this->belongsTo(Categorie::class);
-    }
 }

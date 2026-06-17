@@ -24,7 +24,7 @@ return new class extends Migration
             $table->date('date_acquisition')->nullable();
             $table->decimal('prix_achat', 10, 2)->nullable();
             $table->date('garantie_fin')->nullable();
-            $table->enum('etat', ['neuf', 'en_service', 'en_panne', 'en_maintenance', 'en_attente_sinistre', 'reforme', 'perdu'])->default('neuf');
+            $table->enum('etat', ['neuf', 'en_service', 'en_panne', 'en_maintenance', 'en_attente_sinistre', 'reforme', 'perdu', 'repare'])->default('neuf');
             $table->string('localisation', 200)->nullable();
             $table->text('notes')->nullable();
             $table->boolean('is_archived')->default(false);

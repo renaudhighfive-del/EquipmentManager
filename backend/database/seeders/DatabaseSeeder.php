@@ -21,7 +21,6 @@ class DatabaseSeeder extends Seeder
             'role'         => 'admin',
             'is_active'    => true,
             'avatar'       => null,
-            'categorie_id' => null,
         ]);
         User::create([
             'name'         => 'Hamidou Raimi',
@@ -30,7 +29,6 @@ class DatabaseSeeder extends Seeder
             'role'         => 'admin',
             'is_active'    => true,
             'avatar'       => null,
-            'categorie_id' => null,
         ]);
 
         User::create([
@@ -40,7 +38,6 @@ class DatabaseSeeder extends Seeder
             'role'         => 'admin',
             'is_active'    => true,
             'avatar'       => null,
-            'categorie_id' => null,
         ]);
         User::create([
             'name'         => 'Olayemi ORONKPONDE',
@@ -49,7 +46,6 @@ class DatabaseSeeder extends Seeder
             'role'         => 'admin',
             'is_active'    => true,
             'avatar'       => null,
-            'categorie_id' => null,
         ]);
         User::create([
             'name'         => 'Bathez BANKOLE',
@@ -58,7 +54,6 @@ class DatabaseSeeder extends Seeder
             'role'         => 'admin',
             'is_active'    => true,
             'avatar'       => null,
-            'categorie_id' => null,
         ]);
         User::create([
             'name'         => 'Alexandre Martin',
@@ -67,7 +62,6 @@ class DatabaseSeeder extends Seeder
             'role'         => 'admin',
             'is_active'    => true,
             'avatar'       => null,
-            'categorie_id' => null,
         ]);
 
         User::create([
@@ -77,7 +71,6 @@ class DatabaseSeeder extends Seeder
             'role'         => 'gestionnaire',
             'is_active'    => true,
             'avatar'       => null,
-            'categorie_id' => null,
         ]);
 
         // ── Seeders dans l'ordre des dépendances ──────────────────

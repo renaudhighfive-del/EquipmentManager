@@ -23,6 +23,7 @@ return new class extends Migration
             $table->string('service', 150)->nullable();
             $table->string('poste', 150)->nullable();
             $table->enum('statut', ['actif', 'inactif'])->default('actif');
+            $table->string('photo')->nullable();
             $table->timestamps();
         });
     }

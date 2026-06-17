@@ -18,6 +18,7 @@ return new class extends Migration
             $table->enum('type', ['perte', 'vol', 'casse']);
             $table->date('date_declaration');
             $table->text('description');
+            $table->json('photos')->nullable();
             $table->enum('statut', ['en_attente_validation', 'validee', 'cloturee', 'rejetee'])->default('en_attente_validation');
             $table->foreignId('valide_par')->nullable()->constrained('users')->onDelete('set null');
             $table->date('date_validation')->nullable();

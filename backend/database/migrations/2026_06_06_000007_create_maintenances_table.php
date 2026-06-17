@@ -23,6 +23,7 @@ return new class extends Migration
             $table->decimal('cout', 10, 2)->nullable();
             $table->date('date_debut');
             $table->date('date_fin')->nullable();
+            $table->json('photos_retour')->nullable();
             $table->timestamps();
         });
     }

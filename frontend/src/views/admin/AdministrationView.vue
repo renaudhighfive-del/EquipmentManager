@@ -9,7 +9,7 @@ import {
   UserPlus, Search, Power, PowerOff, Edit3, Loader2,
   ChevronDown, UserCheck, AlertCircle, CheckCircle2,
   Eye, Mail, Shield, Calendar, Smartphone, Package,
-  ArrowLeftRight, Clock, Hash, Tag, X, Download
+  ArrowLeftRight, Clock, Hash, X, Download
 } from 'lucide-vue-next'
 
 import { useAuthStore } from '../../stores/auth'
@@ -29,14 +29,6 @@ const filterRole   = ref('') // '' = tous
 const filterInactif = ref(false)
 const formError    = ref('')
 const formSuccess  = ref('')
-const categories   = ref([])
-const showCatDropdown = ref(false)
-
-const toggleCategory = (catId) => {
-  const idx = form.value.category_ids.indexOf(catId)
-  if (idx > -1) form.value.category_ids.splice(idx, 1)
-  else form.value.category_ids.push(catId)
-}
 
 // ── Formulaire ─────────────────────────────────────────────────────────────
 const emptyForm = () => ({
@@ -133,7 +125,6 @@ const openEdit = async (user) => {
       name:     fullUser.name,
       email:    fullUser.email,
       password: '',
-      category_ids: fullUser.categories?.map(c => Number(c.id)) || [],
     }
     showModal.value = true
   } catch (err) {
@@ -237,12 +228,6 @@ const roleLabel = (role) => ({
 // ── Init ───────────────────────────────────────────────────────────────────
 onMounted(async () => {
   userStore.fetchUsers()
-  try {
-    const response = await api.get('/categories')
-    categories.value = response.data
-  } catch (err) {
-    console.error('Erreur chargement catégories:', err)
-  }
 })
 
 // ── Formatage ──────────────────────────────────────────────────────────────
@@ -689,23 +674,7 @@ const etatBadge = (etat) => ({
           </div>
         </div>
 
-        <!-- ── Catégories gérées (uniquement gestionnaire) ────────────── -->
-        <div v-if="userStore.selectedUser.role === 'gestionnaire'" class="space-y-3">
-          <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Catégories gérées</p>
-          <div v-if="userStore.selectedUser.categories?.length" class="flex flex-wrap gap-2">
-            <div 
-              v-for="cat in userStore.selectedUser.categories" 
-              :key="cat.id"
-              class="px-3 py-1.5 bg-amber-50 border border-amber-100 rounded-xl flex items-center gap-2 shadow-sm"
-            >
-              <Tag class="w-3.5 h-3.5 text-amber-500" />
-              <span class="text-xs font-bold text-amber-700">{{ cat.nom }}</span>
-            </div>
-          </div>
-          <div v-else class="p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-center">
-            <p class="text-xs font-medium text-slate-400 italic">Aucune catégorie affectée</p>
-          </div>
-        </div>
+
 
         <!-- ── Agent lié ───────────────────────────────────────────────── -->
         <div v-if="userStore.selectedUser.agent" class="space-y-3">
