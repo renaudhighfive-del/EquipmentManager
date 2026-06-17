@@ -133,7 +133,6 @@ class AgentSeeder extends Seeder
                 'role'         => 'agent',
                 'is_active'    => $data['statut'] === 'actif',
                 'avatar'       => null,
-                'categorie_id' => null,
             ]);
 
             Agent::create([
