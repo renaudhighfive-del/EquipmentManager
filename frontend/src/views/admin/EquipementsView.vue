@@ -4,6 +4,7 @@ import PageHeader from '../../components/layout/PageHeader.vue';
 import SideModal from '../../components/layout/SideModal.vue';
 import { useEquipementStore } from '../../stores/equipement';
 import { useAuthStore } from '../../stores/auth';
+import * as XLSX from 'xlsx';
 import api from '../../services/axios';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
@@ -34,7 +35,8 @@ import {
   Maximize2,
   Tags,
   Trash2,
-  Save
+  Save,
+  Download
 } from 'lucide-vue-next';
 
 // Stores and helpers
@@ -412,6 +414,44 @@ const formatDateTime = (dateString) => {
   });
 };
 
+const exportToExcel = () => {
+  // Préparer les données pour l'export (utiliser les équipements filtrés)
+  const dataToExport = filteredEquipements.value.map(equip => ({
+    'Référence': equip.reference,
+    'Numéro de Série': equip.numero_serie,
+    'Code Inventaire': equip.code_inventaire,
+    'Marque': equip.marque,
+    'Modèle': equip.modele,
+    'Catégorie': equip.categorie?.nom || 'N/A',
+    'État': getStatusLabel(equip.etat),
+    'Localisation': equip.localisation || 'N/A',
+    'Fournisseur': equip.fournisseur || 'N/A',
+    'Date Acquisition': formatDate(equip.date_acquisition),
+    'Prix d\'Achat': equip.prix_achat ? `${equip.prix_achat} €` : 'N/A',
+    'Garantie Fin': formatDate(equip.garantie_fin),
+    'Assigné à': equip.current_affectation?.agent?.nom ? `${equip.current_affectation.agent.prenom || ''} ${equip.current_affectation.agent.nom}`.trim() : 'Disponible'
+  }));
+
+  // Créer la feuille de calcul
+  const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+  
+  // Créer le classeur et ajouter la feuille
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Équipements');
+  
+  // Générer et télécharger le fichier
+  const date = new Date().toISOString().split('T')[0];
+  XLSX.writeFile(workbook, `Equipements_${date}.xlsx`);
+  
+  // Afficher une notification
+  toast.add({ 
+    severity: 'success', 
+    summary: 'Succès', 
+    detail: 'Export Excel terminé', 
+    life: 3000 
+  });
+};
+
 
 </script>
 
@@ -428,6 +468,10 @@ const formatDateTime = (dateString) => {
           <button class="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm">
             <QrCode class="w-4 h-4" />
             Scan QR
+          </button>
+          <button @click="exportToExcel" class="flex items-center gap-2 px-4 py-2 bg-emerald-600 rounded-xl text-sm font-bold text-white hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200">
+            <Download class="w-4 h-4" />
+            Exporter
           </button>
           <button @click="showAddModal = true" class="flex items-center gap-2 px-4 py-2 bg-primary-600 rounded-xl text-sm font-bold text-white hover:bg-primary-700 transition-all shadow-lg shadow-primary-200">
             <Plus class="w-4 h-4" />
@@ -636,10 +680,7 @@ const formatDateTime = (dateString) => {
           <h3 class="text-2xl font-bold text-slate-900">{{ selectedEquipement.marque }} {{ selectedEquipement.modele }}</h3>
           <p class="text-sm font-mono font-medium text-slate-400 uppercase tracking-tight">{{ selectedEquipement.reference }} • {{ selectedEquipement.numero_serie }}</p>
 
-          <div class="mt-3 flex items-center gap-6">
-            <p class="text-sm text-slate-600">Affecté à: <span class="font-bold text-slate-900">{{ selectedEquipement.current_affectation && selectedEquipement.current_affectation.agent ? (selectedEquipement.current_affectation.agent.prenom + ' ' + selectedEquipement.current_affectation.agent.nom) : '—' }}</span></p>
-            <p v-if="returnedBy" class="text-sm text-slate-600">Retourné par: <span class="font-bold text-slate-900">{{ returnedBy }}</span> <span class="text-xs text-slate-400">{{ returnedAt ? ('le ' + formatDateTime(returnedAt)) : '' }}</span></p>
-          </div>
+          
         </div>
 
         <!-- Details Grid -->
