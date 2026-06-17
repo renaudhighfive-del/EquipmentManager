@@ -414,6 +414,84 @@ const formatDateTime = (dateString) => {
   });
 };
 
+// Récupère et trie l'historique complet de l'équipement sélectionné
+const equipmentHistory = computed(() => {
+  if (!selectedEquipement.value) return [];
+  
+  const events = [];
+  
+  // Ajout des affectations
+  if (selectedEquipement.value.affectations) {
+    selectedEquipement.value.affectations.forEach(aff => {
+      events.push({
+        type: 'affectation',
+        date: aff.date_affectation,
+        data: aff,
+        icon: ArrowLeftRight,
+        color: 'blue',
+        label: 'Affectation'
+      });
+      
+      // Ajout des mouvements liés à l'affectation
+      if (aff.mouvements) {
+        aff.mouvements.forEach(mv => {
+          events.push({
+            type: 'mouvement',
+            date: mv.created_at,
+            data: mv,
+            icon: User,
+            color: 'purple',
+            label: mv.type_mouvement
+          });
+        });
+      }
+    });
+  }
+  
+  // Ajout des pannes
+  if (selectedEquipement.value.pannes) {
+    selectedEquipement.value.pannes.forEach(panne => {
+      events.push({
+        type: 'panne',
+        date: panne.date_declaration,
+        data: panne,
+        icon: AlertTriangle,
+        color: 'rose',
+        label: 'Panne déclarée'
+      });
+    });
+  }
+  
+  // Ajout des maintenances
+  if (selectedEquipement.value.maintenances) {
+    selectedEquipement.value.maintenances.forEach(maintenance => {
+      events.push({
+        type: 'maintenance',
+        date: maintenance.date_debut,
+        data: maintenance,
+        icon: Wrench,
+        color: 'amber',
+        label: 'Maintenance'
+      });
+    });
+  }
+  
+  // Ajout de la date d'acquisition
+  if (selectedEquipement.value.date_acquisition) {
+    events.push({
+      type: 'acquisition',
+      date: selectedEquipement.value.date_acquisition,
+      data: null,
+      icon: Package,
+      color: 'emerald',
+      label: 'Acquisition'
+    });
+  }
+  
+  // Tri des événements par date (du plus récent au plus ancien)
+  return events.sort((a, b) => new Date(b.date) - new Date(a.date));
+});
+
 const exportToExcel = () => {
   // Préparer les données pour l'export (utiliser les équipements filtrés)
   const dataToExport = filteredEquipements.value.map(equip => ({
@@ -709,14 +787,61 @@ const exportToExcel = () => {
             <History class="w-4 h-4 text-primary-500" /> Historique complet
           </h4>
           <div class="space-y-6 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-100">
-            <div v-if="selectedEquipement.current_affectation" class="relative pl-10 group">
-              <div class="absolute left-0 top-1.5 w-[24px] h-[24px] rounded-full bg-blue-50 border-2 border-blue-500 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <ArrowLeftRight class="w-2.5 h-2.5 text-blue-600" />
+            <div v-for="event in equipmentHistory" :key="`${event.type}-${event.date}`" class="relative pl-10 group">
+              <div class="absolute left-0 top-1.5 w-[24px] h-[24px] rounded-full bg-slate-50 border-2 flex items-center justify-center group-hover:scale-110 transition-transform"
+                   :class="{
+                     'border-blue-500 bg-blue-50': event.color === 'blue',
+                     'border-purple-500 bg-purple-50': event.color === 'purple',
+                     'border-rose-500 bg-rose-50': event.color === 'rose',
+                     'border-amber-500 bg-amber-50': event.color === 'amber',
+                     'border-emerald-500 bg-emerald-50': event.color === 'emerald'
+                   }">
+                <component :is="event.icon" class="w-2.5 h-2.5"
+                           :class="{
+                             'text-blue-600': event.color === 'blue',
+                             'text-purple-600': event.color === 'purple',
+                             'text-rose-600': event.color === 'rose',
+                             'text-amber-600': event.color === 'amber',
+                             'text-emerald-600': event.color === 'emerald'
+                           }" />
               </div>
-              <p class="text-sm font-bold text-slate-900">Affecté à {{ selectedEquipement.current_affectation.agent?.nom }}</p>
-              <p class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">{{ formatDate(selectedEquipement.current_affectation.date_affectation) }}</p>
+              <div>
+                <p class="text-sm font-bold text-slate-900">{{ event.label }}</p>
+                
+                <!-- Contenu spécifique selon le type d'événement -->
+                <div v-if="event.type === 'affectation'">
+                  <p class="text-xs text-slate-600">
+                    Affecté à {{ event.data.agent?.prenom }} {{ event.data.agent?.nom }}
+                  </p>
+                  <p class="text-[10px] text-slate-400 font-medium">Statut: {{ event.data.statut }}</p>
+                </div>
+                
+                <div v-else-if="event.type === 'mouvement'">
+                  <p class="text-xs text-slate-600">
+                    Par {{ event.data.user?.name || 'Utilisateur inconnu' }}
+                  </p>
+                  <p v-if="event.data.notes" class="text-[10px] text-slate-400 italic">{{ event.data.notes }}</p>
+                </div>
+                
+                <div v-else-if="event.type === 'panne'">
+                  <p class="text-xs text-slate-600">{{ event.data.description }}</p>
+                  <p v-if="event.data.date_validation" class="text-[10px] text-emerald-600 font-medium">Validée le {{ formatDate(event.data.date_validation) }}</p>
+                </div>
+                
+                <div v-else-if="event.type === 'maintenance'">
+                  <p class="text-xs text-slate-600">{{ event.data.description }}</p>
+                  <p v-if="event.data.date_fin" class="text-[10px] text-emerald-600 font-medium">Terminée le {{ formatDate(event.data.date_fin) }}</p>
+                </div>
+                
+                <div v-else-if="event.type === 'acquisition'">
+                  <p class="text-xs text-slate-600">État initial: {{ getStatusLabel(selectedEquipement.etat) }}</p>
+                </div>
+                
+                <p class="text-[10px] text-slate-400 font-medium uppercase tracking-wider mt-1">{{ formatDateTime(event.date) }}</p>
+              </div>
             </div>
-            <div v-else class="text-xs text-slate-400 italic">Aucun historique récent disponible</div>
+            
+            <div v-if="equipmentHistory.length === 0" class="text-xs text-slate-400 italic">Aucun historique disponible</div>
           </div>
         </div>
       </div>

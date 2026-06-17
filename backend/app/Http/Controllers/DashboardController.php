@@ -170,7 +170,8 @@ class DashboardController extends Controller
         }
         
         $mesEquipements = Equipement::whereHas('currentAffectation', function($q) use ($user) {
-            $q->where('agent_id', $user->agent->id);
+            $q->where('agent_id', $user->agent->id)
+              ->whereIn('statut', ['confirmee', 'retour_en_attente']);
         })->count();
 
         $mesPannes = Panne::where('declare_par', $user->id)
@@ -344,7 +345,8 @@ class DashboardController extends Controller
         }
         
         $mesEquipements = Equipement::whereHas('currentAffectation', function($q) use ($user) {
-            $q->where('agent_id', $user->agent->id);
+            $q->where('agent_id', $user->agent->id)
+              ->whereIn('statut', ['confirmee', 'retour_en_attente']);
         })->count();
 
         $mesPannes = Panne::where('declare_par', $user->id)

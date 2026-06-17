@@ -30,17 +30,15 @@ class EquipementController extends Controller
                 return response()->json([]);
             }
             $query->where('etat', '!=', 'perdu')
-                ->whereHas('latestAffectation', function ($q) use ($user) {
-                    $q->where('agent_id', $user->agent->id);
+                ->whereHas('currentAffectation', function ($q) use ($user) {
+                    $q->where('agent_id', $user->agent->id)
+                      ->whereIn('statut', ['confirmee', 'retour_en_attente', 'retourne']);
                 });
         }
 
         return response()->json($query->latest()->get());
     }
 
-    /**
-     * create de nouvel équipment
-     */
     /**
      * Créé un nouvel équipement.
      * Appelé par la route POST /equipements depuis le front-end lors de la création d'un équipement.
@@ -86,8 +84,15 @@ class EquipementController extends Controller
      */
     public function show(Equipement $equipement)
     {
-        // On charge les relations nécessaires pour afficher les détails et l'historique
-        return response()->json($equipement->load(['images', 'categorie', 'affectations.agent']));
+        // On charge les relations nécessaires pour afficher les détails et l'historique complet
+        return response()->json($equipement->load([
+            'images', 
+            'categorie', 
+            'affectations.agent', 
+            'affectations.mouvements.user',
+            'pannes',
+            'maintenances'
+        ]));
     }
 
     /**

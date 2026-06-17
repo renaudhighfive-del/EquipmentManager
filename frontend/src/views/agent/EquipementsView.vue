@@ -259,7 +259,10 @@ const getAffectationStatutLabel = (statut) => {
 
     <div v-else class="space-y-4">
       <div v-for="equip in equipementStore.equipements" :key="equip.id"
-        class="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:shadow-md transition-all">
+        :class="['p-4 sm:p-6 rounded-2xl border shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all', 
+          equip.latest_affectation?.statut === 'retourne' 
+            ? 'bg-slate-50 border-slate-200 grayscale opacity-75 cursor-default pointer-events-none' 
+            : 'bg-white border-slate-200 hover:shadow-md']">
         <div class="flex items-center gap-4 sm:gap-5">
           <div
             class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400">

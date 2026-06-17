@@ -136,8 +136,14 @@ const stats = computed(() => [
   },
 ])
 
+const activeEquipments = computed(() => {
+  return equipementStore.equipements.filter(equip => 
+    ['confirmee', 'retour_en_attente'].includes(equip.latest_affectation?.statut)
+  );
+})
+
 const recentEquipments = computed(() => {
-  return [...equipementStore.equipements].sort((a, b) => {
+  return [...activeEquipments.value].sort((a, b) => {
     const dateA = a.latest_affectation?.date_affectation || 0;
     const dateB = b.latest_affectation?.date_affectation || 0;
     return new Date(dateB) - new Date(dateA);
@@ -222,7 +228,7 @@ const handleExportPdf = async () => {
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
             <h3 class="text-lg sm:text-xl font-black text-slate-900">Mes équipements actuels</h3>
             <span class="inline-flex w-fit px-3 py-1 bg-primary-50 text-primary-600 text-[10px] font-black uppercase rounded-lg">
-              {{ equipementStore.equipements.length }} Appareils
+              {{ activeEquipments.length }} Appareils
             </span>
           </div>
 
@@ -230,7 +236,7 @@ const handleExportPdf = async () => {
             <div v-for="i in 2" :key="i" class="h-24 bg-slate-50 animate-pulse rounded-3xl"></div>
           </div>
 
-          <div v-else-if="equipementStore.equipements.length === 0" class="text-center py-10 sm:py-12 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+          <div v-else-if="activeEquipments.length === 0" class="text-center py-10 sm:py-12 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
             <Smartphone class="w-10 h-10 sm:w-12 h-12 text-slate-300 mx-auto mb-4" />
             <p class="text-slate-500 text-sm font-medium">Aucun équipement affecté pour le moment.</p>
           </div>
@@ -275,7 +281,7 @@ const handleExportPdf = async () => {
             </div>
           </div>
 
-          <div v-if="equipementStore.equipements.length > 0" class="mt-6 text-center">
+          <div v-if="activeEquipments.length > 0" class="mt-6 text-center">
             <button 
               @click="router.push('/agent/equipements')"
               class="text-sm font-bold text-primary-600 hover:text-primary-700 transition-colors"
@@ -325,7 +331,7 @@ const handleExportPdf = async () => {
             <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Équipement concerné</label>
             <select v-model="selectedEquipementId" class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary-500/10 outline-none">
               <option value="">— Sélectionner un équipement —</option>
-              <option v-for="equip in equipementStore.equipements" :key="equip.id" :value="equip.id">
+              <option v-for="equip in activeEquipments" :key="equip.id" :value="equip.id">
                 {{ equip.marque }} {{ equip.modele }} ({{ equip.reference }})
               </option>
             </select>

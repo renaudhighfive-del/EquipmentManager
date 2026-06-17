@@ -52,6 +52,8 @@ const showEditModal = ref(false);
 const showReviewReturnModal = ref(false);
 const selectedAffectation = ref(null);
 const submitting = ref(false);
+const submittingValidate = ref(false);
+const submittingReject = ref(false);
 const rejectForm = ref({
   motif_rejet: ''
 });
@@ -339,7 +341,7 @@ const openReviewReturnModal = (aff) => {
 
 const handleValidateReturn = async () => {
   try {
-    submitting.value = true;
+    submittingValidate.value = true;
     const success = await affectationStore.validateReturn(selectedAffectation.value.id);
     if (success) {
       showToast('success', 'Succès', successMessage.value);
@@ -351,7 +353,7 @@ const handleValidateReturn = async () => {
     showToast('error', 'Erreur', "Une erreur est survenue lors de la validation du retour.");
     console.error(error);
   } finally {
-    submitting.value = false;
+    submittingValidate.value = false;
   }
 };
 
@@ -388,7 +390,7 @@ const handleRejectReturn = async () => {
   }
 
   try {
-    submitting.value = true;
+    submittingReject.value = true;
     const success = await affectationStore.rejectReturn(selectedAffectation.value.id, rejectForm.value);
     if (success) {
       showToast('success', 'Succès', successMessage.value);
@@ -400,7 +402,7 @@ const handleRejectReturn = async () => {
     showToast('error', 'Erreur', "Une erreur est survenue lors du rejet du retour.");
     console.error(error);
   } finally {
-    submitting.value = false;
+    submittingReject.value = false;
   }
 };
 </script>
@@ -1128,20 +1130,20 @@ const handleRejectReturn = async () => {
           <button 
             type="button"
             @click="handleValidateReturn"
-            :disabled="submitting"
+            :disabled="submittingValidate || submittingReject"
             class="flex-1 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-200 flex items-center justify-center gap-2"
           >
-            <Loader2 v-if="submitting" class="w-4 h-4 animate-spin" />
-            {{ submitting ? 'Validation...' : 'Valider le retour' }}
+            <Loader2 v-if="submittingValidate" class="w-4 h-4 animate-spin" />
+            {{ submittingValidate ? 'Validation...' : 'Valider le retour' }}
           </button>
           <button 
             type="button"
             @click="handleRejectReturn"
-            :disabled="submitting"
+            :disabled="submittingValidate || submittingReject"
             class="flex-1 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors shadow-lg shadow-red-200 flex items-center justify-center gap-2"
           >
-            <Loader2 v-if="submitting" class="w-4 h-4 animate-spin" />
-            {{ submitting ? 'Rejet...' : 'Rejeter le retour' }}
+            <Loader2 v-if="submittingReject" class="w-4 h-4 animate-spin" />
+            {{ submittingReject ? 'Rejet...' : 'Rejeter le retour' }}
           </button>
         </div>
       </div>
