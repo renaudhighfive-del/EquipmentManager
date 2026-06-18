@@ -14,7 +14,7 @@ import {
   Loader2,
   Filter,
   X
-} from 'lucide-vue-next';
+} from '@lucide/vue';
 
 import Paginator from 'primevue/paginator'
 

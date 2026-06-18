@@ -15,7 +15,7 @@ import {
   Smartphone,
   CircleUser,
   X
-} from 'lucide-vue-next';
+} from '@lucide/vue';
 import { useRoute } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
 

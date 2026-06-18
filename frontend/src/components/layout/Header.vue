@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue';
-import { Search, Bell, Menu, ChevronDown, LogOut, User } from 'lucide-vue-next';
+import { Search, Bell, Menu, ChevronDown, LogOut, User } from '@lucide/vue';
 import { useAuthStore } from '../../stores/auth';
 import { useRouter } from 'vue-router';
 

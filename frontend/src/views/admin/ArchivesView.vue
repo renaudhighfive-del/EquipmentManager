@@ -14,7 +14,7 @@ import {
   Calendar,
   Tag,
   Hash
-} from 'lucide-vue-next';
+} from '@lucide/vue';
 
 // Store and UI helpers
 const equipementStore = useEquipementStore(); // store des équipements, contient fetchArchives/unarchiveEquipement

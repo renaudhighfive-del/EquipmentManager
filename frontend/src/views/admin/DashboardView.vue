@@ -12,7 +12,7 @@ import {
   Download,
   Plus,
   Loader2
-} from 'lucide-vue-next';
+} from '@lucide/vue';
 import PageHeader from '../../components/layout/PageHeader.vue';
 import StatCard from '../../components/dashboard/StatCard.vue';
 import { useDashboardStore } from '../../stores/dashboard';

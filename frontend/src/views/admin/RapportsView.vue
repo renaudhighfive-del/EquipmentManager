@@ -6,7 +6,7 @@ import {
   BarChart3, TrendingUp, AlertCircle, CheckCircle2,
   Wrench, AlertOctagon, Activity, Users,
   Package, Loader2, RefreshCw, ArrowLeftRight
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 const store = useRapportStore()
 

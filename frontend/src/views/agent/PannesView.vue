@@ -2,7 +2,7 @@
 import { ref, onMounted, reactive } from 'vue'
 import PageHeader from '../../components/layout/PageHeader.vue'
 import SideModal from '../../components/layout/SideModal.vue'
-import { AlertTriangle, Plus, X, Upload, Loader2, Image as ImageIcon } from 'lucide-vue-next'
+import { AlertTriangle, Plus, X, Upload, Loader2, Image as ImageIcon } from '@lucide/vue'
 import { useEquipementStore } from '../../stores/equipement'
 import { usePanneStore } from '../../stores/panne'
 import { useToast } from 'primevue/usetoast'

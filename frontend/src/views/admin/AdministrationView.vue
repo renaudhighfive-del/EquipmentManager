@@ -10,7 +10,7 @@ import {
   ChevronDown, UserCheck, AlertCircle, CheckCircle2,
   Eye, Mail, Shield, Calendar, Smartphone, Package,
   ArrowLeftRight, Clock, Hash, X, Download
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 import { useAuthStore } from '../../stores/auth'
 

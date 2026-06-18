@@ -2,7 +2,7 @@
 import { onMounted, ref, reactive } from 'vue'
 import PageHeader from '../../components/layout/PageHeader.vue'
 import SideModal from '../../components/layout/SideModal.vue'
-import { Smartphone, RotateCcw, AlertOctagon, Loader2, AlertTriangle, Upload, X, CheckCircle, Calendar } from 'lucide-vue-next'
+import { Smartphone, RotateCcw, AlertOctagon, Loader2, AlertTriangle, Upload, X, CheckCircle, Calendar } from '@lucide/vue'
 import { useAffectationStore } from '../../stores/affectation'
 import { useEquipementStore } from '../../stores/equipement'
 import { usePanneStore } from '../../stores/panne'

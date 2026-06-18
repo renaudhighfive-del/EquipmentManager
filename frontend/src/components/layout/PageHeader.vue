@@ -1,5 +1,5 @@
 <script setup>
-import { ChevronRight, Home } from 'lucide-vue-next';
+import { ChevronRight, Home } from '@lucide/vue';
 
 defineProps({
   title: String,

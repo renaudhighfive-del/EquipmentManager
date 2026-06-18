@@ -19,7 +19,7 @@ import {
   Upload,
   X,
   History
-} from 'lucide-vue-next';
+} from '@lucide/vue';
 
 // Stores et helpers
 const maintenanceStore = useMaintenanceStore(); // store des maintenances et actions backend

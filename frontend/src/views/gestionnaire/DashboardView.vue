@@ -16,7 +16,7 @@ import {
   Loader2,
   AlertOctagon,
   CheckCircle2
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 const authStore = useAuthStore()
 const dashboardStore = useDashboardStore()

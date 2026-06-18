@@ -9,7 +9,7 @@ import {
   MapPin, Briefcase, Smartphone, Loader2,
   Camera, AlertCircle, CheckCircle2, Package, Download,
   ChevronLeft, ChevronRight as ChevronRightIcon
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import api from '../../services/axios'
 
 const agentStore = useAgentStore()

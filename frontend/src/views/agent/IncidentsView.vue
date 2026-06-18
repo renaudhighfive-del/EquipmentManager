@@ -17,7 +17,7 @@ import {
   Clock,
   Search,
   FileText
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { useEquipementStore } from '../../stores/equipement'
 import { usePanneStore } from '../../stores/panne'
 import { useSinistreStore } from '../../stores/sinistre'

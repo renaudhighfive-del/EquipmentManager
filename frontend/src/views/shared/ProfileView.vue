@@ -6,7 +6,7 @@ import PageHeader from '../../components/layout/PageHeader.vue'
 import {
   User, Lock, Eye, EyeOff, Check, AlertCircle,
   CheckCircle2, LogOut, Calendar, KeyRound, X, Camera
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 const authStore = useAuthStore()
 const userStore = useUserStore()

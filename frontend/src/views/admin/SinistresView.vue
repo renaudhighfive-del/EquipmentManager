@@ -4,7 +4,7 @@ import { useSinistreStore } from '../../stores/sinistre';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
 import PageHeader from '../../components/layout/PageHeader.vue';
-import { AlertTriangle, CheckCircle2, XCircle, Clock, User, Calendar, FileText } from 'lucide-vue-next';
+import { AlertTriangle, CheckCircle2, XCircle, Clock, User, Calendar, FileText } from '@lucide/vue';
 
 // Store des sinistres pour lecture et actions backend
 const sinistreStore = useSinistreStore();

@@ -18,7 +18,7 @@ import {
   Maximize2,
   Pencil,
   Download
-} from 'lucide-vue-next';
+} from '@lucide/vue';
 
 import Button from 'primevue/button';
 

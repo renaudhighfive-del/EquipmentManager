@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import PageHeader from '../../components/layout/PageHeader.vue'
 import SideModal from '../../components/layout/SideModal.vue'
-import { AlertTriangle, CheckCircle2, Clock, User, Calendar, Loader2, Smartphone, FileText, Image as ImageIcon, XCircle } from 'lucide-vue-next'
+import { AlertTriangle, CheckCircle2, Clock, User, Calendar, Loader2, Smartphone, FileText, Image as ImageIcon, XCircle } from '@lucide/vue'
 import { usePanneStore } from '../../stores/panne'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'

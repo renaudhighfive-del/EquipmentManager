@@ -4,7 +4,7 @@ import PageHeader from '../../components/layout/PageHeader.vue';
 import SideModal from '../../components/layout/SideModal.vue';
 import { useEquipementStore } from '../../stores/equipement';
 import { useAuthStore } from '../../stores/auth';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import api from '../../services/axios';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
@@ -37,7 +37,7 @@ import {
   Trash2,
   Save,
   Download
-} from 'lucide-vue-next';
+} from '@lucide/vue';
 
 // Stores and helpers
 const equipementStore = useEquipementStore(); // données des équipements et actions CRUD
@@ -492,7 +492,7 @@ const equipmentHistory = computed(() => {
   return events.sort((a, b) => new Date(b.date) - new Date(a.date));
 });
 
-const exportToExcel = () => {
+const exportToExcel = async () => {
   // Préparer les données pour l'export (utiliser les équipements filtrés)
   const dataToExport = filteredEquipements.value.map(equip => ({
     'Référence': equip.reference,
@@ -510,16 +510,34 @@ const exportToExcel = () => {
     'Assigné à': equip.current_affectation?.agent?.nom ? `${equip.current_affectation.agent.prenom || ''} ${equip.current_affectation.agent.nom}`.trim() : 'Disponible'
   }));
 
-  // Créer la feuille de calcul
-  const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-  
-  // Créer le classeur et ajouter la feuille
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Équipements');
-  
+  // Créer le classeur et la feuille avec ExcelJS
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Équipements');
+
+  // Ajouter les en-têtes
+  if (dataToExport.length > 0) {
+    worksheet.columns = Object.keys(dataToExport[0]).map(key => ({
+      header: key,
+      key: key,
+      width: 20
+    }));
+
+    // Ajouter les données
+    worksheet.addRows(dataToExport);
+  }
+
   // Générer et télécharger le fichier
   const date = new Date().toISOString().split('T')[0];
-  XLSX.writeFile(workbook, `Equipements_${date}.xlsx`);
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', `Equipements_${date}.xlsx`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
   
   // Afficher une notification
   toast.add({ 

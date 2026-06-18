@@ -20,7 +20,7 @@ import {
   MessageSquare,
   PackageCheck,
   Download
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 const authStore = useAuthStore()
 const equipementStore = useEquipementStore()
